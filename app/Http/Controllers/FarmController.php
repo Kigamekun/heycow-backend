@@ -14,18 +14,12 @@ class FarmController extends Controller
 
     public function index(Request $request)
     {
-
         $data = Farm::latest()->get();
-        // dd($data);
-
         if ($request->ajax()) {
-
             $data = Farm::latest()->get();
-
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
-
                     $id = Crypt::encrypt($row->_id);
                     $btn = '<div class="d-flex" style="gap:5px;">';
                     $btn .= '
@@ -33,7 +27,6 @@ class FarmController extends Controller
                     data-name="' . $row->name . '"
                     data-location="' . $row->location . '"
                     data-owner_id="' . (string) $row->owner_id . '"
-
                     data-url="' . route('farm.update', ['id' => $id]) . '"
                     >
                         Edit
@@ -49,21 +42,17 @@ class FarmController extends Controller
                     </div>';
                     return $btn;
                 })
-
                 ->addColumn('image', function ($row) {
                     if ($row->image != null) {
                         $image = '<img src="' . asset('storage/farm/' . $row->image) . '" style="width: 100px; border-radius:20px; height: 100px; object-fit: cover;">';
                     } else {
                         $image = '<img src="' . url('assets/img/noimage.jpg') . '" style="width: 100px; border-radius:20px; height: 100px; object-fit: cover;">';
                     }
-
                     return $image;
                 })
-
                 ->rawColumns(['action', 'image'])
                 ->make(true);
         }
-
         return view('admin.farm', [
             'data' => Farm::all(),
             'owners' => User::all()

@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\{ProfileController, FarmController};
+use App\Http\Controllers\{ProfileController, FarmController, IOTDevicesController};
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -29,4 +29,14 @@ Route::prefix('farm')->group(function () {
 });
 
 
-require __DIR__.'/auth.php';
+
+Route::prefix( 'iotdevice')->group(function () {
+    Route::get('/', [IOTDevicesController::class, 'index'])->name('iotdevice.index');
+    Route::get('/{id}', [IOTDevicesController::class, 'detail'])->name('iotdevice.detail');
+    Route::post('/store', [IOTDevicesController::class, 'store'])->name('iotdevice.store');
+    Route::put('/update/{id}', [IOTDevicesController::class, 'update'])->name('iotdevice.update');
+    Route::delete('/delete/{id}', [IOTDevicesController::class, 'destroy'])->name('iotdevice.delete');
+});
+
+
+require __DIR__ . '/auth.php';

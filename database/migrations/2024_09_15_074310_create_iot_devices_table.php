@@ -10,13 +10,13 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('farms', function (Blueprint $table) {
+        Schema::create('IOTDevices', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); // Pemilik peternakan (user yang terdaftar)
-            $table->string('name');
-            $table->text('address');
-            $table->string('contact_number')->nullable();
-            $table->boolean('verified')->default(false);
+            $table->string('device_type');
+            $table->string('serial_number')->unique();
+            $table->string('status')->default('active');
+            $table->date('installation_date');
+            $table->string('location')->nullable();
             $table->timestamps();
         });
     }
@@ -26,6 +26,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('farms');
+        Schema::dropIfExists('i_o_t_devices');
     }
 };

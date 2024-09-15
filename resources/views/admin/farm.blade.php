@@ -50,9 +50,9 @@
                 <br>
 
                 <div class="table-responsive">
-                    <table id="datatable-table" class="mt-3 mb-3 rounded-sm table borrder-none table-md">
+                    <table id="datatable-table" class="mt-3 mb-3 rounded-sm table borrder-none table-bordered table-md " style="border-top: none">
                         <thead>
-                            <tr>
+                            <tr style="border-top-width:0.01px">
                                 <th>#</th>
                                 <th>Name</th>
                                 <th>Location</th>
@@ -192,7 +192,7 @@
             var owner_id = $(e.relatedTarget).data('owner_id');
 
             var ownerOptions = owners.map(function(owner) {
-                return `<option value="${owner.id}" ${owner.id == owner_id ? 'selected' : ''}>${owner.name}</option>`;
+                return `<option value="${owner._id}" ${owner._id == owner_id ? 'selected' : ''}>${owner.name}</option>`;
             });
 
 
