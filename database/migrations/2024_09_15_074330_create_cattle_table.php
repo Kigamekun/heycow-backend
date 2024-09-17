@@ -15,6 +15,7 @@ return new class extends Migration {
             $table->string('name');
             $table->string('breed');
             $table->enum('status', ['alive', 'dead', 'sold']);
+            $table->enum('gender', ['male', 'female']);
 
             $table->date('birth_date');
             $table->integer('birth_weight');
