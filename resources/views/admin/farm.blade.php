@@ -50,7 +50,8 @@
                 <br>
 
                 <div class="table-responsive">
-                    <table id="datatable-table" class="mt-3 mb-3 rounded-sm table borrder-none table-bordered table-md " style="border-top: none">
+                    <table id="datatable-table" class="mt-3 mb-3 rounded-sm table borrder-none table-bordered table-md "
+                        style="border-top: none">
                         <thead>
                             <tr style="border-top-width:0.01px">
                                 <th>#</th>

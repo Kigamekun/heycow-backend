@@ -199,7 +199,6 @@
         });
 
         $('#updateDevice').on('shown.bs.modal', function(e) {
-            var  = @json($deviceTypes); // Assuming you have an array of device types
             var device_type = $(e.relatedTarget).data('device_type');
             var serial_number = $(e.relatedTarget).data('serial_number');
             var status = $(e.relatedTarget).data('status');

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Cattle;
+use App\Models\{Cattle, Farm, User, IOTDevices};
 use Illuminate\Http\Request;
 
 use Illuminate\Support\Facades\Crypt;
@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Validator;
 use Yajra\DataTables\DataTables;
 use Illuminate\Support\Facades\Storage;
 use MongoDB\BSON\ObjectId;
+
 class CattleController extends Controller
 {
     public function index(Request $request)
@@ -62,7 +63,7 @@ class CattleController extends Controller
             'data' => Cattle::all(),
             'farms' => Farm::all(),
             'owners' => User::all(),
-            'iot_devices' => IoTDevice::all(),
+            'iot_devices' => IOTDevices::all(),
         ]);
     }
 
