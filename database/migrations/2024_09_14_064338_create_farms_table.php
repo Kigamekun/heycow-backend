@@ -15,6 +15,7 @@ return new class extends Migration {
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); // Pemilik peternakan (user yang terdaftar)
             $table->string('name');
             $table->text('address');
+            $table->integer('cattle_count');
             $table->string('contact_number')->nullable();
             $table->boolean('verified')->default(false);
             $table->timestamps();
