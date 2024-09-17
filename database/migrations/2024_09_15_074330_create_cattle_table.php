@@ -19,6 +19,7 @@ return new class extends Migration {
 
             $table->date('birth_date');
             $table->integer('birth_weight');
+            $table->integer('birth_height');
 
             $table->unsignedBigInteger('farm_id');
             $table->foreign('farm_id')->references('id')->on('farms')->onDelete('cascade')->onUpdate('cascade');
