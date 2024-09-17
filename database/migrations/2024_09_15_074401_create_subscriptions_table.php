@@ -12,13 +12,11 @@ return new class extends Migration {
     {
         Schema::create('subscriptions', function (Blueprint $table) {
             $table->id();
-            $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->enum('type', ['Basic', 'Premium']);
             $table->timestamp('start_date');
             $table->timestamp('end_date');
             $table->boolean('active')->default(true); // Untuk status aktif atau tidak
-            $table->timestamps();
             $table->timestamps();
         });
     }

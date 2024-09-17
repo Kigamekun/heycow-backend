@@ -17,7 +17,7 @@ return new class extends Migration {
             $table->enum('status', ['alive', 'dead', 'sold']);
 
             $table->date('birth_date');
-            $table->number('birth_weight');
+            $table->integer('birth_weight');
 
             $table->unsignedBigInteger('farm_id');
             $table->foreign('farm_id')->references('id')->on('farms')->onDelete('cascade')->onUpdate('cascade');
@@ -26,7 +26,7 @@ return new class extends Migration {
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade')->onUpdate('cascade');
 
             $table->unsignedBigInteger('iot_device_id');
-            $table->foreign('iot_device_id')->references('id')->on('iot_devices')->onDelete('cascade')->onUpdate('cascade');
+            $table->foreign('iot_device_id')->references('id')->on('IOTDevices')->onDelete('cascade')->onUpdate('cascade');
 
             $table->string('image')->nullable();
             $table->timestamps();
