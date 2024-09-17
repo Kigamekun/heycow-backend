@@ -12,11 +12,10 @@ return new class extends Migration {
     {
         Schema::create('IOTDevices', function (Blueprint $table) {
             $table->id();
-            $table->string('device_type');
             $table->string('serial_number')->unique();
-            $table->string('status')->default('active');
+            $table->enum('status', ['active', 'inactive'])->default('active');
             $table->date('installation_date');
-            $table->string('location')->nullable();
+            $table->text('qr_image');
             $table->timestamps();
         });
     }
