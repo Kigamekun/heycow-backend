@@ -18,6 +18,7 @@
         "sort"
     ],
     "dependencies": {
+        "datatables.net": "file:",
         "jquery": ">=1.7"
     },
     "moduleType": [

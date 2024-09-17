@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('post_id')->constrained('blog_posts')->onDelete('cascade');
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->text('content');
-            $table->boolean('approved')->default(true); // Bisa juga dipakai untuk moderasi komentar
+            //$table->boolean('approved')->default(true); // Bisa juga dipakai untuk moderasi komentar // ga jadi dipakai
             $table->timestamps();
         });
     }
