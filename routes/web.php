@@ -2,8 +2,12 @@
 
 use App\Http\Controllers\{ProfileController, FarmController, IOTDevicesController, CattleController, UserController, BlogPostController, TransactionController};
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\LandingPageController;
 
-Route::get('/', function () {
+
+Route::get('/', [LandingPageController::class, 'indexlp']);
+
+Route::get('/welcome', function () {
     return view('welcome');
 });
 
