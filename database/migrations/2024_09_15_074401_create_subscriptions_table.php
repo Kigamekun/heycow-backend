@@ -16,9 +16,11 @@ return new class extends Migration {
             $table->enum('type', ['Basic', 'Premium']);
             $table->timestamp('start_date');
             $table->timestamp('end_date');
+            $table->enum('status', ['active', 'expired', 'canceled'])->default('active'); // Menambahkan status langganan
             $table->boolean('active')->default(true); // Untuk status aktif atau tidak
             $table->timestamps();
         });
+        
     }
 
     /**
