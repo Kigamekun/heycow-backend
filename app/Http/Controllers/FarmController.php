@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Validator;
 use Yajra\DataTables\DataTables;
 use Illuminate\Support\Facades\Storage;
-use MongoDB\BSON\ObjectId;
 class FarmController extends Controller
 {
 
@@ -20,13 +19,13 @@ class FarmController extends Controller
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
-                    $id = Crypt::encrypt($row->_id);
+                    $id = Crypt::encrypt($row->id);
                     $btn = '<div class="d-flex" style="gap:5px;">';
                     $btn .= '
                     <button type="button" title="EDIT" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#updateData"
                     data-name="' . $row->name . '"
-                    data-location="' . $row->location . '"
-                    data-owner_id="' . (string) $row->owner_id . '"
+                    data-address="' . $row->address . '"
+                    data-user_id="' . (string) $row->user_id . '"
                     data-url="' . route('farm.update', ['id' => $id]) . '"
                     >
                         Edit
@@ -64,14 +63,14 @@ class FarmController extends Controller
     {
         $request->validate([
             'name' => 'required',
-            'location' => 'required',
-            'owner_id' => 'required',
+            'address' => 'required',
+            'user_id' => 'required',
         ]);
 
         Farm::create([
             'name' => $request->name,
-            'location' => $request->location,
-            'owner_id' => $request->owner_id,
+            'address' => $request->address,
+            'user_id' => $request->user_id,
         ]);
 
         return redirect()->back()->with(['message' => 'Farm berhasil ditambahkan', 'status' => 'success']);
@@ -82,19 +81,19 @@ class FarmController extends Controller
     public function update(Request $request, $id)
     {
         $id = Crypt::decrypt($id);
-        $farm = Farm::where('_id', new ObjectId($id))->first();
+        $farm = Farm::where('id', new ($id))->first();
 
 
         $request->validate([
             'name' => 'required',
-            'location' => 'required',
-            'owner_id' => 'required',
+            'address' => 'required',
+            'user_id' => 'required',
         ]);
 
         $farm->update([
             'name' => $request->name,
-            'location' => $request->location,
-            'owner_id' => new ObjectId($request->owner_id),
+            'address' => $request->address,
+            'user_id' => new ($request->user_id),
         ]);
 
         return redirect()->route('farm.index')->with(['message' => 'Farm berhasil di update', 'status' => 'success']);
@@ -104,7 +103,7 @@ class FarmController extends Controller
     public function destroy($id)
     {
         $id = Crypt::decrypt($id);
-        Farm::where('_id', new ObjectId($id))->delete();
+        Farm::where('_id', new ($id))->delete();
         return redirect()->route('farm.index')->with(['message' => 'Farm berhasil di delete', 'status' => 'success']);
     }
 }

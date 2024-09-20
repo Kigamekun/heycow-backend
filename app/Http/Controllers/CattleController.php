@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Validator;
 use Yajra\DataTables\DataTables;
 use Illuminate\Support\Facades\Storage;
-use MongoDB\BSON\ObjectId;
 
 class CattleController extends Controller
 {
@@ -98,7 +97,7 @@ class CattleController extends Controller
     public function update(Request $request, $id)
     {
         $id = Crypt::decrypt($id);
-        $cattle = Cattle::findOrFail(new ObjectId($id));
+        $cattle = Cattle::findOrFail(new ($id));
 
         $request->validate([
             'name' => 'required',
@@ -128,7 +127,7 @@ class CattleController extends Controller
 
     public function destroy($id)
     {
-        $id = Crypt::decrypt(new ObjectId($id));
+        $id = Crypt::decrypt(new ($id));
         Cattle::findOrFail($id)->delete();
         return redirect()->route('cattle.index')->with(['message' => 'Cattle berhasil di delete', 'status' => 'success']);
     }

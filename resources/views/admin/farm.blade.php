@@ -56,7 +56,7 @@
                             <tr style="border-top-width:0.01px">
                                 <th>#</th>
                                 <th>Name</th>
-                                <th>Location</th>
+                                <th>Address</th>
                                 <th>Owner ID</th>
                                 <th>Action</th>
                             </tr>
@@ -109,23 +109,23 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="location" class="fw-semibold">Location <span
+                            <label for="address" class="fw-semibold">Address <span
                                     class="ml-1 text-danger">*</span></label>
-                            <input type="text" class="form-control {{ $errors->has('location') ? 'is-invalid' : '' }}"
-                                id="location" name="location" placeholder="Masukan Location">
-                            <x-input-error :messages="$errors->get('location')" class="mt-2" />
+                            <input type="text" class="form-control {{ $errors->has('address') ? 'is-invalid' : '' }}"
+                                id="address" name="address" placeholder="Masukan Address">
+                            <x-input-error :messages="$errors->get('address')" class="mt-2" />
                         </div>
 
                         <div class="mb-3">
-                            <label for="owner_id" class="fw-semibold">Owner <span class="ml-1 text-danger">*</span></label>
-                            <select name="owner_id" id="owner_id"
-                                class="form-control {{ $errors->has('owner_id') ? 'is-invalid' : '' }}">
+                            <label for="user_id" class="fw-semibold">Owner <span class="ml-1 text-danger">*</span></label>
+                            <select name="user_id" id="user_id"
+                                class="form-control {{ $errors->has('user_id') ? 'is-invalid' : '' }}">
                                 <option value="">Pilih Owner</option>
                                 @foreach ($owners as $owner)
                                     <option value="{{ $owner->id }}">{{ $owner->name }}</option>
                                 @endforeach
                             </select>
-                            <x-input-error :messages="$errors->get('owner_id')" class="mt-2" />
+                            <x-input-error :messages="$errors->get('user_id')" class="mt-2" />
 
                         </div>
 
@@ -171,8 +171,12 @@
                         name: 'location'
                     },
                     {
-                        data: 'owner_id',
-                        name: 'owner_id'
+                        data: 'cattle_count',
+                        name: 'cattle_count'
+                    },
+                    {
+                        data: 'user_id',
+                        name: 'user_id'
                     },
                     {
                         data: 'action',
@@ -190,10 +194,10 @@
         $('#updateData').on('shown.bs.modal', function(e) {
 
             var owners = @json($owners);
-            var owner_id = $(e.relatedTarget).data('owner_id');
+            var user_id = $(e.relatedTarget).data('user_id');
 
             var ownerOptions = owners.map(function(owner) {
-                return `<option value="${owner._id}" ${owner._id == owner_id ? 'selected' : ''}>${owner.name}</option>`;
+                return `<option value="${owner._id}" ${owner._id == user_id ? 'selected' : ''}>${owner.name}</option>`;
             });
 
 
@@ -223,13 +227,13 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="owner_id" class="fw-semibold">Owner <span class="ml-1 text-danger">*</span></label>
-                            <select name="owner_id" id="owner_id"
-                                class="form-control {{ $errors->has('owner_id') ? 'is-invalid' : '' }}">
+                            <label for="user_id" class="fw-semibold">Owner <span class="ml-1 text-danger">*</span></label>
+                            <select name="user_id" id="user_id"
+                                class="form-control {{ $errors->has('user_id') ? 'is-invalid' : '' }}">
                                 <option value="">Pilih Owner</option>
                             ${ownerOptions}
                             </select>
-                            <x-input-error :messages="$errors->get('owner_id')" class="mt-2" />
+                            <x-input-error :messages="$errors->get('user_id')" class="mt-2" />
 
                         </div>
                 </div>

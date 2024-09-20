@@ -3,11 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use MongoDB\Laravel\Eloquent\Model;
+use Illuminate\Database\Eloquent\Model;
+// use MongoDB\Laravel\Eloquent\Model;
 
 class Farm extends Model
 {
     protected $collection = 'farms';
-    protected $fillable = ['name', 'location', 'owner_id'];
+    protected $fillable = ['name', 'address', 'user_id'];
     use HasFactory;
 }
