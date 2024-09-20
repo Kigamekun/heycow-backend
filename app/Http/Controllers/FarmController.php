@@ -51,6 +51,7 @@ class FarmController extends Controller
                     return $image;
                 })
                 ->addColumn('owner', function ($row) {
+
                     return $row->owner->name;
                 })
                 ->rawColumns(['action', 'image'])

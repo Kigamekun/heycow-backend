@@ -40,12 +40,7 @@
         <div class="card">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
-                    <h3>Data Farm</h3>
-                    <div>
-                        <button class="btn btn-primary" data-toggle="modal" data-target="#createData">
-                            Tambah Data
-                        </button>
-                    </div>
+                    <h3>History</h3>
                 </div>
                 <br>
 
@@ -56,9 +51,9 @@
                             <tr style="border-top-width:0.01px">
                                 <th>#</th>
                                 <th>Name</th>
-                                <th>Address</th>
-                                <th>Owner Name</th>
-                                <th>Action</th>
+                                <th>Nomor Pesanan</th>
+                                <th>Jumlah Hewan</th>
+                                <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -87,57 +82,6 @@
 
 
     <!-- Modal -->
-    <div class="modal fade" id="createData" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-        aria-hidden="true" aria-hidden="true">
-        <div class="modal-dialog">
-            <div id="modal-content" class="modal-content">
-                <div class="modal-header">
-                    <div>
-                        <h5 class="modal-title" id="staticBackdropLabel">Buat Farm</h5>
-                        <small id="emailHelp" class="form-text text-muted">Field dengan tanda <span
-                                class="text-danger">*</span> wajib diisi.</small>
-                    </div>
-                </div>
-                <form action="{{ route('farm.store') }}" id="buatFarm" method="post" enctype="multipart/form-data">
-                    @csrf
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="name" class="fw-semibold">Name <span class="ml-1 text-danger">*</span></label>
-                            <input type="text" class="form-control {{ $errors->has('name') ? 'is-invalid' : '' }}"
-                                id="name" name="name" placeholder="Masukan Name">
-                            <x-input-error :messages="$errors->get('name')" class="mt-2" />
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="address" class="fw-semibold">Address <span
-                                    class="ml-1 text-danger">*</span></label>
-                            <input type="text" class="form-control {{ $errors->has('address') ? 'is-invalid' : '' }}"
-                                id="address" name="address" placeholder="Masukan Address">
-                            <x-input-error :messages="$errors->get('address')" class="mt-2" />
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="user_id" class="fw-semibold">Owner <span class="ml-1 text-danger">*</span></label>
-                            <select name="user_id" id="user_id"
-                                class="form-control {{ $errors->has('user_id') ? 'is-invalid' : '' }}">
-                                <option value="">Pilih Owner</option>
-                                @foreach ($owners as $owner)
-                                    <option value="{{ $owner->id }}">{{ $owner->name }}</option>
-                                @endforeach
-                            </select>
-                            <x-input-error :messages="$errors->get('user_id')" class="mt-2" />
-
-                        </div>
-
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
-                        <button type="submit" class="btn btn-primary">Simpan</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
 @endsection
 
 
@@ -167,12 +111,16 @@
                         name: 'name'
                     },
                     {
-                        data: 'address',
-                        name: 'address'
+                        data: 'location',
+                        name: 'location'
                     },
                     {
-                        data: 'owner',
-                        name: 'owner'
+                        data: 'cattle_count',
+                        name: 'cattle_count'
+                    },
+                    {
+                        data: 'user_id',
+                        name: 'user_id'
                     },
                     {
                         data: 'action',
