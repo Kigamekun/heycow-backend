@@ -29,8 +29,7 @@ class IOTDevicesController extends Controller
                     data-serial_number="' . $row->serial_number . '"
                     data-status="' . $row->status . '"
                     data-installation_date="' . $row->installation_date . '"
-                    data-url="' . route('iotdevice.update', ['id' => $id]) . '"
-                    >
+                    data-url="' . route('iotdevice.update', ['id' => $id]) . '">
                         Edit
                     </button>';
                     $btn .= '
@@ -46,7 +45,7 @@ class IOTDevicesController extends Controller
                 })
                 ->addColumn('qr_image', function ($row) {
                     if ($row->qr_image != null) {
-                        $qr_image = '<img src="' . asset('storage/farm/' . $row->qr_image) . '" style="width: 100px; border-radius:20px; height: 100px; object-fit: cover;">';
+                        $qr_image = '<img src="' . asset('storage/' . $row->qr_image) . '" style="width: 100px; border-radius:20px; height: 100px; object-fit: cover;">';
                     } else {
                         $qr_image = '<img src="' . url('assets/img/noimage.jpg') . '" style="width: 100px; border-radius:20px; height: 100px; object-fit: cover;">';
                     }
@@ -80,7 +79,7 @@ class IOTDevicesController extends Controller
             'serial_number' => $request->serial_number,
             'status' => $request->status,
             'installation_date' => $request->installation_date,
-            'qr_image' => $request->$qrImagePath,
+            'qr_image' => $qrImagePath,
         ]);
 
         return redirect()->back()->with(['message' => 'IoT Device berhasil ditambahkan', 'status' => 'success']);

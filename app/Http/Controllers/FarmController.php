@@ -13,6 +13,7 @@ class FarmController extends Controller
 
     public function index(Request $request)
     {
+        // ini fahri
         $data = Farm::latest()->get();
         if ($request->ajax()) {
             $data = Farm::latest()->get();
@@ -113,6 +114,11 @@ class FarmController extends Controller
     // Find the farm by ID
     $farm = Farm::where('id', $id)->first();
 
+        $request->validate([
+            'name' => 'required',
+            'address' => 'required',
+            'user_id' => 'required|string',
+        ]);
     // Validate the request data
     $request->validate([
         'name' => 'required',

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class IOTDevices extends Model
 {
-    protected $table = 'iotdevices';
+    protected $table = 'iot_devices';
     protected $fillable = ['serial_number', 'status', 'installation_date','qr_image'];
     use HasFactory;
 }
