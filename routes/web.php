@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\{ProfileController, FarmController, IOTDevicesController, CattleController, UserController, BlogPostController, TransactionController};
+use App\Http\Controllers\{ProfileController, FarmController, IOTDevicesController, CattleController, UserController, BlogPostController, TransactionController, HistoryController};
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LandingPageController;
 
@@ -76,6 +76,11 @@ Route::prefix('transaction')->group(function () {
     Route::put('/update/{id}', [TransactionController::class, 'update'])->name('transaction.update');
     Route::delete('/delete/{id}', [TransactionController::class, 'destroy'])->name('transaction.delete');
 });
+
+Route::prefix('history')->group(function () {
+    Route::get('/', [HistoryController::class, 'index'])->name('history.index');
+});
+
 
 
 require __DIR__ . '/auth.php';

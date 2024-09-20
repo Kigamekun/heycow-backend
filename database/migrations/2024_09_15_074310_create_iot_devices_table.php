@@ -15,7 +15,7 @@ return new class extends Migration {
             $table->string('serial_number')->unique();
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->date('installation_date');
-            $table->text('qr_image');
+            $table->text('qr_image')->nullable();
             $table->timestamps();
         });
     }
@@ -25,6 +25,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('i_o_t_devices');
+        Schema::dropIfExists('iotdevices');
     }
 };

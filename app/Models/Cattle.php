@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use MongoDB\Laravel\Eloquent\Model;
+use Illuminate\Database\Eloquent\Model;
 
 class Cattle extends Model
 {
@@ -31,7 +31,7 @@ class Cattle extends Model
 
     public function iotDevice()
     {
-        return $this->belongsTo(IoTDevices::class, 'iot_device_id');
+        return $this->belongsTo(IOTDevices::class, 'iot_device_id');
     }
 
     use HasFactory;
