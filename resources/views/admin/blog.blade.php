@@ -28,7 +28,7 @@
     @php
         $breadcrumbs = [
             ['title' => 'Home', 'link' => '/', 'active' => false],
-            ['title' => 'Data Farm', 'link' => '/antrian/periksa', 'active' => true],
+            ['title' => 'Data Post', 'link' => '/antrian/periksa', 'active' => true],
         ];
     @endphp
 
@@ -40,7 +40,7 @@
         <div class="card">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
-                    <h3>Data Farm</h3>
+                    <h3>Data Post</h3>
                     <div>
                         <button class="btn btn-primary" data-toggle="modal" data-target="#createData">
                             Tambah Data
@@ -55,9 +55,10 @@
                         <thead>
                             <tr style="border-top-width:0.01px">
                                 <th>#</th>
-                                <th>Name</th>
-                                <th>Address</th>
-                                <th>Owner ID</th>
+                                <th>Title</th>
+                                <th>Content</th>
+                                <th>Images</th>
+                                <th>Owner</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -93,27 +94,32 @@
             <div id="modal-content" class="modal-content">
                 <div class="modal-header">
                     <div>
-                        <h5 class="modal-title" id="staticBackdropLabel">Buat Farm</h5>
+                        <h5 class="modal-title" id="staticBackdropLabel">Buat Post</h5>
                         <small id="emailHelp" class="form-text text-muted">Field dengan tanda <span
                                 class="text-danger">*</span> wajib diisi.</small>
                     </div>
                 </div>
-                <form action="{{ route('farm.store') }}" id="buatFarm" method="post" enctype="multipart/form-data">
+                <form action="{{ route('blog.store') }}" id="buatBlog" method="post" enctype="multipart/form-data">
                     @csrf
                     <div class="modal-body">
                         <div class="mb-3">
-                            <label for="name" class="fw-semibold">Name <span class="ml-1 text-danger">*</span></label>
-                            <input type="text" class="form-control {{ $errors->has('name') ? 'is-invalid' : '' }}"
-                                id="name" name="name" placeholder="Masukan Name">
-                            <x-input-error :messages="$errors->get('name')" class="mt-2" />
+                            <label for="title" class="fw-semibold">Title <span class="ml-1 text-danger">*</span></label>
+                            <input type="text" class="form-control {{ $errors->has('title') ? 'is-invalid' : '' }}"
+                                id="title" name="title" placeholder="Masukan Title Post">
+                            <x-input-error :messages="$errors->get('title')" class="mt-2" />
                         </div>
-
                         <div class="mb-3">
-                            <label for="address" class="fw-semibold">Address <span
+                            <label for="content" class="fw-semibold">Content <span class="ml-1 text-danger">*</span></label>
+                            <input type="text" class="form-control {{ $errors->has('content') ? 'is-invalid' : '' }}"
+                                id="content" name="content" placeholder="Masukan content">
+                            <x-input-error :messages="$errors->get('content')" class="mt-2" />
+                        </div>
+                        <div class="mb-3">
+                            <label for="image" class="fw-semibold">Image <span
                                     class="ml-1 text-danger">*</span></label>
-                            <input type="text" class="form-control {{ $errors->has('address') ? 'is-invalid' : '' }}"
-                                id="address" name="address" placeholder="Masukan Address">
-                            <x-input-error :messages="$errors->get('address')" class="mt-2" />
+                            <input type="file" class="form-control {{ $errors->has('image') ? 'is-invalid' : '' }}"
+                                id="image" name="image" placeholder="Masukan image">
+                            <x-input-error :messages="$errors->get('image')" class="mt-2" />
                         </div>
 
                         <div class="mb-3">
@@ -122,7 +128,7 @@
                                 class="form-control {{ $errors->has('user_id') ? 'is-invalid' : '' }}">
                                 <option value="">Pilih Owner</option>
                                 @foreach ($owners as $owner)
-                                    <option value="{{ $owner->id }}">{{ $owner->name }}</option>
+                                    <option value="{{ $owner->id }}">{{ $owner->name}}</option>
                                 @endforeach
                             </select>
                             <x-input-error :messages="$errors->get('user_id')" class="mt-2" />
@@ -156,21 +162,24 @@
             var table = $('#datatable-table').DataTable({
                 processing: true,
                 serverSide: true,
-                ajax: "{{ route('farm.index') }}",
+                ajax: "{{ route('blog.index') }}",
                 columns: [{
                         data: 'DT_RowIndex',
                         name: 'DT_RowIndex',
                         searchable: false,
                     },
                     {
-                        data: 'name',
-                        name: 'name'
+                        data: 'title',
+                        name: 'title'
                     },
                     {
-                        data: 'address',
-                        name: 'address'
+                        data: 'content',
+                        name: 'content'
                     },
-                    
+                    {
+                        data: 'image',
+                        name: 'image'
+                    },
                     {
                         data: 'user_id',
                         name: 'user_id'
@@ -201,7 +210,7 @@
             var html = `
                 <div class="modal-header">
                     <div>
-                        <h5 class="modal-title" id="staticBackdropLabel">Edit Farm</h5>
+                        <h5 class="modal-title" id="staticBackdropLabel">Edit Postrm</h5>
                         <small id="emailHelp" class="form-text text-muted">Field dengan tanda <span class="text-danger">*</span> wajib diisi.</small>
                     </div>
                 </div>

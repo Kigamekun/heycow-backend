@@ -52,7 +52,7 @@ Route::prefix('cattle')->group(callback: function () {
     Route::delete('/delete/{id}', [CattleController::class, 'destroy'])->name('cattle.delete');
 });
 
-Route::prefix('user')->group(function () {
+Route::prefix('user')->group(function () { # untuk gabungan
     Route::get('/', [UserController::class, 'index'])->name('user.index');
     Route::get('/{id}', [UserController::class, 'detail'])->name('user.detail');
     Route::post('/store', [UserController::class, 'store'])->name('user.store');

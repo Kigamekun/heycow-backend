@@ -7,5 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class BlogPost extends Model
 {
+    // protected $collection = "";
+    protected $fillable = ['title', 'content', 'image'];
+    
     use HasFactory;
 }
