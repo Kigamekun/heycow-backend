@@ -85,19 +85,19 @@ class FarmController extends Controller
     public function update(Request $request, $id)
     {
         $id = Crypt::decrypt($id);
-        $farm = Farm::where('id', new ($id))->first();
+        $farm = Farm::where('id', ($id))->first();
 
 
         $request->validate([
             'name' => 'required',
             'address' => 'required',
-            'user_id' => 'required',
+            'user_id' => 'required|string',
         ]);
 
         $farm->update([
             'name' => $request->name,
             'address' => $request->address,
-            'user_id' => new ($request->user_id),
+            'user_id' => $request->user_id,
         ]);
 
         return redirect()->route('farm.index')->with(['message' => 'Farm berhasil di update', 'status' => 'success']);

@@ -216,10 +216,11 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="location" class="fw-semibold">Location <span class="ml-1 text-danger">*</span></label>
-                            <input type="text" class="form-control {{ $errors->has('location') ? 'is-invalid' : '' }}" value="${$(e.relatedTarget).data('location')}"
-                                id="location" name="location" placeholder="Masukan Location">
-                            <x-input-error :messages="$errors->get('location')" class="mt-2" />
+                            <label for="address" class="fw-semibold">address <span class="ml-1 text-danger">*</span></label>
+                            <input type="text" class="form-control {{ $errors->has('address') ? 'is-invalid' : '' }}" value="${$(e.relatedTarget).data('address')}"
+                                id="address" name="address" placeholder="Masukan address">
+                            <x-input-error :messages="$errors->get('address
+                                ')" class="mt-2" />
                         </div>
 
                         <div class="mb-3">
