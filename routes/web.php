@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\{ProfileController, FarmController, IOTDevicesController, CattleController, UserController, BlogPostController, TransactionController, HistoryController};
+use App\Http\Controllers\{ProfileController, FarmController, IOTDevicesController, CattleController, UserController, BlogPostController, TransactionController};
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LandingPageController;
 
@@ -62,6 +62,7 @@ Route::prefix('user')->group(function () { # untuk gabungan
 
 Route::prefix('blog')->group(function () {
     Route::get('/', [BlogPostController::class, 'index'])->name('blog.index');
+    Route::get('/comments', [BlogPostController::class, 'comments'])->name('blog.comments');
     Route::get('/{id}', [BlogPostController::class, 'detail'])->name('blog.detail');
     Route::post('/store', [BlogPostController::class, 'store'])->name('blog.store');
     Route::put('/update/{id}', [BlogPostController::class, 'update'])->name('blog.update');
@@ -71,16 +72,12 @@ Route::prefix('blog')->group(function () {
 // transaction
 Route::prefix('transaction')->group(function () {
     Route::get('/', [TransactionController::class, 'index'])->name('transaction.index');
+    
     Route::get('/{id}', [TransactionController::class, 'detail'])->name('transaction.detail');
     Route::post('/store', [TransactionController::class, 'store'])->name('transaction.store');
     Route::put('/update/{id}', [TransactionController::class, 'update'])->name('transaction.update');
     Route::delete('/delete/{id}', [TransactionController::class, 'destroy'])->name('transaction.delete');
 });
-
-Route::prefix('history')->group(function () {
-    Route::get('/', [HistoryController::class, 'index'])->name('history.index');
-});
-
 
 
 require __DIR__ . '/auth.php';

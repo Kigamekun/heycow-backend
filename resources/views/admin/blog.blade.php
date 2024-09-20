@@ -101,6 +101,7 @@
                 </div>
                 <form action="{{ route('blog.store') }}" id="buatBlog" method="post" enctype="multipart/form-data">
                     @csrf
+                    
                     <div class="modal-body">
                         <div class="mb-3">
                             <label for="title" class="fw-semibold">Title <span class="ml-1 text-danger">*</span></label>
@@ -121,18 +122,32 @@
                                 id="image" name="image" placeholder="Masukan image">
                             <x-input-error :messages="$errors->get('image')" class="mt-2" />
                         </div>
+                        
+                        @if (Auth::user()->role=='admin')
+                            <div class="mb-3">
+                                <label for="user_id" class="fw-semibold">Owner <span class="ml-1 text-danger">*</span></label>
+                                <select name="user_id" id="user_id"
+                                    class="form-control {{ $errors->has('user_id') ? 'is-invalid' : '' }}">
+                                    <option value="">Pilih Owner</option>
+                                    @foreach ($owners as $owner)
+                                        <option value="{{ $owner->id }}">{{ $owner->name}}</option>
+                                    @endforeach
+                                </select>
+                                <x-input-error :messages="$errors->get('user_id')" class="mt-2" />
+                            </div>
+                        @endif
 
                         <div class="mb-3">
-                            <label for="user_id" class="fw-semibold">Owner <span class="ml-1 text-danger">*</span></label>
-                            <select name="user_id" id="user_id"
-                                class="form-control {{ $errors->has('user_id') ? 'is-invalid' : '' }}">
-                                <option value="">Pilih Owner</option>
+                            <label for="published" class="fw-semibold">Status <span class="ml-1     text-danger">*</span></label>
+                            <select name="published" id="published"
+                                class="form-control {{ $errors->has('published') ? 'is-invalid' : '' }}">
+                                <option value="">Pilih Status</option>
                                 @foreach ($owners as $owner)
                                     <option value="{{ $owner->id }}">{{ $owner->name}}</option>
                                 @endforeach
                             </select>
                             <x-input-error :messages="$errors->get('user_id')" class="mt-2" />
-
+                            
                         </div>
 
                     </div>
@@ -180,6 +195,14 @@
                         data: 'image',
                         name: 'image'
                     },
+                    // {
+                    //     data: 'name',
+                    //     name: 'name'
+                    // },
+                    {
+                        data: 'published',
+                        name: 'published'
+                    },
                     {
                         data: 'user_id',
                         name: 'user_id'
@@ -198,61 +221,89 @@
         });
 
         $('#updateData').on('shown.bs.modal', function(e) {
-
+            // Get the owner data from the server
             var owners = @json($owners);
             var user_id = $(e.relatedTarget).data('user_id');
-
+            var title = $(e.relatedTarget).data('title');
+            var content = $(e.relatedTarget).data('content');
+            var image = $(e.relatedTarget).data('image');
+            var published = $(e.relatedTarget).data('published');
+            
+            // Generate owner options
             var ownerOptions = owners.map(function(owner) {
-                return `<option value="${owner._id}" ${owner._id == user_id ? 'selected' : ''}>${owner.name}</option>`;
+                return `<option value="${owner.id}" ${owner.id == user_id ? 'selected' : ''}>${owner.name}</option>`;
             });
 
+            // Populate the published options
+            var publishedOptions = `
+                <option value="Published" ${published == 'Published' ? 'selected' : ''}>Published</option>
+                <option value="Draft" ${published == 'Draft' ? 'selected' : ''}>Draft</option>
+            `;
 
+            // Create the HTML structure for the modal form
             var html = `
                 <div class="modal-header">
-                    <div>
-                        <h5 class="modal-title" id="staticBackdropLabel">Edit Postrm</h5>
-                        <small id="emailHelp" class="form-text text-muted">Field dengan tanda <span class="text-danger">*</span> wajib diisi.</small>
-                    </div>
+                    <h5 class="modal-title" id="staticBackdropLabel">Edit Post</h5>
+                    <small id="emailHelp" class="form-text text-muted">Field dengan tanda <span class="text-danger">*</span> wajib diisi.</small>
                 </div>
-            <form action="${$(e.relatedTarget).data('url')}" method="post" enctype="multipart/form-data">
-                @csrf
-                @method('PUT')
-                <div class="modal-body">
-                    <div class="mb-3">
-                            <label for="name" class="fw-semibold">Name <span class="ml-1 text-danger">*</span></label>
-                            <input type="text" class="form-control {{ $errors->has('name') ? 'is-invalid' : '' }}" value="${$(e.relatedTarget).data('name')}"
-                                id="name" name="name" placeholder="Masukan Name">
-                            <x-input-error :messages="$errors->get('name')" class="mt-2" />
-                        </div>
-
+                <form action="${$(e.relatedTarget).data('url')}" method="post" enctype="multipart/form-data">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-body">
                         <div class="mb-3">
-                            <label for="location" class="fw-semibold">Location <span class="ml-1 text-danger">*</span></label>
-                            <input type="text" class="form-control {{ $errors->has('location') ? 'is-invalid' : '' }}" value="${$(e.relatedTarget).data('location')}"
-                                id="location" name="location" placeholder="Masukan Location">
-                            <x-input-error :messages="$errors->get('location')" class="mt-2" />
+                            <label for="title" class="fw-semibold">Title <span class="ml-1 text-danger">*</span></label>
+                            <input type="text" class="form-control" id="title" name="title" value="${title}" placeholder="Masukan Title Post">
                         </div>
-
+                        <div class="mb-3">
+                            <label for="content" class="fw-semibold">Content <span class="ml-1 text-danger">*</span></label>
+                            <input type="text" class="form-control" id="content" name="content" value="${content}" placeholder="Masukan content">
+                        </div>
+                        <div class="mb-3">
+                            <label for="image" class="fw-semibold">Image <span class="ml-1 text-danger">*</span></label>
+                            <input type="file" class="form-control" id="image" name="image" placeholder="Masukan image">
+                        </div>
+                        
+                        @if (Auth::user()->role=='admin')
                         <div class="mb-3">
                             <label for="user_id" class="fw-semibold">Owner <span class="ml-1 text-danger">*</span></label>
-                            <select name="user_id" id="user_id"
-                                class="form-control {{ $errors->has('user_id') ? 'is-invalid' : '' }}">
+                            <select name="user_id" id="user_id" class="form-control">
                                 <option value="">Pilih Owner</option>
-                            ${ownerOptions}
+                                ${ownerOptions.join('')}
                             </select>
-                            <x-input-error :messages="$errors->get('user_id')" class="mt-2" />
-
                         </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                    <button type="submit" class="btn btn-primary">Simpan</button>
-                </div>
-            </form>
-            `;
-            $('#modal-content').html(html);
-            $('.dropify').dropify();
+                        @endif
 
+                        <div class="mb-3">
+                            <label for="published" class="fw-semibold">Status <span class="ml-1 text-danger">*</span></label>
+                            <select name="published" id="published" class="form-control">
+                                ${publishedOptions}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                        <button 
+                            class="btn btn-primary" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#updateData" 
+                            data-url="{{ route('blog.update', ['id' => Crypt::encrypt($blogPost->id)]) }}"
+                            data-title="{{ $blogPost->title }}"
+                            data-content="{{ $blogPost->content }}"
+                            data-image="{{ $blogPost->image }}"
+                            data-user_id="{{ $blogPost->user_id }}"
+                            data-published="{{ $blogPost->published }}"
+                        >
+                            Edit Post
+                        </button>
+
+                    </div>
+                </form>
+            `;
+
+            // Populate the modal with the generated HTML
+            $('#modal-content').html(html);
         });
+
     </script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Dropify/0.2.2/js/dropify.min.js"

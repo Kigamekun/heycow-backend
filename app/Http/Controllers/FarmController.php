@@ -134,11 +134,6 @@ class FarmController extends Controller
 
     public function destroy($id)
     {
-    //     $id = Crypt::decrypt($id);
-    //     Farm::where('id', new ($id))->delete();
-    //     return redirect()->route('farm.index')->with(['message' => 'Farm berhasil di delete', 'status' => 'success']);
-    // }
-    // Decrypt the ID
         $id = Crypt::decrypt($id);
         
         // Delete the farm with the decrypted ID

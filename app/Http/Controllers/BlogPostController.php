@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use Yajra\DataTables\Facades\DataTables;
 
+use function Pest\Laravel\get;
+
 class BlogPostController extends Controller
 {
     /**
@@ -31,14 +33,14 @@ class BlogPostController extends Controller
                     data-address="' . 
                     $rowBlogPost->image . '"
                     data-address="'.
-                    $rowBlogPost->name . '"
-                    data-user_id="' . (string) $rowBlogPost->user . '"
-                    data-url="' . route('blogpost.update', ['id' => $id]) . '"
+                    $rowBlogPost->published . '"
+                    data-user_id="' . (string) $rowBlogPost->user_id . '"
+                    data-url="' . route('blog.update', ['id' => $id]) . '"
                     >
                         Edit
                     </button>';
                     $btn .= '
-                    <form id="deleteForm" action="' . route('blogpost.delete', ['id' => $id]) . '" method="POST">
+                    <form id="deleteForm" action="' . route('blog.delete', ['id' => $id]) . '" method="POST">
                             ' . csrf_field() . '
                             ' . method_field('DELETE') . '
                                 <button type="button" title="DELETE" class="btn btn-sm btn-danger btn-delete" onclick="confirmDelete(event)">
@@ -57,7 +59,7 @@ class BlogPostController extends Controller
                 return $image;
             })
             ->addColumn('owner', function ($rowBlogPost) {
-                return $rowBlogPost>owner->name;
+                return;
             })
             ->rawColumns(['action', 'image'])
             ->make(true);
@@ -83,23 +85,32 @@ class BlogPostController extends Controller
      */
     public function store(Request $request)
     {
-        # ini sebgai FUNCTION UPDATE Untuk mendapatkan para data
-        $request -> validate([
-            #Validaate title Required 
-            "tilte" => "required",
-            "content" => "required",
-            "image" => "required",
-            "name" => "required", 
-            "user_id"=> "required"
-        ]);
-
+        
+        //ini sebgai FUNCTION UPDATE Untuk mendapatkan para data
+        if (\Illuminate\Support\Facades\Auth::user()->role == 'admin') {
+            $request->validate([
+                "title" => "required",
+                "content" => "required",
+                "image" => "required",
+                'published' => 'required',
+                'user_id' => 'required|exists:users,id',
+            ]);
+        } else {
+            $request->validate([
+                "title" => "required",
+                "content" => "required",
+                "image" => "required",
+                'published' => 'required',
+            ]);
+        }
         BlogPost::create([
-            # Input
-            "title" => $request -> title,
-            "content" => $request->input('content'),
-            'image'=> $request -> image,
-            "name" => $request -> name,
-            "user_id"=> $request -> user_id
+            
+            'title' => $request->title,
+            'content' => $request->input('content'),
+            'image' => $request -> image,
+            // 'name' => $request -> name,
+            'published'=> $request -> published, // Buat status publish
+            'user_id' => $request->user_id // No need for 'new' here
         ]);
         // Untuk cekout apakah sudah publish atau belum
         return redirect()->back()->with(['message' => 'Postingan sudah di publish', 'status' => 'success']);
@@ -127,30 +138,46 @@ class BlogPostController extends Controller
      */
     public function update(Request $request, BlogPost $blogPost, $id)
     {
-        # ini sebgai Update Untuk mendapatkan para data
-            
-        // Decrypt the ID
         $id = Crypt::decrypt($id);
 
         // Find the farm by ID
         $blogPost = BlogPost::where('id', $id)->first();
 
-        // Validate the request data
-        $request->validate([
+        if (\Illuminate\Support\Facades\Auth::user()->role == 'admin') {$request->validate([
             "tilte" => "required",
             "content" => "required",
             "image" => "required",
-            "name" => "required", 
+            // "name" => "required",
+            'published' => 'published', 
             "user_id"=> "required" // Ensure user_id exists in the users table
-        ]);
+        ]);}
+        else{
+            $request->validate([
+                "tilte" => "required",
+                "content" => "required",
+                "image" => "required",
+                // "name" => "required",
+                'published' => 'published', 
+                // "user_id"=> "required" // Ensure user_id exists in the users table
+            ]);
+        };
+            
+        // Decrypt the ID
+        // $id = Crypt::decrypt($id);
+
+        // // Find the farm by ID
+        // $blogPost = BlogPost::where('id', $id)->first();
+
+        // Validate the request data
+        
 
         // Update the farm information
         $blogPost->update([
             'title' => $request->title,
             'content' => $request->input('content'),
             'image' => $request -> image,
-            'name' => $request -> name,
-            'user_id' => $request->user_id,  // No need for 'new' here
+            'published'=> $request -> published, // Buat status publish
+            'user_id' => $request->user_id // No need for 'new' here
         ]);
 
         // Redirect back to the farm index with a success message
@@ -160,9 +187,15 @@ class BlogPostController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(BlogPost $blogPost)
+    public function destroy($id)
     {
         # ini sebgai Delete Untuk mendapatkan para data
-        //
+        $id = Crypt::decrypt($id);
+        
+        // Delete the farm with the decrypted ID
+        BlogPost::where('id', $id)->delete();
+        
+        // Redirect with a success message
+        return redirect()->route('blog.index')->with(['message' => 'Farm berhasil di delete', 'status' => 'success']);
     }
 }

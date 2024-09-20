@@ -65,8 +65,8 @@
         </ul>
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
-
-      <a href="login.html" class="btn btn-light">Login</a>
+    
+      <a href="{{route('login')}}" class="btn btn-light">Login</a>
 
     </div>
   </header>

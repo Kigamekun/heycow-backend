@@ -56,7 +56,7 @@
                             </a>
                         </li>
                         <li class="sidebar-item {{ Request::is('community*') ? 'active' : '' }}">
-                            <a href="{{ route('dashboard') }}" class='sidebar-link'>
+                            <a href="{{ route('blog.index') }}" class='sidebar-link'>
                                 <i class="bi bi-chat-left-dots-fill"></i>
                                 <span>Community</span>
                             </a>
