@@ -8,4 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 class BlogPost extends Model
 {
     use HasFactory;
+
+    protected $fillable = [
+        'user_id',
+        'content',
+    ];
+
+    public $timestamps = true; 
 }

@@ -98,9 +98,12 @@
                                 class="text-danger">*</span> wajib diisi.</small>
                     </div>
                 </div>
-                <form action="{{ route('farm.store') }}" id="buatFarm" method="post" enctype="multipart/form-data">
-                    @csrf
+                <form action="{{ route('farm.update', ['id' => $farm->id]) }}" method="post" enctype="multipart/form-data">
+                @csrf
+                @method('PUT')
+
                     <div class="modal-body">
+
                         <div class="mb-3">
                             <label for="name" class="fw-semibold">Name <span class="ml-1 text-danger">*</span></label>
                             <input type="text" class="form-control {{ $errors->has('name') ? 'is-invalid' : '' }}"
@@ -154,41 +157,18 @@
     <script>
         $(function() {
             var table = $('#datatable-table').DataTable({
-                processing: true,
-                serverSide: true,
-                ajax: "{{ route('farm.index') }}",
-                columns: [{
-                        data: 'DT_RowIndex',
-                        name: 'DT_RowIndex',
-                        searchable: false,
-                    },
-                    {
-                        data: 'name',
-                        name: 'name'
-                    },
-                    {
-                        data: 'location',
-                        name: 'location'
-                    },
-                    {
-                        data: 'cattle_count',
-                        name: 'cattle_count'
-                    },
-                    {
-                        data: 'user_id',
-                        name: 'user_id'
-                    },
-                    {
-                        data: 'action',
-                        name: 'action',
-                        orderable: false,
-                        searchable: false
-                    },
-                ],
-                order: [
-                    [0, 'desc']
-                ],
-            });
+    processing: true,
+    serverSide: true,
+    ajax: "{{ route('farm.index') }}",
+    columns: [
+        { data: 'DT_RowIndex', name: 'DT_RowIndex', searchable: false },
+        { data: 'name', name: 'name' },
+        { data: 'address', name: 'address' },
+        { data: 'user.name', name: 'user.name' },
+        { data: 'action', name: 'action', orderable: false, searchable: false }
+    ],
+    order: [[0, 'desc']]
+});
         });
 
         $('#updateData').on('shown.bs.modal', function(e) {
@@ -208,37 +188,37 @@
                         <small id="emailHelp" class="form-text text-muted">Field dengan tanda <span class="text-danger">*</span> wajib diisi.</small>
                     </div>
                 </div>
-            <form action="${$(e.relatedTarget).data('url')}" method="post" enctype="multipart/form-data">
+            <form action="{{ route('farm.store') }}" id="buatFarm" method="post" enctype="multipart/form-data">
                 @csrf
-                @method('PUT')
                 <div class="modal-body">
                     <div class="mb-3">
-                            <label for="name" class="fw-semibold">Name <span class="ml-1 text-danger">*</span></label>
-                            <input type="text" class="form-control {{ $errors->has('name') ? 'is-invalid' : '' }}" value="${$(e.relatedTarget).data('name')}"
-                                id="name" name="name" placeholder="Masukan Name">
-                            <x-input-error :messages="$errors->get('name')" class="mt-2" />
-                        </div>
+                        <label for="name" class="fw-semibold">Name <span class="ml-1 text-danger">*</span></label>
+                        <input type="text" class="form-control {{ $errors->has('name') ? 'is-invalid' : '' }}"
+                            id="name" name="name" placeholder="Masukan Name" required>
+                        <x-input-error :messages="$errors->get('name')" class="mt-2" />
+                    </div>
 
-                        <div class="mb-3">
-                            <label for="location" class="fw-semibold">Location <span class="ml-1 text-danger">*</span></label>
-                            <input type="text" class="form-control {{ $errors->has('location') ? 'is-invalid' : '' }}" value="${$(e.relatedTarget).data('location')}"
-                                id="location" name="location" placeholder="Masukan Location">
-                            <x-input-error :messages="$errors->get('location')" class="mt-2" />
-                        </div>
+                    <div class="mb-3">
+                        <label for="address" class="fw-semibold">Address <span class="ml-1 text-danger">*</span></label>
+                        <input type="text" class="form-control {{ $errors->has('address') ? 'is-invalid' : '' }}"
+                            id="address" name="address" placeholder="Masukan Address" required>
+                        <x-input-error :messages="$errors->get('address')" class="mt-2" />
+                    </div>
 
-                        <div class="mb-3">
-                            <label for="user_id" class="fw-semibold">Owner <span class="ml-1 text-danger">*</span></label>
-                            <select name="user_id" id="user_id"
-                                class="form-control {{ $errors->has('user_id') ? 'is-invalid' : '' }}">
-                                <option value="">Pilih Owner</option>
-                            ${ownerOptions}
-                            </select>
-                            <x-input-error :messages="$errors->get('user_id')" class="mt-2" />
-
-                        </div>
+                    <div class="mb-3">
+                        <label for="user_id" class="fw-semibold">Owner <span class="ml-1 text-danger">*</span></label>
+                        <select name="user_id" id="user_id"
+                                class="form-control {{ $errors->has('user_id') ? 'is-invalid' : '' }}" required>
+                            <option value="">Pilih Owner</option>
+                            @foreach ($owners as $owner)
+                                <option value="{{ $owner->id }}">{{ $owner->name }}</option>
+                            @endforeach
+                        </select>
+                        <x-input-error :messages="$errors->get('user_id')" class="mt-2" />
+                    </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
                     <button type="submit" class="btn btn-primary">Simpan</button>
                 </div>
             </form>

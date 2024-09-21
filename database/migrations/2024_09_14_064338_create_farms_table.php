@@ -8,25 +8,24 @@ return new class extends Migration {
     /**
      * Run the migrations.
      */
-    public function up(): void
-    {
-        Schema::create('farms', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); // Pemilik peternakan (user yang terdaftar)
-            $table->string('name');
-            $table->text('address');
-            $table->integer('cattle_count');
-            $table->string('contact_number')->nullable();
-            $table->boolean('verified')->default(false);
-            $table->timestamps();
-        });
-    }
+    public function up()
+{
+    Schema::create('farms', function (Blueprint $table) {
+        $table->id();
+        $table->unsignedBigInteger('user_id'); // Foreign key
+        $table->string('name');
+        $table->string('address');
+        $table->string('image')->nullable();
+        $table->timestamps();
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::dropIfExists('farms');
-    }
+        // Definisikan foreign key untuk user_id yang mengacu ke id di tabel users
+        $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+    });
+}
+
+public function down()
+{
+    Schema::dropIfExists('farms');
+}
+
 };

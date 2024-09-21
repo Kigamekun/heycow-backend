@@ -8,14 +8,15 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Validator;
 use Yajra\DataTables\DataTables;
 use Illuminate\Support\Facades\Storage;
+
 class FarmController extends Controller
 {
-
+    // Fungsi untuk menampilkan semua data farm
     public function index(Request $request)
     {
-        $data = Farm::latest()->get();
+        $data = Farm::with('user')->latest()->get(); // Menambahkan relasi user
+        
         if ($request->ajax()) {
-            $data = Farm::latest()->get();
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
@@ -58,7 +59,7 @@ class FarmController extends Controller
         ]);
     }
 
-
+    // Fungsi untuk menyimpan data farm
     public function store(Request $request)
     {
         $request->validate([
@@ -66,23 +67,21 @@ class FarmController extends Controller
             'address' => 'required',
             'user_id' => 'required',
         ]);
-
+    
         Farm::create([
             'name' => $request->name,
             'address' => $request->address,
             'user_id' => $request->user_id,
         ]);
-
+    
         return redirect()->back()->with(['message' => 'Farm berhasil ditambahkan', 'status' => 'success']);
     }
-
-
-
+    
+    // Fungsi untuk mengupdate data farm
     public function update(Request $request, $id)
     {
         $id = Crypt::decrypt($id);
-        $farm = Farm::where('id', new ($id))->first();
-
+        $farm = Farm::find($id);
 
         $request->validate([
             'name' => 'required',
@@ -93,17 +92,23 @@ class FarmController extends Controller
         $farm->update([
             'name' => $request->name,
             'address' => $request->address,
-            'user_id' => new ($request->user_id),
+            'user_id' => $request->user_id,
         ]);
 
         return redirect()->route('farm.index')->with(['message' => 'Farm berhasil di update', 'status' => 'success']);
-
     }
 
+    // Fungsi untuk menghapus data farm
     public function destroy($id)
     {
         $id = Crypt::decrypt($id);
-        Farm::where('_id', new ($id))->delete();
-        return redirect()->route('farm.index')->with(['message' => 'Farm berhasil di delete', 'status' => 'success']);
+        $farm = Farm::find($id);
+
+        if ($farm) {
+            $farm->delete();
+            return redirect()->route('farm.index')->with(['message' => 'Farm berhasil di delete', 'status' => 'success']);
+        }
+
+        return redirect()->route('farm.index')->with(['message' => 'Farm tidak ditemukan', 'status' => 'error']);
     }
 }

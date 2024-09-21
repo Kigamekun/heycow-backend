@@ -8,4 +8,16 @@ use Illuminate\Database\Eloquent\Model;
 class HealthRecord extends Model
 {
     use HasFactory;
+
+    protected $fillable = [
+        'cattle_id',
+        'checkup_time',
+        'temperature',
+        'heart_rate',
+        'status',
+        'weight',
+        'veterinarian',
+    ];
+
+    public $timestamps = true; 
 }
