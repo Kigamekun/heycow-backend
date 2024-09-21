@@ -34,6 +34,16 @@ Route::prefix('farm')->group(function () {
 
 
 
+Route::prefix('user')->group(function () {
+    Route::get('/', [FarmController::class, 'index'])->name('user.index');
+    Route::get('/{id}', [FarmController::class, 'detail'])->name('user.detail');
+    Route::post('/store', [FarmController::class, 'store'])->name('user.store');
+    Route::put('/update/{id}', [FarmController::class, 'update'])->name('user.update');
+    Route::delete('/delete/{id}', [FarmController::class, 'destroy'])->name('user.delete');
+});
+
+
+
 Route::prefix('iotdevice')->group(function () {
     Route::get('/', [IOTDevicesController::class, 'index'])->name('iotdevice.index');
     Route::get('/{id}', [IOTDevicesController::class, 'detail'])->name('iotdevice.detail');
@@ -72,7 +82,7 @@ Route::prefix('blog')->group(function () {
 // transaction
 Route::prefix('transaction')->group(function () {
     Route::get('/', [TransactionController::class, 'index'])->name('transaction.index');
-    
+
     Route::get('/{id}', [TransactionController::class, 'detail'])->name('transaction.detail');
     Route::post('/store', [TransactionController::class, 'store'])->name('transaction.store');
     Route::put('/update/{id}', [TransactionController::class, 'update'])->name('transaction.update');
