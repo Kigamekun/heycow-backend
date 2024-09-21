@@ -57,6 +57,7 @@
                                 <th>Birth Weight</th>
                                 <th>Birth Height</th>
                                 <th>Farm</th>
+                                <th>IoT Device ID</th>
                                 <th>Image</th>
                                 <th>Action</th>
                             </tr>
@@ -164,13 +165,14 @@
                             <label for="iot_device_id" class="fw-semibold">IoT Device <span class="text-danger">*</span></label>
                             <select name="iot_device_id" id="iot_device_id"
                                 class="form-control {{ $errors->has('iot_device_id') ? 'is-invalid' : '' }}">
-                                <!-- Populate IoT devices from the database -->
+                                <option value="">Select IoT Device</option>
                                 @foreach ($iot_devices as $iotdevice)
                                     <option value="{{ $iotdevice->id }}">{{ $iotdevice->serial_number }}</option>
                                 @endforeach
                             </select>
-                            <x-input-error :messages="$errors->get('iot_device_id')" class="mt-2" />
+                            <x-input-error :messages="$errors->get('iot_devices_id')" class="mt-2" />
                         </div>
+
 
                         <div class="mb-3">
                             <label for="image" class="fw-semibold">Image</label>
@@ -259,6 +261,10 @@
                     {
                         data: 'farm_name',
                         name: 'farm_name'
+                    },
+                    {
+                        data: 'iot',
+                        name: 'iot'
                     },
                     {
                         data: 'image',

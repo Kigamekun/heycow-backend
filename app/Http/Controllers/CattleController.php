@@ -53,6 +53,9 @@ class CattleController extends Controller
                 ->addColumn('farm_name', function ($row) {
                     return $row->farm ? $row->farm->name : 'N/A';
                 })
+                ->addColumn('iot', function ($row) {
+                    return $row->iotDevice ? $row->iotDevice->serial_number : 'N/A';
+                })
                 ->addColumn('image', function ($row) {
                     if ($row->image != null) {
                         $image = '<img src="' . asset('storage/' . $row->image) . '" style="width: 100px; border-radius:20px; height: 100px; object-fit: cover;">';

@@ -1,6 +1,5 @@
 <?php
 
-<<<<<<< HEAD
 use App\Http\Controllers\Api\FarmControllerApi;
 use App\Http\Controllers\Api\CattleControllerApi;
 use App\Http\Controllers\Api\IOTDevicesControllerApi;
@@ -10,6 +9,7 @@ use App\Http\Controllers\Api\BlogPostControllerApi;
 use App\Http\Controllers\Api\HealthRecordControllerApi;
 use App\Http\Controllers\Api\UserControllerApi;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
 
 // Rute untuk Farms
 Route::prefix('farms')->group(function () {
@@ -81,12 +81,10 @@ Route::prefix('users')->group(function () {
     Route::get('/{id}', [UserControllerApi::class, 'show']);
     Route::put('/{id}', [UserControllerApi::class, 'update']);
     Route::delete('/{id}', [UserControllerApi::class, 'destroy']);
-
+});
     // Rute login
     Route::post('/login', [UserControllerApi::class, 'login']);
-=======
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
+
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -99,5 +97,4 @@ Route::post('/auth/login', [\App\Http\Controllers\API\AuthController::class, 'lo
 
 Route::get('/getFile/{folder}/{filename}', function ($folder,$filename) {
     return response()->file(storage_path('app/public/').$folder.'/'.$filename);
->>>>>>> 991cec93b5dfb4d710afb79557ad503bbc3ddfab
 });

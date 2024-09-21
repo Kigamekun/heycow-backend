@@ -8,7 +8,7 @@ return new class extends Migration {
     /**
      * Run the migrations.
      */
-<<<<<<< HEAD
+
     public function up()
 {
     Schema::create('farms', function (Blueprint $table) {
@@ -28,19 +28,4 @@ public function down()
 {
     Schema::dropIfExists('farms');
 }
-=======
-    public function up(): void
-    {
-        Schema::create('farms', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); // Pemilik peternakan (user yang terdaftar)
-            $table->string('name');
-            $table->text('address');
-            $table->string('contact_number')->nullable();
-            $table->boolean('verified')->default(false);
-            $table->timestamps();
-        });
-    }
->>>>>>> 991cec93b5dfb4d710afb79557ad503bbc3ddfab
-
 };
