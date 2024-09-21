@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Validator;
 use Yajra\DataTables\DataTables;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class CattleController extends Controller
 {
@@ -27,8 +28,10 @@ class CattleController extends Controller
                     data-name="' . $row->name . '"
                     data-breed="' . $row->breed . '"
                     data-status="' . $row->status . '"
+                    data-gender="' . $row->gender . '"
                     data-birth_date="' . $row->birth_date . '"
                     data-birth_weight="' . $row->birth_weight . '"
+                    data-birth_height="' . $row->birth_height . '"
                     data-farm_id="' . (string) $row->farm_id . '"
                     data-user_id="' . (string) $row->user_id . '"
                     data-iot_device_id="' . (string) $row->iot_device_id . '"
@@ -47,9 +50,12 @@ class CattleController extends Controller
                     </div>';
                     return $btn;
                 })
+                ->addColumn('farm_name', function ($row) {
+                    return $row->farm ? $row->farm->name : 'N/A';
+                })
                 ->addColumn('image', function ($row) {
                     if ($row->image != null) {
-                        $image = '<img src="' . asset('storage/cattle/' . $row->image) . '" style="width: 100px; border-radius:20px; height: 100px; object-fit: cover;">';
+                        $image = '<img src="' . asset('storage/' . $row->image) . '" style="width: 100px; border-radius:20px; height: 100px; object-fit: cover;">';
                     } else {
                         $image = '<img src="' . url('assets/img/noimage.jpg') . '" style="width: 100px; border-radius:20px; height: 100px; object-fit: cover;">';
                     }
@@ -68,66 +74,106 @@ class CattleController extends Controller
 
     public function store(Request $request)
     {
+        // Get the current user
+        $user = Auth::user();
+
+        // Conditional validation: If the user is an admin, 'user_id' is required
         $request->validate([
             'name' => 'required',
             'breed' => 'required',
             'status' => 'required|in:alive,dead,sold',
+            'gender' => 'required|in:male,female',
             'birth_date' => 'required|date',
             'birth_weight' => 'required|numeric',
+            'birth_height' => 'required|numeric',
             'farm_id' => 'required|exists:farms,id',
-            'user_id' => 'required|exists:users,id',
+            'user_id' => $user->is_admin ? 'required|exists:users,id' : '',
             'iot_device_id' => 'required|exists:iot_devices,id',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
+
+        $image = null;
+        if ($request->hasFile('image')){
+            $images = $request->file('image');
+            $imageset = $images->store('cattleimages','public');
+        }
+
+
+        // If the user is not an admin, set 'user_id' to the currently logged-in user's ID
+        $userId = $user->is_admin ? $request->user_id : $user->id;
 
         Cattle::create([
             'name' => $request->name,
             'breed' => $request->breed,
             'status' => $request->status,
+            'gender' => $request->gender,
             'birth_date' => $request->birth_date,
             'birth_weight' => $request->birth_weight,
+            'birth_height' => $request->birth_height,
             'farm_id' => $request->farm_id,
-            'user_id' => $request->user_id,
+            'user_id' => $userId,  // Conditional user_id
             'iot_device_id' => $request->iot_device_id,
-            'image' => $request->image,
+            'image' => $imageset,
         ]);
 
-        return redirect()->back()->with(['message' => 'Cattle berhasil ditambahkan', 'status' => 'success']);
+        return redirect()->back()->with(['message' => 'Cattle successfully added', 'status' => 'success']);
     }
 
     public function update(Request $request, $id)
     {
         $id = Crypt::decrypt($id);
-        $cattle = Cattle::findOrFail(new ($id));
+        $cattle = Cattle::findOrFail($id);
 
+        // Get the current user
+        $user = Auth::user();
+
+        // Conditional validation: If the user is an admin, 'user_id' is required
         $request->validate([
             'name' => 'required',
             'breed' => 'required',
             'status' => 'required|in:alive,dead,sold',
+            'gender' => 'required|in:male,female',
             'birth_date' => 'required|date',
             'birth_weight' => 'required|numeric',
+            'birth_height' => 'required|numeric',
             'farm_id' => 'required|exists:farms,id',
-            'user_id' => 'required|exists:users,id',
+            'user_id' => $user->is_admin ? 'required|exists:users,id' : '',
             'iot_device_id' => 'required|exists:iot_devices,id',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
+        $imageset = $cattle->image;
+        if($request->hasFile('image')){
+            if($imageset){
+                Storage::disk('public')->delete($imageset);
+            }
+
+            $images = $request->file('image');
+            $imageset = $images->store('cattleimages','public');
+        }
+        // If the user is not an admin, set 'user_id' to the currently logged-in user's ID
+        $userId = $user->is_admin ? $request->user_id : $user->id;
 
         $cattle->update([
             'name' => $request->name,
             'breed' => $request->breed,
             'status' => $request->status,
+            'gender' => $request->gender,
             'birth_date' => $request->birth_date,
             'birth_weight' => $request->birth_weight,
+            'birth_height' => $request->birth_height,
             'farm_id' => $request->farm_id,
-            'user_id' => $request->user_id,
+            'user_id' => $userId,  // Conditional user_id
             'iot_device_id' => $request->iot_device_id,
             'image' => $request->image,
         ]);
 
-        return redirect()->route('cattle.index')->with(['message' => 'Cattle berhasil di update', 'status' => 'success']);
+        return redirect()->route('cattle.index')->with(['message' => 'Cattle successfully updated', 'status' => 'success']);
     }
+
 
     public function destroy($id)
     {
-        $id = Crypt::decrypt(new ($id));
+        $id = Crypt::decrypt($id);
         Cattle::findOrFail($id)->delete();
         return redirect()->route('cattle.index')->with(['message' => 'Cattle berhasil di delete', 'status' => 'success']);
     }

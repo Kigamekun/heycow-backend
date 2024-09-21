@@ -50,11 +50,10 @@
                         <thead>
                             <tr>
                                 <th>#</th>
-                                <th>Device Type</th>
                                 <th>Serial Number</th>
                                 <th>Status</th>
                                 <th>Installation Date</th>
-                                <th>Location</th>
+                                <th>QR Image</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -81,13 +80,6 @@
                 <form action="{{ route('iotdevice.store') }}" method="post" enctype="multipart/form-data">
                     @csrf
                     <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="device_type" class="fw-semibold">Device Type <span
-                                    class="text-danger">*</span></label>
-                            <input type="text" class="form-control {{ $errors->has('device_type') ? 'is-invalid' : '' }}"
-                                id="device_type" name="device_type" placeholder="Enter Device Type">
-                            <x-input-error :messages="$errors->get('device_type')" class="mt-2" />
-                        </div>
 
                         <div class="mb-3">
                             <label for="serial_number" class="fw-semibold">Serial Number <span
@@ -119,11 +111,11 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="location" class="fw-semibold">Location <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control {{ $errors->has('location') ? 'is-invalid' : '' }}"
-                                id="location" name="location" placeholder="Enter Location">
-                            <x-input-error :messages="$errors->get('location')" class="mt-2" />
+                            <label for="qr_image" class="fw-semibold">QR Code Image</label>
+                            <input type="file" class="form-control dropify {{ $errors->has('qr_image') ? 'is-invalid' : '' }}" id="qr_image" name="qr_image" data-max-file-size="2M" data-allowed-file-extensions="png jpg jpeg">
+                            <x-input-error :messages="$errors->get('qr_image')" class="mt-2" />
                         </div>
+
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -166,10 +158,6 @@
                         searchable: false
                     },
                     {
-                        data: 'device_type',
-                        name: 'device_type'
-                    },
-                    {
                         data: 'serial_number',
                         name: 'serial_number'
                     },
@@ -182,8 +170,8 @@
                         name: 'installation_date'
                     },
                     {
-                        data: 'location',
-                        name: 'location'
+                        data: 'qr_image',
+                        name: 'qr_image'
                     },
                     {
                         data: 'action',
@@ -199,15 +187,10 @@
         });
 
         $('#updateDevice').on('shown.bs.modal', function(e) {
-            var device_type = $(e.relatedTarget).data('device_type');
             var serial_number = $(e.relatedTarget).data('serial_number');
             var status = $(e.relatedTarget).data('status');
             var installation_date = $(e.relatedTarget).data('installation_date');
-            var location = $(e.relatedTarget).data('location');
-
-            // Map the device types into option elements, marking the correct one as selected
-            var deviceTypeOptions = deviceTypes.map(function(type) {
-                return `<option value="${type}" ${type == device_type ? 'selected' : ''}>${type}</option>`;
+            var qr_image = $(e.relatedTarget).data('qr_image');
             });
 
             // Create the HTML for the modal content
@@ -222,14 +205,6 @@
         @csrf
         @method('PUT')
         <div class="modal-body">
-            <div class="mb-3">
-                <label for="device_type" class="fw-semibold">Device Type <span class="ml-1 text-danger">*</span></label>
-                <select name="device_type" id="device_type" class="form-control {{ $errors->has('device_type') ? 'is-invalid' : '' }}">
-                    <option value="">Pilih Device Type</option>
-                    ${deviceTypeOptions}
-                </select>
-                <x-input-error :messages="$errors->get('device_type')" class="mt-2" />
-            </div>
 
             <div class="mb-3">
                 <label for="serial_number" class="fw-semibold">Serial Number <span class="ml-1 text-danger">*</span></label>
@@ -254,12 +229,10 @@
                 <x-input-error :messages="$errors->get('installation_date')" class="mt-2" />
             </div>
 
-            <div class="mb-3">
-                <label for="location" class="fw-semibold">Location <span class="ml-1 text-danger">*</span></label>
-                <input type="text" class="form-control {{ $errors->has('location') ? 'is-invalid' : '' }}" value="${location}"
-                    id="location" name="location" placeholder="Masukan Location">
-                <x-input-error :messages="$errors->get('location')" class="mt-2" />
-            </div>
+                <div class="mb-3">
+                    <label for="qr_image" class="fw-semibold">QR Code Image</label>
+                    <input type="file" class="form-control dropify" data-default-file="${qr_image_url ? '{{ asset("storage/' + qr_image_url + '") }}' : ''}" id="qr_image" name="qr_image">
+                </div>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
@@ -271,6 +244,6 @@
             // Inject the generated HTML into the modal's content container
             $('#modal-content').html(html);
             $('.dropify').dropify();
-        });
+
     </script>
 @endsection

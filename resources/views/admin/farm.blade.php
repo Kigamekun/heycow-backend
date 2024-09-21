@@ -57,7 +57,7 @@
                                 <th>#</th>
                                 <th>Name</th>
                                 <th>Address</th>
-                                <th>Owner ID</th>
+                                <th>Owner Name</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -157,6 +157,7 @@
     <script>
         $(function() {
             var table = $('#datatable-table').DataTable({
+<<<<<<< HEAD
     processing: true,
     serverSide: true,
     ajax: "{{ route('farm.index') }}",
@@ -169,6 +170,39 @@
     ],
     order: [[0, 'desc']]
 });
+=======
+                processing: true,
+                serverSide: true,
+                ajax: "{{ route('farm.index') }}",
+                columns: [{
+                        data: 'DT_RowIndex',
+                        name: 'DT_RowIndex',
+                        searchable: false,
+                    },
+                    {
+                        data: 'name',
+                        name: 'name'
+                    },
+                    {
+                        data: 'address',
+                        name: 'address'
+                    },
+                    {
+                        data: 'owner',
+                        name: 'owner'
+                    },
+                    {
+                        data: 'action',
+                        name: 'action',
+                        orderable: false,
+                        searchable: false
+                    },
+                ],
+                order: [
+                    [0, 'desc']
+                ],
+            });
+>>>>>>> 991cec93b5dfb4d710afb79557ad503bbc3ddfab
         });
 
         $('#updateData').on('shown.bs.modal', function(e) {
@@ -198,12 +232,22 @@
                         <x-input-error :messages="$errors->get('name')" class="mt-2" />
                     </div>
 
+<<<<<<< HEAD
                     <div class="mb-3">
                         <label for="address" class="fw-semibold">Address <span class="ml-1 text-danger">*</span></label>
                         <input type="text" class="form-control {{ $errors->has('address') ? 'is-invalid' : '' }}"
                             id="address" name="address" placeholder="Masukan Address" required>
                         <x-input-error :messages="$errors->get('address')" class="mt-2" />
                     </div>
+=======
+                        <div class="mb-3">
+                            <label for="address" class="fw-semibold">address <span class="ml-1 text-danger">*</span></label>
+                            <input type="text" class="form-control {{ $errors->has('address') ? 'is-invalid' : '' }}" value="${$(e.relatedTarget).data('address')}"
+                                id="address" name="address" placeholder="Masukan address">
+                            <x-input-error :messages="$errors->get('address
+                                ')" class="mt-2" />
+                        </div>
+>>>>>>> 991cec93b5dfb4d710afb79557ad503bbc3ddfab
 
                     <div class="mb-3">
                         <label for="user_id" class="fw-semibold">Owner <span class="ml-1 text-danger">*</span></label>

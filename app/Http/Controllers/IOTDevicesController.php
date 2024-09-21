@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Validator;
 use Yajra\DataTables\DataTables;
 use Illuminate\Support\Facades\Storage;
-use MongoDB\BSON\ObjectId;
 
 class IOTDevicesController extends Controller
 {
@@ -27,13 +26,10 @@ class IOTDevicesController extends Controller
                     $btn = '<div class="d-flex" style="gap:5px;">';
                     $btn .= '
                     <button type="button" title="EDIT" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#updateData"
-                    data-device_type="' . $row->device_type . '"
                     data-serial_number="' . $row->serial_number . '"
                     data-status="' . $row->status . '"
                     data-installation_date="' . $row->installation_date . '"
-                    data-location="' . $row->location . '"
-                    data-url="' . route('iotdevice.update', ['id' => $id]) . '"
-                    >
+                    data-url="' . route('iotdevice.update', ['id' => $id]) . '">
                         Edit
                     </button>';
                     $btn .= '
@@ -47,7 +43,15 @@ class IOTDevicesController extends Controller
                     </div>';
                     return $btn;
                 })
-                ->rawColumns(['action'])
+                ->addColumn('qr_image', function ($row) {
+                    if ($row->qr_image != null) {
+                        $qr_image = '<img src="' . asset('storage/' . $row->qr_image) . '" style="width: 100px; border-radius:20px; height: 100px; object-fit: cover;">';
+                    } else {
+                        $qr_image = '<img src="' . url('assets/img/noimage.jpg') . '" style="width: 100px; border-radius:20px; height: 100px; object-fit: cover;">';
+                    }
+                    return $qr_image;
+                })
+                ->rawColumns(['action','qr_image'])
                 ->make(true);
         }
         return view('admin.devices', [
@@ -59,18 +63,23 @@ class IOTDevicesController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'device_type' => 'required|string',
             'serial_number' => 'required|string',
             'installation_date' => 'required|date',
             'status' => 'required|string',
+            'qr_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
+        $qr_image = null;
+        if ($request->hasFile('qr_image')) {
+            $qrImage = $request->file('qr_image');
+            $qrImagePath = $qrImage->store('qrcodes', 'public');
+        }
+
         IoTDevices::create([
-            'device_type' => $request->device_type,
             'serial_number' => $request->serial_number,
             'status' => $request->status,
             'installation_date' => $request->installation_date,
-            'location' => $request->location,
+            'qr_image' => $qrImagePath,
         ]);
 
         return redirect()->back()->with(['message' => 'IoT Device berhasil ditambahkan', 'status' => 'success']);
@@ -80,21 +89,32 @@ class IOTDevicesController extends Controller
     public function update(Request $request, $id)
     {
         $id = Crypt::decrypt($id);
-        $iotDevice = IoTDevices::findOrFail(new ObjectId($id));
+        $iotDevice = IoTDevices::findOrFail($id);
 
         $request->validate([
-            'device_type' => 'required|string',
+
             'serial_number' => 'required|string|unique:iotdevices,serial_number,' . $id,
             'installation_date' => 'required|date',
             'status' => 'required|string',
+            'qr_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
+        $qrImagePath = $iotDevice->qr_image;  // Keep existing image path
+    if ($request->hasFile('qr_image')) {
+        // Delete the old image if it exists
+        if ($qrImagePath) {
+            Storage::disk('public')->delete($qrImagePath);
+        }
+
+        // Store the new QR image
+        $qrImage = $request->file('qr_image');
+        $qrImagePath = $qrImage->store('qrcodes', 'public');
+    }
 
         $iotDevice->update([
-            'device_type' => $request->device_type,
             'serial_number' => $request->serial_number,
             'status' => $request->status,
             'installation_date' => $request->installation_date,
-            'location' => $request->location,
+            'qr_image' => $request->$qrImagePath,
         ]);
 
         return redirect()->route('iotdevice.index')->with(['message' => 'IoT Device berhasil di update', 'status' => 'success']);
@@ -104,7 +124,7 @@ class IOTDevicesController extends Controller
     public function destroy($id)
     {
         $id = Crypt::decrypt($id);
-        IoTDevices::where('_id', new ObjectId($id))->delete();
+        IoTDevices::where('id', $id)->delete();
         return redirect()->route('iotdevice.index')->with(['message' => 'IoT Device berhasil di delete', 'status' => 'success']);
     }
 }

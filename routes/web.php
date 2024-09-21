@@ -34,6 +34,16 @@ Route::prefix('farm')->group(function () {
 
 
 
+Route::prefix('user')->group(function () {
+    Route::get('/', [FarmController::class, 'index'])->name('user.index');
+    Route::get('/{id}', [FarmController::class, 'detail'])->name('user.detail');
+    Route::post('/store', [FarmController::class, 'store'])->name('user.store');
+    Route::put('/update/{id}', [FarmController::class, 'update'])->name('user.update');
+    Route::delete('/delete/{id}', [FarmController::class, 'destroy'])->name('user.delete');
+});
+
+
+
 Route::prefix('iotdevice')->group(function () {
     Route::get('/', [IOTDevicesController::class, 'index'])->name('iotdevice.index');
     Route::get('/{id}', [IOTDevicesController::class, 'detail'])->name('iotdevice.detail');
@@ -52,7 +62,7 @@ Route::prefix('cattle')->group(callback: function () {
     Route::delete('/delete/{id}', [CattleController::class, 'destroy'])->name('cattle.delete');
 });
 
-Route::prefix('user')->group(function () {
+Route::prefix('user')->group(function () { # untuk gabungan
     Route::get('/', [UserController::class, 'index'])->name('user.index');
     Route::get('/{id}', [UserController::class, 'detail'])->name('user.detail');
     Route::post('/store', [UserController::class, 'store'])->name('user.store');
@@ -62,6 +72,7 @@ Route::prefix('user')->group(function () {
 
 Route::prefix('blog')->group(function () {
     Route::get('/', [BlogPostController::class, 'index'])->name('blog.index');
+    Route::get('/comments', [BlogPostController::class, 'comments'])->name('blog.comments');
     Route::get('/{id}', [BlogPostController::class, 'detail'])->name('blog.detail');
     Route::post('/store', [BlogPostController::class, 'store'])->name('blog.store');
     Route::put('/update/{id}', [BlogPostController::class, 'update'])->name('blog.update');
@@ -71,6 +82,7 @@ Route::prefix('blog')->group(function () {
 // transaction
 Route::prefix('transaction')->group(function () {
     Route::get('/', [TransactionController::class, 'index'])->name('transaction.index');
+
     Route::get('/{id}', [TransactionController::class, 'detail'])->name('transaction.detail');
     Route::post('/store', [TransactionController::class, 'store'])->name('transaction.store');
     Route::put('/update/{id}', [TransactionController::class, 'update'])->name('transaction.update');

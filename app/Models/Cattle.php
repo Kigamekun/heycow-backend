@@ -11,8 +11,10 @@ class Cattle extends Model
         'name',
         'breed',
         'status',
+        'gender',
         'birth_date',
         'birth_weight',
+        'birth_height',
         'farm_id',
         'user_id',
         'iot_device_id',
@@ -31,7 +33,7 @@ class Cattle extends Model
 
     public function iotDevice()
     {
-        return $this->belongsTo(IoTDevices::class, 'iot_device_id');
+        return $this->belongsTo(IOTDevices::class, 'iot_device_id');
     }
 
     use HasFactory;
