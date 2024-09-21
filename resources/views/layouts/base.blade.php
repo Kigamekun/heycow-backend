@@ -55,7 +55,7 @@
                             </a>
                         </li>
                         <li class="sidebar-item {{ Request::is('community*') ? 'active' : '' }}">
-                            <a href="{{ route('dashboard') }}" class='sidebar-link'>
+                            <a href="{{ route('blog.index') }}" class='sidebar-link'>
                                 <i class="bi bi-chat-left-dots-fill"></i>
                                 <span>Community</span>
                             </a>
@@ -191,7 +191,7 @@
                                     <li>
                                         <hr class="dropdown-divider">
                                     </li>
-                                    <li><a class="dropdown-item" href="#"><i
+                                    <li><a class="dropdown-item" href="/logout"><i
                                                 class="icon-mid bi bi-box-arrow-left me-2"></i> Logout</a></li>
                                 </ul>
                             </div>

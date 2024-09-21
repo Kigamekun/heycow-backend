@@ -52,9 +52,12 @@
                                 <th>Name</th>
                                 <th>Breed</th>
                                 <th>Status</th>
+                                <th>Gender</th>
                                 <th>Birth Date</th>
                                 <th>Birth Weight</th>
+                                <th>Birth Height</th>
                                 <th>Farm</th>
+                                <th>Image</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -108,6 +111,17 @@
                         </div>
 
                         <div class="mb-3">
+                            <label for="gender" class="fw-semibold">Gender <span class="text-danger">*</span></label>
+                            <select name="gender" id="status"
+                                class="form-control {{ $errors->has('gender') ? 'is-invalid' : '' }}">
+                                <option value="">Select Gender</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                            </select>
+                            <x-input-error :messages="$errors->get('gender')" class="mt-2" />
+                        </div>
+
+                        <div class="mb-3">
                             <label for="birth_date" class="fw-semibold">Birth Date <span
                                     class="text-danger">*</span></label>
                             <input type="date"
@@ -123,6 +137,15 @@
                                 class="form-control {{ $errors->has('birth_weight') ? 'is-invalid' : '' }}"
                                 id="birth_weight" name="birth_weight" placeholder="Enter Birth Weight">
                             <x-input-error :messages="$errors->get('birth_weight')" class="mt-2" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="birth_height" class="fw-semibold">Birth Height (cm) <span
+                                    class="text-danger">*</span></label>
+                            <input type="number"
+                                class="form-control {{ $errors->has('birth_weight') ? 'is-invalid' : '' }}"
+                                id="birth_height" name="birth_height" placeholder="Enter Birth Height">
+                            <x-input-error :messages="$errors->get('birth_height')" class="mt-2" />
                         </div>
 
                         <div class="mb-3">
@@ -142,8 +165,8 @@
                             <select name="iot_device_id" id="iot_device_id"
                                 class="form-control {{ $errors->has('iot_device_id') ? 'is-invalid' : '' }}">
                                 <!-- Populate IoT devices from the database -->
-                                @foreach ($iot_devices as $iot_device)
-                                    <option value="{{ $iot_device->id }}">{{ $iot_device->serial_number }}</option>
+                                @foreach ($iot_devices as $iotdevice)
+                                    <option value="{{ $iotdevice->id }}">{{ $iotdevice->serial_number }}</option>
                                 @endforeach
                             </select>
                             <x-input-error :messages="$errors->get('iot_device_id')" class="mt-2" />
@@ -184,6 +207,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script src="https://cdn.datatables.net/2.1.3/js/dataTables.js"></script>
     <script src="https://cdn.datatables.net/2.1.3/js/dataTables.bootstrap4.js"></script>
+    @if(Auth::user()->role !== 'admin')
+    <input type="hidden" name="user_id" value="{{ Auth::id() }}">
+    @else
+        <select name="user_id" class="form-control">
+            @foreach($owners as $owner)
+                <option value="{{ $owner->id }}">{{ $owner->name }}</option>
+            @endforeach
+        </select>
+    @endif
 
     <script>
         $(function() {
@@ -209,6 +241,10 @@
                         name: 'status'
                     },
                     {
+                        data: 'gender',
+                        name: 'gender'
+                    },
+                    {
                         data: 'birth_date',
                         name: 'birth_date'
                     },
@@ -217,8 +253,16 @@
                         name: 'birth_weight'
                     },
                     {
-                        data: 'farm.name',
-                        name: 'farm.name'
+                        data: 'birth_height',
+                        name: 'birth_height'
+                    },
+                    {
+                        data: 'farm_name',
+                        name: 'farm_name'
+                    },
+                    {
+                        data: 'image',
+                        name: 'image'
                     },
                     {
                         data: 'action',

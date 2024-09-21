@@ -13,6 +13,7 @@ class FarmController extends Controller
 
     public function index(Request $request)
     {
+        // ini fahri
         $data = Farm::latest()->get();
         if ($request->ajax()) {
             $data = Farm::latest()->get();
@@ -41,6 +42,7 @@ class FarmController extends Controller
                     </div>';
                     return $btn;
                 })
+                
                 ->addColumn('image', function ($row) {
                     if ($row->image != null) {
                         $image = '<img src="' . asset('storage/farm/' . $row->image) . '" style="width: 100px; border-radius:20px; height: 100px; object-fit: cover;">';
@@ -48,6 +50,10 @@ class FarmController extends Controller
                         $image = '<img src="' . url('assets/img/noimage.jpg') . '" style="width: 100px; border-radius:20px; height: 100px; object-fit: cover;">';
                     }
                     return $image;
+                })
+                ->addColumn('owner', function ($row) {
+
+                    return $row->owner->name;
                 })
                 ->rawColumns(['action', 'image'])
                 ->make(true);
@@ -78,32 +84,68 @@ class FarmController extends Controller
 
 
 
-    public function update(Request $request, $id)
-    {
-        $id = Crypt::decrypt($id);
-        $farm = Farm::where('id', new ($id))->first();
+    // public function update(Request $request, $id)
+    // {
+    //     $id = Crypt::decrypt($id);
+    //     $farm = Farm::where('id', new ($id))->first();
 
+
+    //     $request->validate([
+    //         'name' => 'required',
+    //         'address' => 'required',
+    //         'user_id' => 'required',
+    //     ]);
+
+    //     $farm->update([
+    //         'name' => $request->name,
+    //         'address' => $request->address,
+    //         'user_id' => new ($request->user_id),
+    //     ]);
+
+    //     return redirect()->route('farm.index')->with(['message' => 'Farm berhasil di update', 'status' => 'success']);
+
+    // }
+
+    public function update(Request $request, $id)
+{
+    // Decrypt the ID
+    $id = Crypt::decrypt($id);
+
+    // Find the farm by ID
+    $farm = Farm::where('id', $id)->first();
 
         $request->validate([
             'name' => 'required',
             'address' => 'required',
-            'user_id' => 'required',
+            'user_id' => 'required|string',
         ]);
+    // Validate the request data
+    $request->validate([
+        'name' => 'required',
+        'address' => 'required',
+        'user_id' => 'required|exists:users,id',  // Ensure user_id exists in the users table
+    ]);
 
-        $farm->update([
-            'name' => $request->name,
-            'address' => $request->address,
-            'user_id' => new ($request->user_id),
-        ]);
+    // Update the farm information
+    $farm->update([
+        'name' => $request->name,
+        'address' => $request->address,
+        'user_id' => $request->user_id,  // No need for 'new' here
+    ]);
 
-        return redirect()->route('farm.index')->with(['message' => 'Farm berhasil di update', 'status' => 'success']);
+    // Redirect back to the farm index with a success message
+    return redirect()->route('farm.index')->with(['message' => 'Farm berhasil di update', 'status' => 'success']);
+}
 
-    }
 
     public function destroy($id)
     {
         $id = Crypt::decrypt($id);
-        Farm::where('_id', new ($id))->delete();
+        
+        // Delete the farm with the decrypted ID
+        Farm::where('id', $id)->delete();
+        
+        // Redirect with a success message
         return redirect()->route('farm.index')->with(['message' => 'Farm berhasil di delete', 'status' => 'success']);
     }
 }
