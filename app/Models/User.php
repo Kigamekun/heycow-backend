@@ -7,10 +7,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 // use MongoDB\Laravel\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-
+use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasFactory,HasApiTokens, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -21,7 +21,12 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'address'
+        'address',
+        'phone_number',
+        'role',
+        'gender',
+        'bio',
+        'avatar',
     ];
 
     /**
