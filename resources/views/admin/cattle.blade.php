@@ -273,6 +273,7 @@
                 ]
             });
 
+
             $('.dropify').dropify();
         });
     </script>

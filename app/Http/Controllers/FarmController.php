@@ -25,7 +25,7 @@ class FarmController extends Controller
                     <button type="button" title="EDIT" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#updateData"
                     data-name="' . $row->name . '"
                     data-address="' . $row->address . '"
-                    data-user_id="' . (string) $row->user_id . '"
+                    data-user_id="' . $row->user_id . '"
                     data-url="' . route('farm.update', ['id' => $id]) . '"
                     >
                         Edit
@@ -91,7 +91,7 @@ class FarmController extends Controller
         $request->validate([
             'name' => 'required',
             'address' => 'required',
-            'user_id' => 'required|string',
+            'user_id' => 'required|integer|exists:users,id',
         ]);
 
         $farm->update([

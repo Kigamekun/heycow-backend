@@ -190,10 +190,11 @@
         $('#updateData').on('shown.bs.modal', function(e) {
 
             var owners = @json($owners);
-            var user_id = $(e.relatedTarget).data('user_id');
-
+            var user_id = parseInt($(e.relatedTarget).data('user_id'));
+            var name = $(e.relatedTarget).data('name');
+            var address = $(e.relatedTarget).data('address');
             var ownerOptions = owners.map(function(owner) {
-                return `<option value="${owner._id}" ${owner._id == user_id ? 'selected' : ''}>${owner.name}</option>`;
+                return `<option value="${owner.id}" ${owner.id == user_id ? 'selected' : ''}>${owner.name}</option>`;
             });
 
 
@@ -241,6 +242,7 @@
             </form>
             `;
             $('#modal-content').html(html);
+            $('#user_id').html(ownerOptions);
             $('.dropify').dropify();
 
         });
