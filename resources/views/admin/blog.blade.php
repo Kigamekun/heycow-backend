@@ -284,14 +284,14 @@
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
                         <button 
                             class="btn btn-primary" 
-                            data-bs-toggle="modal" 
-                            data-bs-target="#updateData" 
-                            data-url="{{ route('blog.update', ['id' => Crypt::encrypt($blogPost->id)]) }}"
-                            data-title="{{ $blogPost->title }}"
-                            data-content="{{ $blogPost->content }}"
-                            data-image="{{ $blogPost->image }}"
-                            data-user_id="{{ $blogPost->user_id }}"
-                            data-published="{{ $blogPost->published }}"
+                                // data-bs-toggle="modal" 
+                                // data-bs-target="#updateData" 
+                                // data-url="{{ route('blog.update', ['id' => Crypt::encrypt($blogPost->id)]) }}"
+                                // data-title="{{ $blogPost->title }}"
+                                // data-content="{{ $blogPost->content }}"
+                                // data-image="{{ $blogPost->image }}"
+                                // data-user_id="{{ $blogPost->user_id }}"
+                                // data-published="{{ $blogPost->published }}"
                         >
                             Edit Post
                         </button>
