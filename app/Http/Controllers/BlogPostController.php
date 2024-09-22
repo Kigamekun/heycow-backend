@@ -230,11 +230,6 @@ class BlogPostController extends Controller
     
         // Find the blog post by ID
         $blogPost = BlogPost::findOrFail($decryptedId);
-    
-        
-        $post = BlogPost::findOrFail($id);
-        $this->authorize('update', $post);
-        
         // Define validation rules
         $rules = [
             "title" => "required",
