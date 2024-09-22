@@ -11,9 +11,8 @@ class BlogPost extends Model
     protected $fillable = ['title', 'content', 'image', 'published', 'user_id'];
 
     use HasFactory;
-
+    protected $content;  
     public $timestamps = true;
-
     public function comments() {
         return $this->hasMany(Comment::class);
     }

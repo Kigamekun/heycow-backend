@@ -235,10 +235,16 @@
             });
 
             // Populate the published options
+            // var publishedOptions = `
+            //     <option value="Published" ${published == 'Published' ? 'selected' : ''}>Published</option>
+            //     <option value="Draft" ${published == 'Draft' ? 'selected' : ''}>Draft</option>
+            // `;
+
             var publishedOptions = `
-                <option value="Published" ${published == 'Published' ? 'selected' : ''}>Published</option>
-                <option value="Draft" ${published == 'Draft' ? 'selected' : ''}>Draft</option>
+                <option value="published" ${published == 'Published' ? 'selected' : ''}>Published</option>
+                <option value="draft" ${published == 'Draft' ? 'selected' : ''}>Draft</option>
             `;
+
 
             // Create the HTML structure for the modal form
             var html = `
@@ -283,6 +289,7 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
                         <button 
+                            type="submit",
                             class="btn btn-primary", 
                                 data-bs-toggle="modal", 
                                 data-bs-target="#updateData" 

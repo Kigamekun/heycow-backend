@@ -19,8 +19,10 @@ return new class extends Migration {
             $table->boolean('published')->default(false); // Status apakah postingan sudah dipublish
             $table->unsignedBigInteger('iot_device_id');
             $table->foreign('iot_device_id')->references('id')->on('iot_devices')->onDelete('cascade')->onUpdate('cascade');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->timestamp('published_at')->nullable(); // Waktu publikasi postingan
             $table->timestamps();
+            
         });
     }
 
