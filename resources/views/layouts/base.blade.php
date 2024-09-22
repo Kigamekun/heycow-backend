@@ -59,7 +59,7 @@
                                 <span>Dashboard</span>
                             </a>
                         </li>
-                        <li class="sidebar-item {{ Request::is('community*') ? 'active' : '' }}">
+                        <li class="sidebar-item {{ Request::is('blog*') ? 'active' : '' }}">
                             <a href="{{ route('blog.index') }}" class='sidebar-link'>
                                 <i class="bi bi-chat-left-dots-fill"></i>
                                 <span>Community</span>

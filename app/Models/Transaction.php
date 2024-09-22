@@ -11,5 +11,5 @@ class Transaction extends Model
 
     protected $fillable = [];
 
-    public $timestamps = true; 
+    public $timestamps = true;
 }

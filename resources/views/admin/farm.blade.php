@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Dropify/0.2.2/css/dropify.min.css"
         integrity="sha512-EZSUkJWTjzDlspOoPSpUFR0o0Xy7jdzW//6qhUkoZ9c4StFkVsp9fbbd0O06p9ELS3H486m4wmrCELjza4JEog=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
-
     <style>
         .table> :not(:first-child) {
             border-top: none;
@@ -25,17 +24,7 @@
 
 
 @section('content')
-    @php
-        $breadcrumbs = [
-            ['title' => 'Home', 'link' => '/', 'active' => false],
-            ['title' => 'Data Farm', 'link' => '/antrian/periksa', 'active' => true],
-        ];
-    @endphp
-
-
     <div class="container-fluid">
-        {{-- <x-jumbotroon :title="'Data Farm'" :breadcrumbs="$breadcrumbs" /> --}}
-
         <br>
         <div class="card">
             <div class="card-body">
@@ -48,7 +37,6 @@
                     </div>
                 </div>
                 <br>
-
                 <div class="table-responsive">
                     <table id="datatable-table" class="mt-3 mb-3 rounded-sm table borrder-none table-bordered table-md "
                         style="border-top: none">
@@ -62,15 +50,12 @@
                             </tr>
                         </thead>
                         <tbody>
-
                         </tbody>
-
                     </table>
                 </div>
             </div>
         </div>
     </div>
-
 
     <!-- Modal -->
     <div class="modal fade" id="updateData" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
@@ -83,8 +68,6 @@
             </div>
         </div>
     </div>
-
-
 
     <!-- Modal -->
     <div class="modal fade" id="createData" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
@@ -107,7 +90,6 @@
                                 id="name" name="name" placeholder="Masukan Name">
                             <x-input-error :messages="$errors->get('name')" class="mt-2" />
                         </div>
-
                         <div class="mb-3">
                             <label for="address" class="fw-semibold">Address <span
                                     class="ml-1 text-danger">*</span></label>
@@ -115,7 +97,6 @@
                                 id="address" name="address" placeholder="Masukan Address">
                             <x-input-error :messages="$errors->get('address')" class="mt-2" />
                         </div>
-
                         <div class="mb-3">
                             <label for="user_id" class="fw-semibold">Owner <span class="ml-1 text-danger">*</span></label>
                             <select name="user_id" id="user_id"
@@ -126,9 +107,7 @@
                                 @endforeach
                             </select>
                             <x-input-error :messages="$errors->get('user_id')" class="mt-2" />
-
                         </div>
-
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
@@ -139,8 +118,6 @@
         </div>
     </div>
 @endsection
-
-
 
 @section('js')
     <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4="
@@ -188,7 +165,6 @@
         });
 
         $('#updateData').on('shown.bs.modal', function(e) {
-
             var owners = @json($owners);
             var user_id = parseInt($(e.relatedTarget).data('user_id'));
             var name = $(e.relatedTarget).data('name');
@@ -196,8 +172,6 @@
             var ownerOptions = owners.map(function(owner) {
                 return `<option value="${owner.id}" ${owner.id == user_id ? 'selected' : ''}>${owner.name}</option>`;
             });
-
-
             var html = `
                 <div class="modal-header">
                     <div>
@@ -205,46 +179,42 @@
                         <small id="emailHelp" class="form-text text-muted">Field dengan tanda <span class="text-danger">*</span> wajib diisi.</small>
                     </div>
                 </div>
-            <form action="${$(e.relatedTarget).data('url')}" method="post" enctype="multipart/form-data">
-                @csrf
-                @method('PUT')
-                <div class="modal-body">
-                    <div class="mb-3">
-                            <label for="name" class="fw-semibold">Name <span class="ml-1 text-danger">*</span></label>
-                            <input type="text" class="form-control {{ $errors->has('name') ? 'is-invalid' : '' }}" value="${$(e.relatedTarget).data('name')}"
-                                id="name" name="name" placeholder="Masukan Name">
-                            <x-input-error :messages="$errors->get('name')" class="mt-2" />
-                        </div>
-
+                <form action="${$(e.relatedTarget).data('url')}" method="post" enctype="multipart/form-data">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-body">
                         <div class="mb-3">
-                            <label for="address" class="fw-semibold">address <span class="ml-1 text-danger">*</span></label>
-                            <input type="text" class="form-control {{ $errors->has('address') ? 'is-invalid' : '' }}" value="${$(e.relatedTarget).data('address')}"
-                                id="address" name="address" placeholder="Masukan address">
-                            <x-input-error :messages="$errors->get('address
-                                ')" class="mt-2" />
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="user_id" class="fw-semibold">Owner <span class="ml-1 text-danger">*</span></label>
-                            <select name="user_id" id="user_id"
-                                class="form-control {{ $errors->has('user_id') ? 'is-invalid' : '' }}">
-                                <option value="">Pilih Owner</option>
-                            ${ownerOptions}
-                            </select>
-                            <x-input-error :messages="$errors->get('user_id')" class="mt-2" />
-                        </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                    <button type="submit" class="btn btn-primary">Simpan</button>
-                </div>
-            </form>
+                                <label for="name" class="fw-semibold">Name <span class="ml-1 text-danger">*</span></label>
+                                <input type="text" class="form-control {{ $errors->has('name') ? 'is-invalid' : '' }}" value="${$(e.relatedTarget).data('name')}"
+                                    id="name" name="name" placeholder="Masukan Name">
+                                <x-input-error :messages="$errors->get('name')" class="mt-2" />
+                            </div>
+                            <div class="mb-3">
+                                <label for="address" class="fw-semibold">address <span class="ml-1 text-danger">*</span></label>
+                                <input type="text" class="form-control {{ $errors->has('address') ? 'is-invalid' : '' }}" value="${$(e.relatedTarget).data('address')}"
+                                    id="address" name="address" placeholder="Masukan address">
+                                <x-input-error :messages="$errors->get('address
+                                    ')" class="mt-2" />
+                            </div>
+                            <div class="mb-3">
+                                <label for="user_id" class="fw-semibold">Owner <span class="ml-1 text-danger">*</span></label>
+                                <select name="user_id" id="user_id"
+                                    class="form-control {{ $errors->has('user_id') ? 'is-invalid' : '' }}">
+                                    <option value="">Pilih Owner</option>
+                                ${ownerOptions}
+                                </select>
+                                <x-input-error :messages="$errors->get('user_id')" class="mt-2" />
+                            </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                        <button type="submit" class="btn btn-primary">Simpan</button>
+                    </div>
+                </form>
             `;
             $('#modal-content').html(html);
             $('#user_id').html(ownerOptions);
             $('.dropify').dropify();
-
-
         });
     </script>
 

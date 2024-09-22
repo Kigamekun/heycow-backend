@@ -10,7 +10,6 @@ use Yajra\DataTables\DataTables;
 use Illuminate\Support\Facades\Storage;
 class FarmController extends Controller
 {
-
     public function index(Request $request)
     {
         $data = Farm::latest()->get();
@@ -50,7 +49,6 @@ class FarmController extends Controller
                     return $image;
                 })
                 ->addColumn('owner', function ($row) {
-
                     return $row->owner->name;
                 })
                 ->rawColumns(['action', 'image'])
@@ -62,7 +60,6 @@ class FarmController extends Controller
         ]);
     }
 
-
     public function store(Request $request)
     {
         $request->validate([
@@ -70,48 +67,35 @@ class FarmController extends Controller
             'address' => 'required',
             'user_id' => 'required',
         ]);
-
         Farm::create([
             'name' => $request->name,
             'address' => $request->address,
             'user_id' => $request->user_id,
         ]);
-
         return redirect()->back()->with(['message' => 'Farm berhasil ditambahkan', 'status' => 'success']);
     }
-
-
 
     public function update(Request $request, $id)
     {
         $id = Crypt::decrypt($id);
         $farm = Farm::where('id', ($id))->first();
-
-
         $request->validate([
             'name' => 'required',
             'address' => 'required',
             'user_id' => 'required|integer|exists:users,id',
         ]);
-
         $farm->update([
             'name' => $request->name,
             'address' => $request->address,
             'user_id' => $request->user_id,
         ]);
-
         return redirect()->route('farm.index')->with(['message' => 'Farm berhasil di update', 'status' => 'success']);
-
     }
 
     public function destroy($id)
     {
         $id = Crypt::decrypt($id);
-
-        // Delete the farm with the decrypted ID
         Farm::where('id', $id)->delete();
-
-        // Redirect with a success message
         return redirect()->route('farm.index')->with(['message' => 'Farm berhasil di delete', 'status' => 'success']);
     }
 }

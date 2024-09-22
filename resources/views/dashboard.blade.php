@@ -108,11 +108,6 @@
             </div>
 
 
-            <div class="card-header">
-                <div class="d-flex justify-content-between">
-                    <h4 class="card-title">Cattle Activities</h4>
-                </div>
-            </div>
             <div class="card-body">
 
                 <br>

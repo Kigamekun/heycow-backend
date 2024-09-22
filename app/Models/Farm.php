@@ -11,7 +11,8 @@ class Farm extends Model
     protected $collection = 'farms';
     protected $fillable = ['name', 'address', 'user_id'];
 
-    public function owner(){
+    public function owner()
+    {
         return $this->belongsTo(User::class, 'user_id');
     }
 }

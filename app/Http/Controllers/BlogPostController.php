@@ -21,35 +21,41 @@ class BlogPostController extends Controller
     {
         # ini sebgai GET Untuk mendapatkan para data
         $data = BlogPost::latest()->get();
-        if ($request->ajax()){
+        if ($request->ajax()) {
             return DataTables::of($data)
-            ->addIndexColumn()
-            ->addColumn('action', function ($rowBlogPost) {
-                $id = Crypt::encrypt($rowBlogPost->id);
-                $btn = '<div class="d-flex" style="gap:5px;">';
-                // $btn .= '
-                //     <button type="button" title="EDIT" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#updateData"
-                //     data-name="' . $rowBlogPost->title . '"
-                //     data-address="' . 
-                //     $rowBlogPost->content . '"
-                //     data-address="' . 
-                //     $rowBlogPost->image . '"
-                //     data-address="'.
-                //     (boolean) $rowBlogPost->published . '"
-                //     data-user_id="' . (string) $rowBlogPost->user_id . '"
-                //     data-url="' . route('blog.update', ['id' => $id]) . '"
-                //     >
-                //         Edit
-                //     </button>'
-                    $btn .= '<button type="button" title="EDIT" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#updateData"
-                    data-title="' . $rowBlogPost->title . '"
-                    data-content="' . $rowBlogPost->content . '"
-                    data-image="' . $rowBlogPost->image . '"
-                    data-published="' . $rowBlogPost->published . '"
-                    data-user_id="' . $rowBlogPost->user_id . '"
-                    data-url="' . route('blog.update', ['id' => $id]) . '">
+                ->addIndexColumn()
+                ->addColumn('action', function ($rowBlogPost) {
+                    $id = Crypt::encrypt($rowBlogPost->id);
+                    $file_image = url('storage/' . $rowBlogPost->image);
+
+
+                    $btn = '<div class="d-flex" style="gap:5px;">';
+                    $btn .= '<button type="button" title="EDIT" class="btn  text-white btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#updateData"
+                        data-id="' . $id . '"
+                        data-url="' . route('blog.update', ['id' => $id]) . '">
                     Edit
                 </button>';
+
+                    if ($rowBlogPost->published == 1) {
+                        $btn .= '<form id="unpublishForm" action="' . route('blog.unpublish', ['id' => $id]) . '" method="POST">
+                                ' . csrf_field() . '
+                                <input type="hidden" name="_method" value="PATCH">
+                                <button type="submit" title="UNPUBLISH" class="btn btn-sm btn-danger btn-delete" onclick="confirmUnpublish(event)">
+                                    Unpublish
+                                </button>
+                            </form>';
+                    } else {
+                        $btn .= '<form id="publishForm" action="' . route('blog.publish', ['id' => $id]) . '" method="POST">
+                                ' . csrf_field() . '
+                                <input type="hidden" name="_method" value="PATCH">
+                                <button type="submit" title="PUBLISH" class="btn btn-sm btn-success btn-delete" onclick="confirmPublish(event)">
+                                    Publish
+                                </button>
+                            </form>';
+                    }
+
+
+
                     $btn .= '
                     <form id="deleteForm" action="' . route('blog.delete', ['id' => $id]) . '" method="POST">
                             ' . csrf_field() . '
@@ -58,176 +64,87 @@ class BlogPostController extends Controller
                                     Delete
                                 </button>
                             </form>
-                    <button type="button" title="DETAIL" class="btn btn-sm btn-success btn-delete" onclick="location.href=">
-                        Detail
+                    <button type="button" title="DETAIL" class="btn btn-sm btn-info text-white btn-delete" onclick="location.href=">
+                        See Comments
                     </button>
                     </div>';
                     return $btn;
-            })
-            ->addColumn('image', function ($rowBlogPost) {
-                if ($rowBlogPost->image != null) {
-                    $image = '<img src="' . asset('storage/' . $rowBlogPost->image) . '" style="width: 100px; border-radius:20px; height: 100px; object-fit: cover;">';
-                } else {
-                    $image = '<img src="' . url('assets/img/noimage.jpg') . '" style="width: 100px; border-radius:20px; height: 100px; object-fit: cover;">';
-                }
-                return $image;
-            })
-            
-            ->addColumn('owner', function ($rowBlogPost) {
-                return;
-            })
-            ->rawColumns(['action', 'image', 'button'])
-            ->make(true);
+                })
+                ->addColumn('image', function ($rowBlogPost) {
+                    if ($rowBlogPost->image != null) {
+                        $image = '<img src="' . url('storage/' . $rowBlogPost->image) . '" style="width: 100px; border-radius:20px; height: 100px; object-fit: cover;">';
+                    } else {
+                        $image = '<img src="' . url('assets/img/noimage.jpg') . '" style="width: 100px; border-radius:20px; height: 100px; object-fit: cover;">';
+                    }
+                    return $image;
+                })
+
+                ->addColumn('owner', function ($rowBlogPost) {
+                    return $rowBlogPost->owner->name;
+                })
+                ->editColumn('published', function ($rowBlogPost) {
+                    if ($rowBlogPost->published == 1) {
+                        return '<span class="badge bg-success">Published</span>';
+                    } else {
+                        return '<span class="badge bg-danger">Draft</span>';
+                    }
+                })
+                ->rawColumns(['action', 'published', 'image', 'button'])
+                ->make(true);
         }
-        return view('admin.blog',[
-            'data'=> BlogPost::all(),
+        return view('admin.blog', [
+            'data' => BlogPost::all(),
             'owners' => User::all(),
         ]);
     }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    
-    // public function create()
-    // {
-    //     # ini sebgai POST Untuk mendapatkan para data
-    //     //
-    // }
 
     /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
     {
-        
-        //ini sebgai FUNCTION UPDATE Untuk mendapatkan para data
+        $rules = [
+            "title" => "required",
+            "content" => "required",
+            "image" => "nullable|image",
+            'published' => 'required|in:1,0',
+        ];
+
         if (Auth::user()->role == 'admin') {
-            $request->validate([
-                "title" => "required",
-                "content" => "required",
-                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-                'published' => 'required',
-                'user_id' => 'required|exists:users,id',
-            ]);
-            BlogPost::create([
-            
-                'title' => $request->title,
-                'content' => $request->input('content'),
-                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-                // 'name' => $request -> name,
-                'published'=> $request -> published, // Buat status publish
-                'user_id' => $request->user_id // No need for 'new' here
-            ]);
-        } else {
-            $request->validate([
-                
-                "title" => "required",
-                "content" => "required",
-                "image" => "required",
-                'published' => 'required',
-            ]);
-            BlogPost::create([
-            
-                'title' => $request->title,
-                'content' => $request->input('content'),
-                'image' => $request -> image,
-                // 'name' => $request -> name,
-                'published'=> $request -> published, // Buat status publish
-                'user_id' => Auth::id() // No need for 'new' here
-            ]);
+            $rules["user_id"] = "required|exists:users,id"; // Only admin can update user_id
         }
-        // dd($request->user_id);
-        
-        // Untuk cekout apakah sudah publish atau belum
-        return redirect()->back()->with(['message' => 'Postingan sudah di publish', 'status' => 'success']);
-        //
+
+        $request->validate($rules);
+
+        $imageset = null;
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $imageset = $image->store('blogimages', 'public'); // Store the new image
+        }
+
+
+        BlogPost::create([
+            'title' => $request->title,
+            'content' => $request->input('content'),
+            'image' => $imageset,
+            'status' => $request->pzublished,
+            'user_id' => $request->user_id ?? Auth::id()
+        ]);
+
+        return redirect()->route('blog.index')->with(['message' => 'Postingan berhasil di publish', 'status' => 'success']);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    // public function show(BlogPost $blogPost)
-    // {
-    //     //
-    // }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    // public function edit(BlogPost $blogPost)
-    // {
-    //     //
-    // }
-
-    /**
-     * Update the specified resource in storage.
-     */
-
-
-    // public function update(Request $request, BlogPost $blogPost, $id)
-    // {
-    //     $id = Crypt::decrypt($id);
-
-    //     // Find the farm by ID
-    //     $blogPost = BlogPost::where('id', $id)->first();
-
-    //     if (Auth::user()->role == 'admin') {$request->validate([
-    //         "title" => "required",
-    //         "content" => "required",
-    //         "image" => "nullable|image",
-    //         // "name" => "required",
-    //         'published' => 'published|in:published,draft', 
-    //         "user_id"=> "required" // Ensure user_id exists in the users table
-    //     ]);}
-    //     else{
-    //         $request->validate([
-    //             "title" => "required",
-    //             "content" => "required",
-    //             "image" => "nullable|image",
-    //             // "name" => "required",
-    //             'published' => 'required|in:published,draft', 
-    //             // "user_id"=> "required" // Ensure user_id exists in the users table
-    //         ]);
-    //     };
-    //     $imageset = $blogPost->image;
-    //     // if($request->hasFile('image')){
-    //     //     if($imageset){
-    //     //         Storage::disk('public')->delete($imageset);
-    //     //     }
-
-    //     //     $images = $request->file('image');
-    //     //     $imageset = $images->store('blogimages','public');
-    //     // };
-    //     // Update the farm information
-    //     if ($request->hasFile('image')) {
-    //         if ($imageset) {
-    //             Storage::disk('public')->delete($imageset);
-    //         }
-        
-    //         $image = $request->file('image');
-    //         $imageset = $image->store('blogimages', 'public');
-    //     }
-        
-    //     // Save the new image path if available
-        
-        
-        
-    //     $blogPost->update([
-    //         'title' => $request->title,
-    //         'content' => $request->input('content'),
-    //         'image' => $imageset,
-    //         'status' => $request->published,
-    //         'user_id' => $request->user_id ?? $blogPost->user_id
-    //     ]);
-    //     // Redirect back to the farm index with a success message
-    //     return redirect()->route('blog.index')->with(['message' => 'Postingan berhasil di update', 'status' => 'success']);
-    // }
+    public function detail($id)
+    {
+        $id = Crypt::decrypt($id);
+        $blogPost = BlogPost::findOrFail($id);
+        return response()->json(['post'=> $blogPost,'owners' => User::all()]);
+    }
 
     public function update(Request $request, $id)
     {
         $decryptedId = Crypt::decrypt($id);
-    
+
         // Find the blog post by ID
         $blogPost = BlogPost::findOrFail($decryptedId);
         // Define validation rules
@@ -237,46 +154,47 @@ class BlogPostController extends Controller
             "image" => "nullable|image",
             'published' => 'required|in:published,draft',
         ];
-    
+
         if (Auth::user()->role == 'admin') {
             $rules["user_id"] = "required|exists:users,id"; // Only admin can update user_id
         }
-    
+
         $request->validate($rules);
-    
+
         // Check if the user is authorized to update
         if (Auth::user()->role != 'admin' && Auth::user()->id != $blogPost->user_id) {
             return redirect()->route('blog.index')->with(['message' => 'Unauthorized action', 'status' => 'error']);
         }
-    
+
         // Handle image upload
         $imageset = $blogPost->image;
         if ($request->hasFile('image')) {
             if ($imageset) {
                 Storage::disk('public')->delete($imageset); // Delete the old image
             }
-    
+
             $image = $request->file('image');
             $imageset = $image->store('blogimages', 'public'); // Store the new image
         }
-    
+
         // Update the blog post
         $blogPost->update([
             'title' => $request->title,
             'content' => $request->input('content'),
             'image' => $imageset,
-            'status' => $request->published ,
+            'status' => $request->published,
             'user_id' => $request->user_id ?? $blogPost->user_id
         ]);
-    
+
         // Redirect back to the blog index with a success message
         return redirect()->route('blog.index')->with(['message' => 'Postingan berhasil di update', 'status' => 'success']);
     }
-// Logs the value of 'published' field
-    
+    // Logs the value of 'published' field
 
-    public function comments(){
-        
+
+    public function comments()
+    {
+
     }
     /**
      * Remove the specified resource from storage.
@@ -285,11 +203,32 @@ class BlogPostController extends Controller
     {
         # ini sebgai Delete Untuk mendapatkan para data
         $id = Crypt::decrypt($id);
-        
+
         // Delete the farm with the decrypted ID
         BlogPost::where('id', $id)->delete();
-        
+
         // Redirect with a success message
         return redirect()->route('blog.index')->with(['message' => 'Farm berhasil di delete', 'status' => 'success']);
+    }
+
+
+    public function publish($id)
+    {
+        $id = Crypt::decrypt($id);
+        $blogPost = BlogPost::findOrFail($id);
+        $blogPost->update([
+            'published' => 1
+        ]);
+        return redirect()->route('blog.index')->with(['message' => 'Postingan berhasil di publish', 'status' => 'success']);
+    }
+
+    public function unpublish($id)
+    {
+        $id = Crypt::decrypt($id);
+        $blogPost = BlogPost::findOrFail($id);
+        $blogPost->update([
+            'published' => 0
+        ]);
+        return redirect()->route('blog.index')->with(['message' => 'Postingan berhasil di unpublish', 'status' => 'success']);
     }
 }

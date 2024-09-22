@@ -54,7 +54,6 @@ class UserController extends Controller
         return view('admin.user', ['owners' => $owners]);
     }
 
-
     public function store(Request $request)
     {
         $request->validate([
@@ -89,7 +88,6 @@ class UserController extends Controller
         return redirect()->back()->with(['message' => 'Users berhasil ditambahkan', 'status' => 'success']);
     }
 
-
     public function update(Request $request, $id)
     {
         $id = Crypt::decrypt($id);
@@ -99,7 +97,7 @@ class UserController extends Controller
             'role' => 'required|in:admin,cattleman',
             'phone_number' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
-            'password' => 'nullable|string|min:8', // Optional password validation
+            'password' => 'nullable|string|min:8',
             'avatar' => 'nullable|file|image',
         ]);
         $user = User::find($id);
@@ -117,13 +115,10 @@ class UserController extends Controller
         return redirect()->route('user.index')->with(['message' => 'Users berhasil di update', 'status' => 'success']);
     }
 
-
     public function destroy($id)
     {
         $id = Crypt::decrypt($id);
         User::where('id', $id)->delete();
         return redirect()->route('user.index')->with(['message' => 'Users berhasil di delete', 'status' => 'success']);
     }
-
-
 }

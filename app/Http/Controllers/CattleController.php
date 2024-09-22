@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\{Cattle, Farm, User, IOTDevices};
 use Illuminate\Http\Request;
-
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Validator;
 use Yajra\DataTables\DataTables;
@@ -22,7 +21,7 @@ class CattleController extends Controller
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
                     $id = Crypt::encrypt($row->id);
-                    $file_image = strpos($row->image, 'https://') == 0 ? $row->image : url('storage/' . $row->avatar);
+                    $file_image = url('storage/' . $row->image);
                     $btn = '<div class="d-flex" style="gap:5px;">';
                     $btn .= '
                     <button type="button" title="EDIT" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#updateCattle"
@@ -36,7 +35,7 @@ class CattleController extends Controller
                     data-farm_id="' . $row->farm_id . '"
                     data-user_id="' . $row->user_id . '"
                     data-iot_device_id="' . $row->iot_device_id . '"
-                    data-image="' . $row->image . '"
+                    data-image="' . $file_image . '"
                     data-url="' . route('cattle.update', ['id' => $id]) . '">
                         Edit
                     </button>';
@@ -51,22 +50,43 @@ class CattleController extends Controller
                     </div>';
                     return $btn;
                 })
+                ->editColumn('birth_weight', function ($row) {
+                    return $row->birth_weight . ' kg';
+                })
+                ->editColumn('birth_height', function ($row) {
+                    return $row->birth_height . ' cm';
+                })
+                ->addColumn('owner', function ($row) {
+                    return $row->user ? $row->user->name : 'N/A';
+                })
                 ->addColumn('farm_name', function ($row) {
                     return $row->farm ? $row->farm->name : 'N/A';
                 })
                 ->addColumn('iot', function ($row) {
-                    return $row->iotDevice ? $row->iotDevice->serial_number : 'N/A';
+                    $device = $row->iotDevice ? $row->iotDevice->serial_number : 'N/A';
+                    return '<span class="badge bg-light-secondary">' . $device . '</span>';
+                })
+                ->editColumn('status', function ($row) {
+                    $status = '';
+                    if ($row->status == 'alive') {
+                        $status = '<span class="badge bg-success">Alive</span>';
+                    } elseif ($row->status == 'dead') {
+                        $status = '<span class="badge bg-danger">Dead</span>';
+                    } elseif ($row->status == 'sold') {
+                        $status = '<span class="badge bg-warning">Sold</span>';
+                    }
+                    return $status;
                 })
                 ->addColumn('image', function ($row) {
                     if ($row->image != null) {
                         $file_path = strpos($row->image, 'https://') === 0 ? $row->image : url('storage/' . $row->image);
-                        return '<img src="' . $file_path . '" style="width: 100px; border-radius:20px; height: 100px; object-fit: cover;">';
+                        return '<img src="' . $file_path . '" style="width: 100px; border-radius:12px; height: 100px; object-fit: cover;">';
                     } else {
-                        $image = '<img src="' . url('assets/img/noimage.jpg') . '" style="width: 100px; border-radius:20px; height: 100px; object-fit: cover;">';
+                        $image = '<img src="' . url('assets/img/noimage.jpg') . '" style="width: 100px; border-radius:12px; height: 100px; object-fit: cover;">';
                     }
                     return $image;
                 })
-                ->rawColumns(['action', 'image'])
+                ->rawColumns(['action', 'status', 'iot', 'image'])
                 ->make(true);
         }
         return view('admin.cattle', [
@@ -79,10 +99,7 @@ class CattleController extends Controller
 
     public function store(Request $request)
     {
-        // Get the current user
         $user = Auth::user();
-
-        // Conditional validation: If the user is an admin, 'user_id' is required
         $request->validate([
             'name' => 'required',
             'breed' => 'required',
@@ -96,19 +113,14 @@ class CattleController extends Controller
             'iot_device_id' => 'required|exists:iot_devices,id',
             'image' => 'nullable|file|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
-
         $image = null;
-        if ($request->hasFile('image')){
-            $image = $request->file('image')->store('image','public');
+        if ($request->hasFile('image')) {
+            $image = $request->file('image')->store('image', 'public');
         } else {
             $name = $request->input('name');
             $avatar = 'https://ui-avatars.com/api/?name=' . urlencode($name) . '&size=128&background=random';
         }
-
-
-        // If the user is not an admin, set 'user_id' to the currently logged-in user's ID
         $userId = $user->is_admin ? $request->user_id : $user->id;
-
         Cattle::create([
             'name' => $request->name,
             'breed' => $request->breed,
@@ -122,7 +134,6 @@ class CattleController extends Controller
             'iot_device_id' => $request->iot_device_id,
             'image' => $image,
         ]);
-
         return redirect()->back()->with(['message' => 'Cattle successfully added', 'status' => 'success']);
     }
 
@@ -130,11 +141,7 @@ class CattleController extends Controller
     {
         $id = Crypt::decrypt($id);
         $cattle = Cattle::findOrFail($id);
-
-        // Get the current user
         $user = Auth::user();
-
-        // Conditional validation: If the user is an admin, 'user_id' is required
         $request->validate([
             'name' => 'required',
             'breed' => 'required',
@@ -148,32 +155,38 @@ class CattleController extends Controller
             'iot_device_id' => 'required|exists:iot_devices,id',
             'image' => 'nullable|file|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
-        if($request->hasFile('image')){
-            $image = $request->file('image')->store('image', 'public');
-            $data['image'] = $avatar;
-        } else {
-            $data['image'] = $user->image;
-        }
-        // If the user is not an admin, set 'user_id' to the currently logged-in user's ID
         $userId = $user->is_admin ? $request->user_id : $user->id;
-
-        $cattle->update([
-            'name' => $request->name,
-            'breed' => $request->breed,
-            'status' => $request->status,
-            'gender' => $request->gender,
-            'birth_date' => $request->birth_date,
-            'birth_weight' => $request->birth_weight,
-            'birth_height' => $request->birth_height,
-            'farm_id' => $request->farm_id,
-            'user_id' => $userId,  // Conditional user_id
-            'iot_device_id' => $request->iot_device_id,
-            'image' => $image,
-        ]);
-
+        if ($request->hasFile('image')) {
+            $image = $request->file('image')->store('image', 'public');
+            $cattle->update([
+                'name' => $request->name,
+                'breed' => $request->breed,
+                'status' => $request->status,
+                'gender' => $request->gender,
+                'birth_date' => $request->birth_date,
+                'birth_weight' => $request->birth_weight,
+                'birth_height' => $request->birth_height,
+                'farm_id' => $request->farm_id,
+                'user_id' => $userId,
+                'iot_device_id' => $request->iot_device_id,
+                'image' => $image,
+            ]);
+        } else {
+            $cattle->update([
+                'name' => $request->name,
+                'breed' => $request->breed,
+                'status' => $request->status,
+                'gender' => $request->gender,
+                'birth_date' => $request->birth_date,
+                'birth_weight' => $request->birth_weight,
+                'birth_height' => $request->birth_height,
+                'farm_id' => $request->farm_id,
+                'user_id' => $userId,
+                'iot_device_id' => $request->iot_device_id,
+            ]);
+        }
         return redirect()->route('cattle.index')->with(['message' => 'Cattle successfully updated', 'status' => 'success']);
     }
-
 
     public function destroy($id)
     {

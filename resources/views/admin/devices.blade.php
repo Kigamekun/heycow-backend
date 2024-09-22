@@ -5,7 +5,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Dropify/0.2.2/css/dropify.min.css"
         integrity="sha512-EZSUkJWTjzDlspOoPSpUFR0o0Xy7jdzW//6qhUkoZ9c4StFkVsp9fbbd0O06p9ELS3H486m4wmrCELjza4JEog=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
-
     <style>
         .table> :not(:first-child) {
             border-top: none;
@@ -22,15 +21,7 @@
 @endsection
 
 @section('content')
-    @php
-        $breadcrumbs = [
-            ['title' => 'Home', 'link' => '/', 'active' => false],
-            ['title' => 'IoT Devices', 'link' => '/iotdevice', 'active' => true],
-        ];
-    @endphp
-
     <div class="container-fluid">
-        {{-- <x-jumbotroon :title="'IoT Devices'" :breadcrumbs="$breadcrumbs" /> --}}
         <br>
         <div class="card">
             <div class="card-body">
@@ -43,7 +34,6 @@
                     </div>
                 </div>
                 <br>
-
                 <div class="table-responsive">
                     <table id="datatable-table" class="mt-3 mb-3 rounded-sm table border-none table-bordered table-md "
                         style="border-top: none">
@@ -65,7 +55,6 @@
         </div>
     </div>
 
-    <!-- Modal to Add Device -->
     <div class="modal fade" id="createDevice" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
         aria-hidden="true">
         <div class="modal-dialog">
@@ -80,7 +69,6 @@
                 <form action="{{ route('iotdevice.store') }}" method="post" enctype="multipart/form-data">
                     @csrf
                     <div class="modal-body">
-
                         <div class="mb-3">
                             <label for="serial_number" class="fw-semibold">Serial Number <span
                                     class="text-danger">*</span></label>
@@ -89,7 +77,6 @@
                                 id="serial_number" name="serial_number" placeholder="Enter Serial Number">
                             <x-input-error :messages="$errors->get('serial_number')" class="mt-2" />
                         </div>
-
                         <div class="mb-3">
                             <label for="status" class="fw-semibold">Status <span class="text-danger">*</span></label>
                             <select name="status" id="status"
@@ -100,7 +87,6 @@
                             </select>
                             <x-input-error :messages="$errors->get('status')" class="mt-2" />
                         </div>
-
                         <div class="mb-3">
                             <label for="installation_date" class="fw-semibold">Installation Date <span
                                     class="text-danger">*</span></label>
@@ -109,13 +95,6 @@
                                 id="installation_date" name="installation_date">
                             <x-input-error :messages="$errors->get('installation_date')" class="mt-2" />
                         </div>
-
-                        <div class="mb-3">
-                            <label for="qr_image" class="fw-semibold">QR Code Image</label>
-                            <input type="file" class="form-control dropify {{ $errors->has('qr_image') ? 'is-invalid' : '' }}" id="qr_image" name="qr_image" data-max-file-size="2M" data-allowed-file-extensions="png jpg jpeg">
-                            <x-input-error :messages="$errors->get('qr_image')" class="mt-2" />
-                        </div>
-
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -126,7 +105,6 @@
         </div>
     </div>
 
-    <!-- Modal to Update Device -->
     <div class="modal fade" id="updateDevice" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
         aria-labelledby="updateDeviceLabel" aria-hidden="true">
         <div class="modal-dialog" id="updateDialog">
@@ -190,60 +168,47 @@
             var serial_number = $(e.relatedTarget).data('serial_number');
             var status = $(e.relatedTarget).data('status');
             var installation_date = $(e.relatedTarget).data('installation_date');
-            var qr_image = $(e.relatedTarget).data('qr_image');
-            });
-
-            // Create the HTML for the modal content
             var html = `
-        <div class="modal-header">
-            <div>
-                <h5 class="modal-title" id="staticBackdropLabel">Edit IoT Device</h5>
-                <small id="emailHelp" class="form-text text-muted">Field dengan tanda <span class="text-danger">*</span> wajib diisi.</small>
-            </div>
-        </div>
-    <form action="${$(e.relatedTarget).data('url')}" method="post" enctype="multipart/form-data">
-        @csrf
-        @method('PUT')
-        <div class="modal-body">
-
-            <div class="mb-3">
-                <label for="serial_number" class="fw-semibold">Serial Number <span class="ml-1 text-danger">*</span></label>
-                <input type="text" class="form-control {{ $errors->has('serial_number') ? 'is-invalid' : '' }}" value="${serial_number}"
-                    id="serial_number" name="serial_number" placeholder="Masukan Serial Number">
-                <x-input-error :messages="$errors->get('serial_number')" class="mt-2" />
-            </div>
-
-            <div class="mb-3">
-                <label for="status" class="fw-semibold">Status <span class="ml-1 text-danger">*</span></label>
-                <select name="status" id="status" class="form-control {{ $errors->has('status') ? 'is-invalid' : '' }}">
-                    <option value="active" ${status == 'active' ? 'selected' : ''}>Active</option>
-                    <option value="inactive" ${status == 'inactive' ? 'selected' : ''}>Inactive</option>
-                </select>
-                <x-input-error :messages="$errors->get('status')" class="mt-2" />
-            </div>
-
-            <div class="mb-3">
-                <label for="installation_date" class="fw-semibold">Installation Date <span class="ml-1 text-danger">*</span></label>
-                <input type="date" class="form-control {{ $errors->has('installation_date') ? 'is-invalid' : '' }}" value="${installation_date}"
-                    id="installation_date" name="installation_date" placeholder="Pilih Installation Date">
-                <x-input-error :messages="$errors->get('installation_date')" class="mt-2" />
-            </div>
-
-                <div class="mb-3">
-                    <label for="qr_image" class="fw-semibold">QR Code Image</label>
-                    <input type="file" class="form-control dropify" data-default-file="${qr_image_url ? '{{ asset("storage/' + qr_image_url + '") }}' : ''}" id="qr_image" name="qr_image">
-                </div>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-            <button type="submit" class="btn btn-primary">Simpan</button>
-        </div>
-    </form>
-    `;
-
-            // Inject the generated HTML into the modal's content container
+                    <div class="modal-header">
+                        <div>
+                            <h5 class="modal-title" id="staticBackdropLabel">Edit IoT Device</h5>
+                            <small id="emailHelp" class="form-text text-muted">Field dengan tanda <span class="text-danger">*</span> wajib diisi.</small>
+                        </div>
+                    </div>
+                    <form action="${$(e.relatedTarget).data('url')}" method="post" enctype="multipart/form-data">
+                        @csrf
+                        @method('PUT')
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="serial_number" class="fw-semibold">Serial Number <span class="ml-1 text-danger">*</span></label>
+                                <input type="text" class="form-control {{ $errors->has('serial_number') ? 'is-invalid' : '' }}" value="${serial_number}"
+                                    id="serial_number" name="serial_number" placeholder="Masukan Serial Number">
+                                <x-input-error :messages="$errors->get('serial_number')" class="mt-2" />
+                            </div>
+                            <div class="mb-3">
+                                <label for="status" class="fw-semibold">Status <span class="ml-1 text-danger">*</span></label>
+                                <select name="status" id="status" class="form-control {{ $errors->has('status') ? 'is-invalid' : '' }}">
+                                    <option value="active" ${status == 'active' ? 'selected' : ''}>Active</option>
+                                    <option value="inactive" ${status == 'inactive' ? 'selected' : ''}>Inactive</option>
+                                </select>
+                                <x-input-error :messages="$errors->get('status')" class="mt-2" />
+                            </div>
+                            <div class="mb-3">
+                                <label for="installation_date" class="fw-semibold">Installation Date <span class="ml-1 text-danger">*</span></label>
+                                <input type="date" class="form-control {{ $errors->has('installation_date') ? 'is-invalid' : '' }}" value="${installation_date}"
+                                    id="installation_date" name="installation_date" placeholder="Pilih Installation Date">
+                                <x-input-error :messages="$errors->get('installation_date')" class="mt-2" />
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                            <button type="submit" class="btn btn-primary">Simpan</button>
+                        </div>
+                    </form>
+            `;
             $('#modal-content').html(html);
             $('.dropify').dropify();
 
+        });
     </script>
 @endsection
