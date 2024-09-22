@@ -91,7 +91,7 @@ class FarmController extends Controller
         $request->validate([
             'name' => 'required',
             'address' => 'required',
-            'user_id' => 'required|integer|exists:user,id',
+            'user_id' => 'required|integer|exists:users,id',
         ]);
 
         $farm->update([

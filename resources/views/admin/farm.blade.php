@@ -232,7 +232,6 @@
                             ${ownerOptions}
                             </select>
                             <x-input-error :messages="$errors->get('user_id')" class="mt-2" />
-
                         </div>
                 </div>
                 <div class="modal-footer">
@@ -244,6 +243,7 @@
             $('#modal-content').html(html);
             $('#user_id').html(ownerOptions);
             $('.dropify').dropify();
+
 
         });
     </script>

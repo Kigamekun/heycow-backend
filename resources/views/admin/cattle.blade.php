@@ -176,7 +176,7 @@
 
                         <div class="mb-3">
                             <label for="image" class="fw-semibold">Image</label>
-                            <input type="file" class="form-control dropify {{ $errors->has('image') ? 'is-invalid' : '' }}"
+                            <input type="file" class="form-control"
                                 id="image" name="image">
                             <x-input-error :messages="$errors->get('image')" class="mt-2" />
                         </div>
@@ -278,9 +278,153 @@
                     },
                 ]
             });
-
-
-            $('.dropify').dropify();
         });
-    </script>
+
+        $('#updateCattle').on('shown.bs.modal', function(e) {
+            // Dynamically get owner options
+            var ownerOptions = '';
+            var selectedIoTDeviceId = $(e.relatedTarget).data('iot_device_id');
+
+
+            var owners = @json($owners); // Assuming you passed the list of owners as $owners
+            var selectedOwner = $(e.relatedTarget).data('user_id');
+            owners.forEach(function(owner) {
+                var isSelected = owner.id == selectedOwner ? 'selected' : '';
+                ownerOptions += `<option value="${owner.id}" ${isSelected}>${owner.name}</option>`;
+            });
+
+            var iotDeviceOptions = '';
+            var iotDevices = @json($iot_devices);  // Assuming you're passing the devices in this variable
+            iotDevices.forEach(function(device) {
+                var isSelected = device.id == selectedIoTDeviceId ? 'selected' : '';
+                iotDeviceOptions += `<option value="${device.id}" ${isSelected}>${device.serial_number}</option>`;
+            });
+            var farmId = $(e.relatedTarget).data('farm_id'); // Get the farm ID
+            var farmName = ''; // Variable to hold the farm name
+
+            // Assuming you have a JavaScript array of farms available
+            var farms = @json($farms); // This should be an array of farm objects with id and name
+
+            // Find the farm name using the farm ID
+            farms.forEach(function(farm) {
+                var isSelected = farm.id == farmId ? 'selected' : '';
+                farmName += `<option value="${farm.id}" ${isSelected}>${farm.name}</option>`;
+                // if (farm.id == farmId) {
+                //     farmName = farm.name; // Get the farm name
+            });
+
+
+
+            var html = `
+        <div class="modal-header">
+            <div>
+                <h5 class="modal-title" id="staticBackdropLabel">Edit Cattle</h5>
+                <small id="emailHelp" class="form-text text-muted">Field dengan tanda <span class="text-danger">*</span> wajib diisi.</small>
+            </div>
+        </div>
+        <form action="${$(e.relatedTarget).data('url')}" method="post" enctype="multipart/form-data">
+            @csrf
+            @method('PUT')
+            <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="name" class="fw-semibold">Nama<span class="ml-1 text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" name="name" value="${$(e.relatedTarget).data('name')}"
+                                placeholder="Masukan Nama" required>
+                            <x-input-error :messages="$errors->get('name')" class="mt-2" />
+                        </div>
+                        <div class="mb-3">
+                            <label for="breed" class="fw-semibold">Email<span class="ml-1 text-danger">*</span></label>
+                            <input type="breed" class="form-control" id="breed" name="breed" value="${$(e.relatedTarget).data('breed')}"
+                                placeholder="Masukan Breed" required>
+                            <x-input-error :messages="$errors->get('breed')" class="mt-2" />
+                        </div>
+                        <div class="mb-3">
+                            <label for="status" class="fw-semibold">Role<span class="ml-1 text-danger">*</span></label>
+                            <select name="status" id="status" class="form-control" required>
+                                <option value="">Pilih Status</option>
+                                <option value="alive" ${$(e.relatedTarget).data('status') == 'alive' ? 'selected' : ''}>alive</option>
+                                <option value="dead" ${$(e.relatedTarget).data('status') == 'dead' ? 'selected' : ''}>dead</option>
+                                <option value="sold" ${$(e.relatedTarget).data('status') == 'sold' ? 'selected' : ''}>sold</option>
+                            </select>
+                            <x-input-error :messages="$errors->get('status')" class="mt-2" />
+                        </div>
+                        <div class="mb-3">
+                            <label for="gender" class="fw-semibold">Jenis Kelamin</label>
+                            <select name="gender" id="gender" class="form-control">
+                                <option value="">Pilih Jenis Kelamin</option>
+                                <option value="male" ${$(e.relatedTarget).data('gender') == 'male' ? 'selected' : ''}>Laki-laki</option>
+                                <option value="female" ${$(e.relatedTarget).data('gender') == 'female' ? 'selected' : ''}>Perempuan</option>
+                            </select>
+                            <x-input-error :messages="$errors->get('gender')" class="mt-2" />
+                        </div>
+                        <div class="mb-3">
+                            <label for="birth_date" class="fw-semibold">Birth Date <span
+                                    class="text-danger">*</span></label>
+                            <input type="date"
+                                class="form-control"
+                                id="birth_date" name="birth_date" value="${$(e.relatedTarget).data('birth_date')}">
+                            <x-input-error :messages="$errors->get('birth_date')" class="mt-2" />
+                        </div>
+                        <div class="mb-3">
+                            <label for="birth_weight" class="fw-semibold">Birth Weight<span class="ml-1 text-danger">*</span></label>
+                            <input type="text" class="form-control" id="birth_weight" name="birth_weight" value="${$(e.relatedTarget).data('birth_weight')}"
+                                placeholder="Masukan Berat" required>
+                            <x-input-error :messages="$errors->get('birth_weight')" class="mt-2" />
+                        </div>
+                        <div class="mb-3">
+                            <label for="birth_height" class="fw-semibold">Birth Height<span class="ml-1 text-danger">*</span></label>
+                            <input type="text" class="form-control" id="birth_height" name="birth_height" value="${$(e.relatedTarget).data('birth_height')}"
+                                placeholder="Masukan Tinggi" required>
+                            <x-input-error :messages="$errors->get('birth_height')" class="mt-2" />
+                        </div>
+                        <div class="mb-3">
+                            <label for="farm_id" class="fw-semibold">Farm Name <span class="text-danger">*</span></label>
+                            <select name="farm_id" id="farm_id"
+                                class="form-control {{ $errors->has('farm_id') ? 'is-invalid' : '' }}">
+                                <option value="">Select Farm</option>
+                                ${farmName}
+                            </select>
+                            <x-input-error :messages="$errors->get('farm_id')" class="mt-2" />
+                        </div>
+                        <div class="mb-3">
+                            <label for="iot_device_id" class="fw-semibold">IoT Device <span class="text-danger">*</span></label>
+                            <select name="iot_device_id" id="iot_device_id"
+                                class="form-control {{ $errors->has('iot_device_id') ? 'is-invalid' : '' }}">
+                                <option value="">Select IOT Device</option>
+                                ${iotDeviceOptions}
+                            </select>
+                            <x-input-error :messages="$errors->get('iot_devices_id')" class="mt-2" />
+                        </div>
+                        <div class="mb-3" id="avatar-upload">
+                            <label for="image" class="fw-semibold">Avatar<span
+                                    class="ml-1 text-danger">*</span></label>
+                            <input type="file" class=" dropify" id="image" name="image" placeholder="Isi file"
+                                data-allowed-file-extensions='["png", "jpeg","jpg"]' data-default-file="${$(e.relatedTarget).data('image')}">
+                            <x-input-error :messages="$errors->get('image')" class="mt-2" />
+                        </div>
+
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                <button type="submit" class="btn btn-primary">Simpan</button>
+            </div>
+        </form>
+    `;
+
+            $('#modal-content').html(html);
+
+            // Initialize the dropify plugin for file inputs
+            $('.dropify').dropify();
+            });
+            </script>
+
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/Dropify/0.2.2/js/dropify.min.js"
+            integrity="sha512-8QFTrG0oeOiyWo/VM9Y8kgxdlCryqhIxVeRpWSezdRRAvarxVtwLnGroJgnVW9/XBRduxO/z1GblzPrMQoeuew=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            <script>
+                $('.dropify').dropify
+            </script>
+
 @endsection
