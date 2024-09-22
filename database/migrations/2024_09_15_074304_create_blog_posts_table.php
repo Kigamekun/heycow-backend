@@ -17,6 +17,8 @@ return new class extends Migration {
             $table->text('content');
             $table->string('image')->nullable(); // URL gambar postingan (opsional)
             $table->boolean('published')->default(false); // Status apakah postingan sudah dipublish
+            $table->unsignedBigInteger('iot_device_id');
+            $table->foreign('iot_device_id')->references('id')->on('iot_devices')->onDelete('cascade')->onUpdate('cascade');
             $table->timestamp('published_at')->nullable(); // Waktu publikasi postingan
             $table->timestamps();
         });

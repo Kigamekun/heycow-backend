@@ -14,6 +14,8 @@ class BlogPost extends Model
 
     public $timestamps = true;
 
-
+    public function comments() {
+        return $this->hasMany(Comment::class);
+    }
 
 }

@@ -28,7 +28,7 @@ return new class extends Migration {
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade')->onUpdate('cascade');
 
             $table->unsignedBigInteger('iot_device_id');
-            $table->foreign('iot_device_id')->references('id')->on('iotdevices')->onDelete('cascade')->onUpdate('cascade');
+            $table->foreign('iot_device_id')->references('id')->on('iot_devices')->onDelete('cascade')->onUpdate('cascade');
 
             $table->string('image')->nullable();
             $table->timestamps();

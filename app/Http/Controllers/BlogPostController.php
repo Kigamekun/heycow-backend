@@ -7,8 +7,9 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use Yajra\DataTables\Facades\DataTables;
-
+use \Illuminate\Support\Facades\Auth;
 use function Pest\Laravel\get;
+use Illuminate\Support\Facades\Storage;
 
 class BlogPostController extends Controller
 {
@@ -47,21 +48,25 @@ class BlogPostController extends Controller
                                     Delete
                                 </button>
                             </form>
+                    <button type="button" title="DETAIL" class="btn btn-sm btn-success btn-delete">
+                        Detail
+                    </button>
                     </div>';
                     return $btn;
             })
             ->addColumn('image', function ($rowBlogPost) {
                 if ($rowBlogPost->image != null) {
-                    $image = '<img src="' . asset('storage/post/' . $rowBlogPost->image) . '" style="width: 100px; border-radius:20px; height: 100px; object-fit: cover;">';
+                    $image = '<img src="' . asset('storage/' . $rowBlogPost->image) . '" style="width: 100px; border-radius:20px; height: 100px; object-fit: cover;">';
                 } else {
                     $image = '<img src="' . url('assets/img/noimage.jpg') . '" style="width: 100px; border-radius:20px; height: 100px; object-fit: cover;">';
                 }
                 return $image;
             })
+            
             ->addColumn('owner', function ($rowBlogPost) {
                 return;
             })
-            ->rawColumns(['action', 'image'])
+            ->rawColumns(['action', 'image', 'button'])
             ->make(true);
         }
         return view('admin.blog',[
@@ -87,31 +92,43 @@ class BlogPostController extends Controller
     {
         
         //ini sebgai FUNCTION UPDATE Untuk mendapatkan para data
-        if (\Illuminate\Support\Facades\Auth::user()->role == 'admin') {
+        if (Auth::user()->role == 'admin') {
             $request->validate([
                 "title" => "required",
                 "content" => "required",
-                "image" => "required",
+                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
                 'published' => 'required',
                 'user_id' => 'required|exists:users,id',
             ]);
+            BlogPost::create([
+            
+                'title' => $request->title,
+                'content' => $request->input('content'),
+                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                // 'name' => $request -> name,
+                'published'=> $request -> published, // Buat status publish
+                'user_id' => $request->user_id // No need for 'new' here
+            ]);
         } else {
             $request->validate([
+                
                 "title" => "required",
                 "content" => "required",
                 "image" => "required",
                 'published' => 'required',
             ]);
-        }
-        BlogPost::create([
+            BlogPost::create([
             
-            'title' => $request->title,
-            'content' => $request->input('content'),
-            'image' => $request -> image,
-            // 'name' => $request -> name,
-            'published'=> $request -> published, // Buat status publish
-            'user_id' => $request->user_id // No need for 'new' here
-        ]);
+                'title' => $request->title,
+                'content' => $request->input('content'),
+                'image' => $request -> image,
+                // 'name' => $request -> name,
+                'published'=> $request -> published, // Buat status publish
+                'user_id' => Auth::id() // No need for 'new' here
+            ]);
+        }
+        // dd($request->user_id);
+        
         // Untuk cekout apakah sudah publish atau belum
         return redirect()->back()->with(['message' => 'Postingan sudah di publish', 'status' => 'success']);
         //
@@ -161,23 +178,22 @@ class BlogPostController extends Controller
                 // "user_id"=> "required" // Ensure user_id exists in the users table
             ]);
         };
-            
-        // Decrypt the ID
-        // $id = Crypt::decrypt($id);
+        $imageset = $blogPost->image;
+        if($request->hasFile('image')){
+            if($imageset){
+                Storage::disk('public')->delete($imageset);
+            }
 
-        // // Find the farm by ID
-        // $blogPost = BlogPost::where('id', $id)->first();
-
-        // Validate the request data
-        
-
+            $images = $request->file('image');
+            $imageset = $images->store('blogimages','public');
+        };
         // Update the farm information
         $blogPost->update([
             'title' => $request->title,
             'content' => $request->input('content'),
-            'image' => $request -> image,
-            'published'=> $request -> published, // Buat status publish
-            'user_id' => $request->user_id // No need for 'new' here
+            'published'=> $request -> published,  
+            'image' => $request->image,// Buat status publish
+            'user_id' => $request->user_id// No need for 'new' here
         ]);
 
         // Redirect back to the farm index with a success message
