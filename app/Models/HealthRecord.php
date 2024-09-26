@@ -19,5 +19,5 @@ class HealthRecord extends Model
         'veterinarian',
     ];
 
-    public $timestamps = true; 
+    public $timestamps = true;
 }

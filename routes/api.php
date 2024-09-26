@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\SubscriptionControllerApi;
 use App\Http\Controllers\Api\CommentControllerApi;
 use App\Http\Controllers\Api\BlogPostControllerApi;
 use App\Http\Controllers\Api\HealthRecordControllerApi;
+use App\Http\Controllers\Api\TransactionControllerApi;
 use App\Http\Controllers\Api\UserControllerApi;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
@@ -73,6 +74,25 @@ Route::prefix('health_records')->group(function () {
     Route::put('/{id}', [HealthRecordControllerApi::class, 'update']);
     Route::delete('/{id}', [HealthRecordControllerApi::class, 'destroy']);
 });
+
+// Rute untuk Transactions
+Route::prefix('transactions')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Api\TransactionControllerApi::class, 'index']);
+    Route::post('/', [\App\Http\Controllers\Api\TransactionControllerApi::class, 'store']);
+    Route::get('/{id}', [\App\Http\Controllers\Api\TransactionControllerApi::class, 'show']);
+    Route::put('/{id}', [\App\Http\Controllers\Api\TransactionControllerApi::class, 'update']);
+    Route::delete('/{id}', [\App\Http\Controllers\Api\TransactionControllerApi::class, 'destroy']);
+});
+
+Route::post('/uploadFile', function(Request $request) {
+    if ($request->hasFile('file')) {
+        $file = $request->file('file');
+        $path = $file->store('public/uploads');
+        return response()->json(['status' => 'sukses', 'path' => $path]);
+    }
+    return response()->json(['status' => 'gagal', 'pesan' => 'File tidak ditemukan'], 400);
+});
+
 
 // Rute untuk Users
 Route::prefix('users')->group(function () {

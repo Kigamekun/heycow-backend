@@ -4,25 +4,25 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Subscription;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 
 class SubscriptionControllerApi extends Controller
 {
+    // Mengambil semua langganan
     public function index()
     {
-        $subscriptions = Subscription::latest()->get();
-
+        $subscriptions = Subscription::all();
         return response()->json([
-            'message' => 'Data langganan',
-            'status' => 'success',
-            'data' => $subscriptions
+            'status' => 'sukses',
+            'data' => $subscriptions,
         ]);
     }
 
+    // Menyimpan langganan baru
     public function store(Request $request)
     {
-        $request->validate([
+        $validatedData = $request->validate([
             'user_id' => 'required|exists:users,id',
             'type' => 'required|string|in:Basic,Premium',
             'start_date' => 'required|date',
@@ -31,36 +31,42 @@ class SubscriptionControllerApi extends Controller
             'active' => 'required|boolean',
         ]);
 
-        $subscription = Subscription::create($request->all());
-
-        return response()->json([
-            'message' => 'Langganan berhasil ditambahkan',
-            'status' => 'success',
-            'data' => $subscription
-        ], 201);
+        try {
+            $subscription = Subscription::create($validatedData);
+            return response()->json([
+                'status' => 'sukses',
+                'pesan' => 'Langganan berhasil ditambahkan',
+                'data' => $subscription,
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'gagal',
+                'pesan' => 'Gagal menambahkan langganan',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
+    // Mengambil langganan spesifik
     public function show($id)
     {
-        $id = Crypt::decrypt($id);
         $subscription = Subscription::find($id);
-
         if (!$subscription) {
-            return response()->json(['message' => 'Langganan tidak ditemukan', 'status' => 'error'], 404);
+            return response()->json(['status' => 'gagal', 'pesan' => 'Langganan tidak ditemukan'], 404);
         }
 
-        return response()->json($subscription);
+        return response()->json(['status' => 'sukses', 'data' => $subscription]);
     }
 
+    // Memperbarui langganan
     public function update(Request $request, $id)
     {
         $subscription = Subscription::find($id);
-
         if (!$subscription) {
-            return response()->json(['message' => 'Langganan tidak ditemukan', 'status' => 'error'], 404);
+            return response()->json(['status' => 'gagal', 'pesan' => 'Langganan tidak ditemukan'], 404);
         }
 
-        $request->validate([
+        $validatedData = $request->validate([
             'user_id' => 'required|exists:users,id',
             'type' => 'required|string|in:Basic,Premium',
             'start_date' => 'required|date',
@@ -69,29 +75,20 @@ class SubscriptionControllerApi extends Controller
             'active' => 'required|boolean',
         ]);
 
-        $subscription->update($request->all());
+        $subscription->update($validatedData);
 
-        return response()->json([
-            'message' => 'Langganan berhasil diupdate',
-            'status' => 'success',
-            'data' => $subscription
-        ], 200);
+        return response()->json(['status' => 'sukses', 'pesan' => 'Langganan berhasil diperbarui', 'data' => $subscription]);
     }
 
+    // Menghapus langganan
     public function destroy($id)
     {
-        $id = Crypt::decrypt($id);
         $subscription = Subscription::find($id);
-
         if (!$subscription) {
-            return response()->json(['message' => 'Langganan tidak ditemukan', 'status' => 'error'], 404);
+            return response()->json(['status' => 'gagal', 'pesan' => 'Langganan tidak ditemukan'], 404);
         }
 
         $subscription->delete();
-
-        return response()->json([
-            'message' => 'Langganan berhasil dihapus',
-            'status' => 'success'
-        ], 200);
+        return response()->json(['status' => 'sukses', 'pesan' => 'Langganan berhasil dihapus']);
     }
 }

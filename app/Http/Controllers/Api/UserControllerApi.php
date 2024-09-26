@@ -10,62 +10,120 @@ use Illuminate\Validation\ValidationException;
 
 class UserControllerApi extends Controller
 {
+    // Mengambil semua pengguna
     public function index()
     {
-        return User::all();
+        try {
+            $users = User::all();
+            return response()->json([
+                'status' => 'sukses',
+                'data' => $users,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'gagal',
+                'pesan' => 'Gagal mengambil data pengguna',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
+    // Menyimpan pengguna baru
     public function store(Request $request)
     {
-        $request->validate([
+        $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
-            'address' => 'nullable|string|max:255',
         ]);
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'address' => $request->address,
-        ]);
-
-        return response()->json($user, 201);
+        try {
+            $validatedData['password'] = Hash::make($validatedData['password']);
+            $user = User::create($validatedData);
+            return response()->json([
+                'status' => 'sukses',
+                'pesan' => 'Pengguna berhasil dibuat',
+                'data' => $user,
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'gagal',
+                'pesan' => 'Gagal membuat pengguna',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
+    // Mengambil pengguna spesifik
     public function show($id)
     {
-        $user = User::findOrFail($id);
-        return response()->json($user);
+        try {
+            $user = User::findOrFail($id);
+            return response()->json([
+                'status' => 'sukses',
+                'data' => $user,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'gagal',
+                'pesan' => 'Pengguna tidak ditemukan',
+                'error' => $e->getMessage(),
+            ], 404);
+        }
     }
 
+    // Memperbarui pengguna
     public function update(Request $request, $id)
     {
-        $user = User::findOrFail($id);
+        try {
+            $user = User::findOrFail($id);
 
-        $request->validate([
-            'name' => 'sometimes|string|max:255',
-            'email' => 'sometimes|string|email|max:255|unique:users,email,' . $user->id,
-            'password' => 'sometimes|string|min:8',
-            'address' => 'nullable|string|max:255',
-        ]);
+            $validatedData = $request->validate([
+                'name' => 'sometimes|string|max:255',
+                'email' => 'sometimes|string|email|max:255|unique:users,email,' . $user->id,
+                'password' => 'sometimes|string|min:8',
+            ]);
 
-        if ($request->has('password')) {
-            $user->password = Hash::make($request->password);
+            if (isset($validatedData['password'])) {
+                $validatedData['password'] = Hash::make($validatedData['password']);
+            }
+
+            $user->update($validatedData);
+
+            return response()->json([
+                'status' => 'sukses',
+                'pesan' => 'Pengguna berhasil diperbarui',
+                'data' => $user,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'gagal',
+                'pesan' => 'Gagal memperbarui pengguna',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        $user->update($request->only(['name', 'email', 'address']));
-        return response()->json($user);
     }
 
+    // Menghapus pengguna
     public function destroy($id)
     {
-        $user = User::findOrFail($id);
-        $user->delete();
-        return response()->json(null, 204);
+        try {
+            $user = User::findOrFail($id);
+            $user->delete();
+            return response()->json([
+                'status' => 'sukses',
+                'pesan' => 'Pengguna berhasil dihapus',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'gagal',
+                'pesan' => 'Gagal menghapus pengguna',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
+    // Login pengguna
     public function login(Request $request)
     {
         $request->validate([
@@ -73,14 +131,25 @@ class UserControllerApi extends Controller
             'password' => 'required|string',
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        try {
+            $user = User::where('email', $request->email)->first();
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
+            if (!$user || !Hash::check($request->password, $user->password)) {
+                throw ValidationException::withMessages([
+                    'email' => ['The provided credentials are incorrect.'],
+                ]);
+            }
+
+            return response()->json([
+                'status' => 'sukses',
+                'data' => $user,
             ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'gagal',
+                'pesan' => 'Login gagal',
+                'error' => $e->getMessage(),
+            ], 401);
         }
-
-        return response()->json($user);
     }
 }

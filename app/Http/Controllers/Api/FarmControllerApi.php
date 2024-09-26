@@ -6,6 +6,7 @@ use App\Models\{Farm, User};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Log;
 
 class FarmControllerApi extends Controller
 {
@@ -22,56 +23,79 @@ class FarmControllerApi extends Controller
     }
 
     public function store(Request $request)
-    {
-        $request->validate([
+{
+    try {
+        $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'address' => 'required|string|max:255',
             'user_id' => 'required|exists:users,id',
+        ], [
+            'name.required' => 'Nama harus diisi',
+            'address.required' => 'Alamat harus diisi',
+            'user_id.required' => 'User ID harus diisi',
         ]);
 
-        $farm = Farm::create([
-            'name' => $request->name,
-            'address' => $request->address,
-            'user_id' => $request->user_id,
-        ]);
+        // Log data for debugging
+        Log::info('Validation successful', $validatedData);
+
+        // Create new farm after validation success
+        $farm = Farm::create($validatedData);
 
         return response()->json([
             'message' => 'Farm berhasil ditambahkan',
             'status' => 'success',
             'data' => $farm
         ], 201);
+
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        // Catch validation error and return response immediately
+        return response()->json([
+            'message' => $e->getMessage(),
+            'errors' => $e->errors(),
+            'status' => 'error'
+        ], 422);
+    }
+}
+
+
+public function update(Request $request, $id)
+{
+    $farm = Farm::find($id);
+
+    if (!$farm) {
+        return response()->json(['message' => 'Farm tidak ditemukan', 'status' => 'error'], 404);
     }
 
-    public function update(Request $request, $id)
-    {
-        $farm = Farm::find($id);
-
-        if (!$farm) {
-            return response()->json(['message' => 'Farm tidak ditemukan', 'status' => 'error'], 404);
-        }
-
-        $request->validate([
+    try {
+        // Validasi data input
+        $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'address' => 'required|string|max:255',
             'user_id' => 'required|exists:users,id',
         ]);
 
-        $farm->update([
-            'name' => $request->name,
-            'address' => $request->address,
-            'user_id' => $request->user_id,
-        ]);
+        // Update farm jika validasi berhasil
+        $farm->update($validatedData);
 
         return response()->json([
             'message' => 'Farm berhasil diupdate',
             'status' => 'success',
             'data' => $farm
         ], 200);
+
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        // Tangkapan error validasi dan langsung mengembalikan response error
+        return response()->json([
+            'message' => 'Validasi gagal',
+            'errors' => $e->errors(),
+            'status' => 'error'
+        ], 422);
     }
+}
 
     public function destroy($id)
     {
-        $id = Crypt::decrypt($id);
+
         $farm = Farm::find($id);
 
         if (!$farm) {

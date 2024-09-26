@@ -6,6 +6,7 @@ use App\Models\IOTDevices;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Storage;
 
 class IOTDevicesControllerApi extends Controller
 {
@@ -23,14 +24,20 @@ class IOTDevicesControllerApi extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'device_type' => 'required|string',
             'serial_number' => 'required|string|unique:iot_devices',
             'installation_date' => 'required|date',
-            'status' => 'required|string',
-            'location' => 'nullable|string',
+            'status' => 'required|in:active,inactive',
+            'qr_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        $device = IOTDevices::create($request->all());
+        // Proses upload gambar
+        $qrImagePath = null;
+        if ($request->hasFile('qr_image')) {
+            $qrImagePath = $request->file('qr_image')->store('qr_images', 'public');
+        }
+
+        // Buat perangkat IoT
+        $device = IOTDevices::create(array_merge($request->all(), ['qr_image' => $qrImagePath]));
 
         return response()->json([
             'message' => 'Perangkat IoT berhasil ditambahkan',
@@ -41,7 +48,6 @@ class IOTDevicesControllerApi extends Controller
 
     public function show($id)
     {
-        $id = Crypt::decrypt($id);
         $device = IOTDevices::find($id);
 
         if (!$device) {
@@ -60,12 +66,22 @@ class IOTDevicesControllerApi extends Controller
         }
 
         $request->validate([
-            'device_type' => 'required|string',
             'serial_number' => 'required|string|unique:iot_devices,serial_number,' . $device->id,
             'installation_date' => 'required|date',
-            'status' => 'required|string',
-            'location' => 'nullable|string',
+            'status' => 'required|in:active,inactive',
+            'qr_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
+
+        // Proses upload gambar
+        if ($request->hasFile('qr_image')) {
+            // Hapus gambar lama jika ada
+            if ($device->qr_image) {
+                Storage::disk('public')->delete($device->qr_image);
+            }
+
+            $qrImagePath = $request->file('qr_image')->store('qr_images', 'public');
+            $request->merge(['qr_image' => $qrImagePath]);
+        }
 
         $device->update($request->all());
 
@@ -78,11 +94,15 @@ class IOTDevicesControllerApi extends Controller
 
     public function destroy($id)
     {
-        $id = Crypt::decrypt($id);
         $device = IOTDevices::find($id);
 
         if (!$device) {
             return response()->json(['message' => 'Perangkat IoT tidak ditemukan', 'status' => 'error'], 404);
+        }
+
+        // Hapus gambar jika ada
+        if ($device->qr_image) {
+            Storage::disk('public')->delete($device->qr_image);
         }
 
         $device->delete();
