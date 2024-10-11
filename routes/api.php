@@ -12,6 +12,8 @@ use App\Http\Controllers\Api\UserControllerApi;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 
+Route::middleware(['auth:sanctum'])->group(function () {
+
 // Rute untuk Farms
 Route::prefix('farms')->group(function () {
     Route::get('/', [FarmControllerApi::class, 'index']);
@@ -101,6 +103,7 @@ Route::prefix('users')->group(function () {
     Route::get('/{id}', [UserControllerApi::class, 'show']);
     Route::put('/{id}', [UserControllerApi::class, 'update']);
     Route::delete('/{id}', [UserControllerApi::class, 'destroy']);
+});
 });
     // Rute login
     Route::post('/login', [UserControllerApi::class, 'login']);

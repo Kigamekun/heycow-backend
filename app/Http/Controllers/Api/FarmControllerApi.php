@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Models\{Farm, User};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Log;
 
@@ -28,18 +29,20 @@ class FarmControllerApi extends Controller
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'address' => 'required|string|max:255',
-            'user_id' => 'required|exists:users,id',
+
         ], [
             'name.required' => 'Nama harus diisi',
             'address.required' => 'Alamat harus diisi',
-            'user_id.required' => 'User ID harus diisi',
         ]);
 
-        // Log data for debugging
-        Log::info('Validation successful', $validatedData);
+        $user = Auth::id();
 
         // Create new farm after validation success
-        $farm = Farm::create($validatedData);
+        $farm = Farm::create([
+            'name' => $validatedData['name'],
+            'address' => $validatedData['address'],
+            'user_id' => $user,
+        ]);
 
         return response()->json([
             'message' => 'Farm berhasil ditambahkan',

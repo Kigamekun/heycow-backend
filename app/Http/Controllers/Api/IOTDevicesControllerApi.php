@@ -23,7 +23,9 @@ class IOTDevicesControllerApi extends Controller
 
     public function store(Request $request)
     {
+
         $request->validate([
+
             'serial_number' => 'required|string|unique:iot_devices',
             'installation_date' => 'required|date',
             'status' => 'required|in:active,inactive',
