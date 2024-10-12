@@ -14,8 +14,9 @@ return new class extends Migration {
             $table->id();
             $table->string('name');
             $table->string('breed');
-            $table->enum('status', ['alive', 'dead', 'sold']);
-            $table->enum('gender', ['male', 'female']);
+            $table->enum('status', ['sehat', 'sakit', 'mati', 'dijual']);
+            $table->enum('gender', ['jantan', 'betina']);
+            $table->enum('type', ['pedaging', 'perah', 'peranakan', 'lainnya']);
 
             $table->date('birth_date');
             $table->integer('birth_weight');
@@ -27,10 +28,12 @@ return new class extends Migration {
             $table->unsignedBigInteger('user_id');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade')->onUpdate('cascade');
 
-            $table->unsignedBigInteger('iot_device_id');
-            $table->foreign('iot_device_id')->references('id')->on('iot_devices')->onDelete('cascade')->onUpdate('cascade');
+            // Tambahkan nullable() sebelum foreign key
+            $table->unsignedBigInteger('iot_device_id')->nullable();
+            $table->foreign('iot_device_id')->references('id')->on('iot_devices')->onDelete('cascade')->onUpdate('cascade')->nullable(); // tidak perlu nullable di sini
 
             $table->string('image')->nullable();
+            $table->date('last_vaccination')->nullable();
             $table->timestamps();
         });
     }
@@ -43,3 +46,4 @@ return new class extends Migration {
         Schema::dropIfExists('cattle');
     }
 };
+

@@ -9,6 +9,12 @@ class IOTDevices extends Model
 {
 
     protected $table = 'iot_devices';
-    protected $fillable = ['serial_number', 'status', 'installation_date', 'qr_image'];
+    protected $fillable = ['serial_number', 'status', 'installation_date', 'qr_image','user_id'];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
 
 }

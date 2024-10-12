@@ -13,7 +13,7 @@ return new class extends Migration {
 {
     Schema::create('farms', function (Blueprint $table) {
         $table->id();
-        $table->unsignedBigInteger('user_id'); // Foreign key
+        $table->unsignedBigInteger('user_id')->nullable();
         $table->string('name');
         $table->string('address');
         $table->string('image')->nullable();

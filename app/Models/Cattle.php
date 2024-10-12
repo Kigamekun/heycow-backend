@@ -7,28 +7,22 @@ use Illuminate\Database\Eloquent\Model;
 
 class Cattle extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
-        'name',
-        'breed',
-        'status',
-        'gender',
-        'birth_date',
-        'birth_weight',
-        'birth_height',
-        'farm_id',
-        'user_id',
-        'iot_device_id',
-        'image'
+        'name', 'breed_id', 'status', 'gender', 'type', 'birth_date',
+        'birth_weight', 'birth_height', 'iot_device_id', 'last_vaccination',
+        'farm_id', 'user_id'
     ];
+
+    public function breed()
+    {
+        return $this->belongsTo(Breed::class);
+    }
 
     public function farm()
     {
         return $this->belongsTo(Farm::class);
-    }
-
-    public function owner()
-    {
-        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function iotDevice()
@@ -36,5 +30,8 @@ class Cattle extends Model
         return $this->belongsTo(IOTDevices::class, 'iot_device_id');
     }
 
-    use HasFactory;
+    public function healthRecords()
+    {
+        return $this->hasMany(HealthRecord::class);
+    }
 }

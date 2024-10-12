@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\CommentControllerApi;
 use App\Http\Controllers\Api\BlogPostControllerApi;
 use App\Http\Controllers\Api\HealthRecordControllerApi;
 use App\Http\Controllers\Api\TransactionControllerApi;
+use App\Http\Controllers\Api\BreedControllerApi;
 use App\Http\Controllers\Api\UserControllerApi;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
@@ -84,6 +85,13 @@ Route::prefix('transactions')->group(function () {
     Route::get('/{id}', [\App\Http\Controllers\Api\TransactionControllerApi::class, 'show']);
     Route::put('/{id}', [\App\Http\Controllers\Api\TransactionControllerApi::class, 'update']);
     Route::delete('/{id}', [\App\Http\Controllers\Api\TransactionControllerApi::class, 'destroy']);
+});
+
+// Rute untuk Breeds
+Route::prefix('breeds')->group(function () {
+    Route::get('/', [BreedControllerApi::class, 'index']);
+    Route::post('/', [BreedControllerApi::class, 'store']);
+    Route::delete('/{id}', [BreedControllerApi::class, 'destroy']);
 });
 
 Route::post('/uploadFile', function(Request $request) {
