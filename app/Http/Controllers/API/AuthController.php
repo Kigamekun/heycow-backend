@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\Models\{User,Farm};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -26,8 +26,15 @@ class AuthController extends Controller
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'role' => 'user',
+            'role' => 'cattleman',
             'password' => Hash::make($request->password)
+        ]);
+
+        $nameFarm = explode(' ', $request->name)[0];
+
+        Farm::create([
+            'user_id' => $user->id,
+            'name' => $nameFarm . ' Farm'
         ]);
 
         $token = $user->createToken('auth_token')->plainTextToken;

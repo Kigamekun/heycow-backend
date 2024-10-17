@@ -9,16 +9,14 @@ use Illuminate\Support\Facades\Auth;
 
 class CattleControllerApi extends Controller
 {
-    // Menampilkan daftar sapi milik pengguna
     public function index()
     {
         $user = Auth::id();
 
-        // Mengambil data sapi dengan semua relasi penting
         $cattles = Cattle::where('user_id', $user)
-                          ->with(['iotDevice', 'breed', 'farm', 'healthRecords']) // Eager loading
-                          ->get()
-                          ->makeHidden(['created_at', 'updated_at', 'farm_id', 'user_id']); // Menyembunyikan atribut
+            ->with(['iotDevice', 'breed', 'farm', 'healthRecords'])
+            ->get()
+            ->makeHidden(['created_at', 'updated_at', 'farm_id', 'user_id']);
 
         return response()->json([
             'message' => 'Data Sapi dan Perangkat IoT',
@@ -32,9 +30,8 @@ class CattleControllerApi extends Controller
     public function store(Request $request)
     {
         try {
-            // Validasi input
             $validatedData = $request->validate([
-                'name' => 'required|string|max:255',
+
                 'breed_id' => 'required|exists:breeds,id',
                 'status' => 'required|in:sehat,sakit,mati,dijual',
                 'gender' => 'required|in:jantan,betina',
@@ -52,8 +49,19 @@ class CattleControllerApi extends Controller
 
             $iot_device_id = $request->iot_device_id;
 
+
+
+            if (Cattle::where('iot_device_id', $iot_device_id)->exists()) {
+                return response()->json([
+                    'message' => 'Perangkat IoT sudah digunakan',
+                    'status' => 'error'
+                ], 400);
+            }
+
+            $cattleCount = Cattle::where('user_id', $user)->count();
+
             $cattle = Cattle::create([
-                'name' => $validatedData['name'],
+                'name' => 'Sapi ' . ($cattleCount + 1),
                 'breed_id' => $validatedData['breed_id'],
                 'status' => $validatedData['status'],
                 'gender' => $validatedData['gender'],
@@ -66,6 +74,9 @@ class CattleControllerApi extends Controller
                 'iot_device_id' => $iot_device_id,
                 'last_vaccination' => $validatedData['last_vaccination'],
             ]);
+
+
+
 
             return response()->json([
                 'message' => 'Sapi berhasil ditambahkan',
@@ -88,13 +99,13 @@ class CattleControllerApi extends Controller
     }
 
 
-// Fungsi untuk mendapatkan iot_device_id yang tersedia
-private function getAvailableIotDeviceId()
-{
-    // Mengambil perangkat IoT yang belum terpakai
-    $availableDevice = IOTDevices::whereNull('cattle')->first(); // Perbaiki nama kelas di sini
-    return $availableDevice ? $availableDevice->id : null; // Mengembalikan id atau null jika tidak ada
-}
+    // Fungsi untuk mendapatkan iot_device_id yang tersedia
+    private function getAvailableIotDeviceId()
+    {
+        // Mengambil perangkat IoT yang belum terpakai
+        $availableDevice = IOTDevices::whereNull('cattle')->first(); // Perbaiki nama kelas di sini
+        return $availableDevice ? $availableDevice->id : null; // Mengembalikan id atau null jika tidak ada
+    }
 
 
     // Mengambil semua breed
@@ -111,47 +122,47 @@ private function getAvailableIotDeviceId()
 
     // Menampilkan detail sapi berdasarkan ID
     public function show($id)
-{
-    $cattle = Cattle::with(['iotDevice', 'breed', 'farm', 'healthRecords'])->findOrFail($id);
-    $cattle->makeHidden(['created_at', 'updated_at', 'farm_id', 'user_id']); // Menyembunyikan atribut
+    {
+        $cattle = Cattle::with(['iotDevice', 'breed', 'farm', 'healthRecords'])->findOrFail($id);
+        $cattle->makeHidden(['created_at', 'updated_at', 'farm_id', 'user_id']); // Menyembunyikan atribut
 
-    return response()->json([
-        'message' => 'Data Sapi ditemukan',
-        'status' => 'success',
-        'data' => [
-            'id' => $cattle->id,
-            'name' => $cattle->name,
-            'breed' => [
-                'id' => $cattle->breed->id,
-                'name' => $cattle->breed->name,
-            ],
-            'status' => $cattle->status,
-            'gender' => $cattle->gender,
-            'type' => $cattle->type,
-            'birth_date' => $cattle->birth_date,
-            'birth_weight' => $cattle->birth_weight,
-            'birth_height' => $cattle->birth_height,
-            'last_vaccination' => $cattle->last_vaccination,
-            'farm' => [
-                'id' => optional($cattle->farm)->id,
-                'name' => optional($cattle->farm)->name,
-            ],
-            'iotDevice' => [
-                'id' => optional($cattle->iotDevice)->id,
-                'serial_number' => optional($cattle->iotDevice)->serial_number,
-                'installation_date' => optional($cattle->iotDevice)->installation_date,
-            ],
-            'healthRecords' => $cattle->healthRecords->map(function($record) {
-                return [
-                    'id' => $record->id,
-                    'date' => $record->date,
-                    'status' => $record->status,
-                    'temperature' => $record->temperature,
-                ];
-            })
-        ]
-    ]);
-}
+        return response()->json([
+            'message' => 'Data Sapi ditemukan',
+            'status' => 'success',
+            'data' => [
+                'id' => $cattle->id,
+                'name' => $cattle->name,
+                'breed' => [
+                    'id' => $cattle->breed->id,
+                    'name' => $cattle->breed->name,
+                ],
+                'status' => $cattle->status,
+                'gender' => $cattle->gender,
+                'type' => $cattle->type,
+                'birth_date' => $cattle->birth_date,
+                'birth_weight' => $cattle->birth_weight,
+                'birth_height' => $cattle->birth_height,
+                'last_vaccination' => $cattle->last_vaccination,
+                'farm' => [
+                    'id' => optional($cattle->farm)->id,
+                    'name' => optional($cattle->farm)->name,
+                ],
+                'iotDevice' => [
+                    'id' => optional($cattle->iotDevice)->id,
+                    'serial_number' => optional($cattle->iotDevice)->serial_number,
+                    'installation_date' => optional($cattle->iotDevice)->installation_date,
+                ],
+                'healthRecords' => $cattle->healthRecords->map(function ($record) {
+                    return [
+                        'id' => $record->id,
+                        'date' => $record->date,
+                        'status' => $record->status,
+                        'temperature' => $record->temperature,
+                    ];
+                })
+            ]
+        ]);
+    }
 
     // Mengupdate data sapi berdasarkan ID
     public function update(Request $request, $id)

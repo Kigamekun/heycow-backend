@@ -23,6 +23,8 @@ Route::middleware('auth')->group(function () {
     Route::prefix('farm')->group(function () {
         Route::get('/', [FarmController::class, 'index'])->name('farm.index');
         Route::get('/{id}', [FarmController::class, 'detail'])->name('farm.detail');
+
+
         Route::post('/store', [FarmController::class, 'store'])->name('farm.store');
         Route::put('/update/{id}', [FarmController::class, 'update'])->name('farm.update');
         Route::delete('/delete/{id}', [FarmController::class, 'destroy'])->name('farm.delete');

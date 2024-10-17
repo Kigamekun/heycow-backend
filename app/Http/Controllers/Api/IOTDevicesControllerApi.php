@@ -7,6 +7,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
+
+use Illuminate\Support\Facades\Auth;
 
 class IOTDevicesControllerApi extends Controller
 {
@@ -23,23 +26,25 @@ class IOTDevicesControllerApi extends Controller
 
     public function store(Request $request)
     {
+
+
         $request->validate([
-            'serial_number' => 'required|string|unique:iot_devices',
+            'serial_number' => 'required|string',
             'installation_date' => 'required|date',
-            'status' => 'required|in:active,inactive',
-            'qr_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'user_id' => 'nullable|exists:users,id',
+            'status' => 'required|string',
+        ]);
+        $qrCodeContent = $request->serial_number;
+        $qrCodeFileName = 'qrcodes/' . $request->serial_number . '.png';
+        $qrCodeImage = QrCode::format('png')->size(200)->generate($qrCodeContent);
+        Storage::disk('public')->put($qrCodeFileName, $qrCodeImage);
+        $device = IoTDevices::create([
+            'serial_number' => $request->serial_number,
+            'status' => $request->status,
+            'installation_date' => $request->installation_date,
+            'qr_image' => $qrCodeFileName,
+            'user_id' => Auth::id()
         ]);
 
-        $qrImagePath = null;
-        if ($request->hasFile('qr_image')) {
-            $qrImagePath = $request->file('qr_image')->store('qr_images', 'public');
-        }
-
-        $device = IOTDevices::create(array_merge(
-            $request->all(),
-            ['qr_image' => $qrImagePath]
-        ));
 
         return response()->json([
             'message' => 'Perangkat IoT berhasil ditambahkan',
@@ -73,7 +78,7 @@ class IOTDevicesControllerApi extends Controller
             'installation_date' => 'required|date',
             'status' => 'required|in:active,inactive',
             'qr_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'user_id' => 'nullable|exists:users,id', 
+            'user_id' => 'nullable|exists:users,id',
         ]);
 
         if ($request->hasFile('qr_image')) {

@@ -83,7 +83,7 @@ class UserController extends Controller
             'role' => $request->input('role'),
             'phone_number' => $request->input('phone_number'),
             'address' => $request->input('address'),
-            'avatar' => $avatar, // Save the avatar URL or file path
+            'avatar' => $avatar,
         ]);
         return redirect()->back()->with(['message' => 'Users berhasil ditambahkan', 'status' => 'success']);
     }
