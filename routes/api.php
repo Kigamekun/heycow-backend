@@ -120,7 +120,9 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-
+Route::get('/me', function (Request $request) {
+    return $request->user();
+})->middleware('auth:sanctum');
 
 Route::post('/auth/register', [\App\Http\Controllers\API\AuthController::class, 'register']);
 Route::post('/auth/login', [\App\Http\Controllers\API\AuthController::class, 'login']);

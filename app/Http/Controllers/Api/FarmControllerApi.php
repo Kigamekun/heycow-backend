@@ -9,14 +9,22 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Log;
 
 class FarmControllerApi extends Controller
-{
+{   
+
     public function index()
     {
-        $farms = Farm::latest()->get();
+        if(Auth::user()->role == 'admin') {
+            $farms = Farm::latest()->get();
+
+        } else {
+            $farms = Farm::where('user_id',Auth::user()->id)->first();
+
+        }
 
         return response()->json([
             'message' => 'Data peternakan',
             'status' => 'success',
+            
             'data' => $farms
         ]);
     }
@@ -27,15 +35,18 @@ class FarmControllerApi extends Controller
             $validatedData = $request->validate([
                 'name' => 'required|string|max:255',
                 'address' => 'required|string|max:255',
+                "user_id" => "required|exists:users,id|unique:farms,user_id"
             ], [
                 'name.required' => 'Nama harus diisi',
                 'address.required' => 'Alamat harus diisi',
+                'user_id.required' => 'User ID harus diisi'
             ]);
 
             // Create new farm after validation success
             $farm = Farm::create([
                 'name' => $validatedData['name'],
                 'address' => $validatedData['address'],
+                'user_id' => $validatedData['user_id']
             ]);
 
             return response()->json([
@@ -65,6 +76,7 @@ class FarmControllerApi extends Controller
         try {
             // Validasi data input
             $validatedData = $request->validate([
+                'user_id' => 'required|exists:users,id',
                 'name' => 'required|string|max:255',
                 'address' => 'required|string|max:255',
             ]);
