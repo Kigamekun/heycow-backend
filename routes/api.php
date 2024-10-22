@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\HealthRecordControllerApi;
 use App\Http\Controllers\Api\TransactionControllerApi;
 use App\Http\Controllers\Api\BreedControllerApi;
 use App\Http\Controllers\Api\UserControllerApi;
+use App\Http\Controllers\Api\HelpCenterControllerApi;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 
@@ -111,6 +112,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/{id}', [UserControllerApi::class, 'show']);
         Route::put('/{id}', [UserControllerApi::class, 'update']);
         Route::delete('/{id}', [UserControllerApi::class, 'destroy']);
+    });
+
+    // Rute Help Center
+    Route::prefix('help_centers')->group(function () {
+        Route::get('/', [HelpCenterControllerApi::class, 'index']);
+        Route::post('/', [HelpCenterControllerApi::class, 'store']);
+        Route::delete('/{id}', [HelpCenterControllerApi::class, 'destroy']);
     });
 });
 
