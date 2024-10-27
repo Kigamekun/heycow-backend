@@ -9,6 +9,9 @@ class Farm extends Model
 {
 
     protected $collection = 'farms';
+
+    protected $hidden = ['created_at', 'updated_at'];
+
     protected $fillable = ['name', 'address', 'user_id'];
 
     public function owner()
