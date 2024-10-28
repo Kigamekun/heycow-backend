@@ -13,6 +13,7 @@ class BlogPost extends Model
         'content', 
         'image',
         'category',
+        'cattle_id',
         'published', 
         'user_id'
     ];
@@ -24,10 +25,19 @@ class BlogPost extends Model
         return $this->hasMany(Comment::class, 'post_id');
     }
 
+    public function likes()
+    {
+        return $this->hasMany(Like::class, 'post_id');
+    }
     // public function reply()
     // {
     //     return $this->hasMany(Reply::class, 'comment_id');
     // }
+
+    public function cattle()
+    {
+        return $this->belongsTo(Cattle::class, 'cattle_id');
+    }
 
     public function owner()
     {

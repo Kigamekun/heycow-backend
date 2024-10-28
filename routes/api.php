@@ -12,7 +12,7 @@ use App\Http\Controllers\Api\TransactionControllerApi;
 use App\Http\Controllers\Api\BreedControllerApi;
 use App\Http\Controllers\Api\UserControllerApi;
 use App\Http\Controllers\Api\HelpCenterControllerApi;
-
+use App\Http\Controllers\Api\LikeControllerApi;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 
@@ -74,14 +74,25 @@ Route::middleware(['auth:sanctum'])->group(function () {
         
         // Komentar API
         Route::get('/{id}/comments', [CommentControllerApi::class, 'index']);
-        Route::post('/{id}/comments/', [CommentControllerApi::class, 'store']);
+        Route::post('/{id}/comments', [CommentControllerApi::class, 'store']);
         Route::get('/{id}/comments/{comment_id}', [CommentControllerApi::class, 'show']);
         Route::put('/{id}/comments', [CommentControllerApi::class, 'update']);
         Route::delete('/{id}/comments', [CommentControllerApi::class, 'destroy']);
 
-        // Forum
-        Route::get('/forum', [BlogPostControllerApi::class, 'Forum']);
+        // API LIKE
+        Route::post('/{id}/likes', [LikeControllerApi::class, 'index']);
+        Route::post('/{id}/likes', [LikeControllerApi::class, 'store']);
+        Route::get('/{id}/likes/{like_id}', [LikeControllerApi::class, 'show']);
+        Route::put('/{id}/likes', [LikeControllerApi::class, 'update']);
 
+        // // Forum
+        // Route::get('/{category}', [BlogPostControllerApi::class, 'showCategory']);
+
+        // Forum Category
+        Route::get('/forum', [BlogPostControllerApi::class, 'showForumPosts']);
+
+        // Jual Category
+        Route::get('/jual', [BlogPostControllerApi::class, 'showJualCategory']);
 
         // Reply API
         Route::get('/{id}/comments/{comment_id}/reply', [ReplyControllerApi::class, 'index']);

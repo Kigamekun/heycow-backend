@@ -8,6 +8,8 @@ use App\Models\Comment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
+use function Pest\Laravel\post;
+
 class CommentControllerApi extends Controller
 {
     // Mengambil semua komentar
@@ -36,16 +38,22 @@ class CommentControllerApi extends Controller
     }
 
     // Menyimpan komentar baru
-    public function store(Request $request)
+    public function store(Request $request, $id)
     {
         $validatedData = $request->validate([
-            'post_id' => 'required|integer',
-            'user_id' => 'required|integer',
+            // 'post_id' => 'integer',
+            // 'user_id' => 'required|integer',
             'content' => 'required|string',
         ]);
-
+        
         try {
-            $comment = Comment::create($validatedData);
+            $comment = Comment::create([
+                'content' => $validatedData['content'],
+                'user_id' => auth()->user()->id,
+                'post_id' => $id,
+            ]);
+  
+        // Hapus atau komentar baris ini
             return response()->json([
                 'status' => 'sukses',
                 'pesan' => 'Komentar berhasil dibuat',
@@ -80,7 +88,10 @@ class CommentControllerApi extends Controller
             return response()->json(['status' => 'gagal', 'pesan' => 'Komentar tidak ditemukan'], 404);
         }
 
-        $validatedData = $request->validate(['content' => 'nullable|string']);
+        $validatedData = $request->validate([
+            'content' => 'nullable|string',
+            'like' => 'nullable|String|in:like,dislike'
+        ]);
         $comment->update($validatedData);
 
         return response()->json(['status' => 'sukses', 'pesan' => 'Komentar berhasil diperbarui', 'data' => $comment]);

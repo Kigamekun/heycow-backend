@@ -15,12 +15,13 @@ return new class extends Migration
             Schema::create('comments', function (Blueprint $table) {
                 $table->id();
                 $table->string('image')->nullable(); // URL gambar postingan (opsional)
-                $table->unsignedBigInteger('post_id');
+                // $table->unsignedBigInteger('post_id');
                 $table->foreign('post_id')->references('id')->on('blog_posts')->onDelete('cascade');
-                $table->unsignedBigInteger('user_id');
+                // $table->unsignedBigInteger('user_id');
+                $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
                 $table->text('content');
                 $table->timestamps();
-                
+
             });
         }
     }

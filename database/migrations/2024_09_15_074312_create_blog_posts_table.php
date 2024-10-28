@@ -13,8 +13,8 @@ return new class extends Migration {
         Schema::create('blog_posts', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); // Penulis (user yang memposting)
-            $table->unsignedBigInteger('cattle_id')->nullable(); // ID ternak yang terkait (opsional)
-            $table->foreign('cattle_id')->references('id')->on('cattle')->onDelete('cascade')->onUpdate('cascade'); 
+            // $table->unsignedBigInteger('cattle_id')->nullable(); // ID ternak yang terkait (opsional)
+            $table->foreign('cattle_id')->references('id')->on('cattles')->onDelete('cascade')->onUpdate('cascade'); 
             $table->string('title');
             $table->text('content');
             $table->enum('category', ['forum','jual'])->default('forum'); // Kategori postingan
