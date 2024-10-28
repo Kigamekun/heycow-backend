@@ -23,6 +23,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/{id}', [FarmControllerApi::class, 'show']);
         Route::put('/{id}', [FarmControllerApi::class, 'update']);
         Route::delete('/{id}', [FarmControllerApi::class, 'destroy'])->middleware('checkRole:admin');
+
+        Route::get('/cattle/{id}', [FarmControllerApi::class, 'cattle'])
+        ->where('id', '[0-9]+');
+        Route::get('/cattle/most-cattle', [FarmControllerApi::class, 'mostCattle']);
+
     });
 
     // Rute untuk Cattle
@@ -35,11 +40,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
         Route::post('/iot-devices/search', [CattleControllerApi::class, 'searchIOT']);
 
-        Route::post('/assign-iot-devices/{id}', [CattleControllerApi::class, 'assignIOTDevices'])->name('cattle.assign-iot-devices');
-        Route::post('/remove-iot-devices/{id}', [CattleControllerApi::class, 'removeIOTDevices'])->name('cattle.remove-iot-devices');
-        Route::post('change-status', [CattleControllerApi::class, 'changeStatus'])->name('cattle.change-status');
+        Route::patch('/assign-iot-devices/{id}', [CattleControllerApi::class, 'assignIOTDevices'])->name('cattle.assign-iot-devices');
+        Route::delete('/remove-iot-devices/{id}', [CattleControllerApi::class, 'removeIOTDevices'])->name('cattle.remove-iot-devices');
+        Route::patch('change-status/{id}', [CattleControllerApi::class, 'changeStatus'])->name('cattle.change-status');
         Route::post('/create-request', [CattleControllerApi::class, 'createRequest'])->name('cattle.create-request');
-        Route::post('/respond-request/{id}', [CattleControllerApi::class, 'respondToRequest'])->name('cattle.respond-request');
+        Route::patch('/respond-request/{id}', [CattleControllerApi::class, 'respondToRequest'])->name('cattle.respond-request');
         Route::post('/complete-contract/{id}', [CattleControllerApi::class, 'completeContract'])->name('cattle.complete-contract');
 
     });
@@ -48,9 +53,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::prefix('iot_devices')->group(function () {
         Route::get('/', [IOTDevicesControllerApi::class, 'index']);
         Route::post('/', [IOTDevicesControllerApi::class, 'store']);
-        Route::get('/{id}', [IOTDevicesControllerApi::class, 'show']);
+        Route::get('/{id}', [IOTDevicesControllerApi::class, 'show'])->where('id', '[0-9]+');
         Route::put('/{id}', [IOTDevicesControllerApi::class, 'update'])->middleware('checkRole:admin');
         Route::delete('/{id}', [IOTDevicesControllerApi::class, 'destroy'])->middleware('checkRole:admin');
+
+        Route::post('/assign-iot-devices', [IOTDevicesControllerApi::class, 'AssignIOTDevices']);
+        Route::put('/change-status/{id}', [IOTDevicesControllerApi::class, 'changeStatus']);
+        Route::get('/get-iot-devices-by-user', [IOTDevicesControllerApi::class, 'getIOTDevicesByUser']);
     });
 
     // Rute untuk Subscription
