@@ -276,7 +276,7 @@ class CattleControllerApi extends Controller
         $cattle = Cattle::findOrFail($id);
         $cattle->update(['status' => $validated['status']]);
 
-        return response()->json(['message' => 'Status changed', 'status' => 'success', 'statusCode' => 200]);
+        return response()->json(['message' => 'Status changed', 'status' => 'success', 'statusCode' => 200,'data' => $cattle]);
     }
 
     public function createRequest(Request $request)

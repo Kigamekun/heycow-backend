@@ -10,15 +10,32 @@ use Illuminate\Support\Facades\Log;
 
 class FarmControllerApi extends Controller
 {
+    // public function index()
+    // {
+    //     $farms = Farm::latest()->get();
+
+    //     return response()->json([
+    //         'message' => 'Data peternakan',
+    //         'status' => 'success',
+    //         'data' => $farms
+    //     ]);
+    // }
+
     public function index()
     {
-        $farms = Farm::latest()->get();
-
-        return response()->json([
-            'message' => 'Data peternakan',
-            'status' => 'success',
-            'data' => $farms
-        ]);
+        $limit = $_GET['limit'] ?? 10;
+        $data = Farm::orderBy('id', 'DESC');
+        if (isset($_GET['search'])) {
+            $data = $data->where('name', 'like', '%' . $_GET['search'] . '%');
+        }
+        if ($data->count() > 0) {
+            $data = $data->paginate($limit);
+            $custom = collect(['status' => 'success', 'statusCode' => 200, 'message' => 'Data berhasil diambil', 'data' => $data, 'timestamp' => now()->toIso8601String()]);
+            return response()->json($custom, 200);
+        } else {
+            $custom = collect(['status' => 'error', 'statusCode' => 404, 'message' => 'Data tidak ditemukan', 'data' => null]);
+            return response()->json($custom, 200);
+        }
     }
 
     public function store(Request $request)
@@ -52,6 +69,24 @@ class FarmControllerApi extends Controller
                 'status' => 'error'
             ], 422);
         }
+    }
+
+    public function show($id)
+    {
+        $farm = Farm::find($id);
+
+        if (!$farm) {
+            return response()->json([
+                'message' => 'Farm tidak ditemukan',
+                'status' => 'error'
+            ], 404);
+        }
+
+        return response()->json([
+            'message' => 'Data farm',
+            'status' => 'success',
+            'data' => $farm
+        ], 200);
     }
 
     public function update(Request $request, $id)
@@ -105,5 +140,27 @@ class FarmControllerApi extends Controller
             'message' => 'Farm berhasil dihapus',
             'status' => 'success'
         ], 200);
+    }
+
+
+    public function cattle($id) {
+        $farms = Farm::with('cattle')->where('id',$id)->first();
+
+        return response()->json([
+            'message' => 'Data peternakan dengan sapi',
+            'status' => 'success',
+            'data' => $farms
+        ]);
+    }
+
+    public function mostCattle() {
+        // $farms = Farm::withCount('cattle')->orderBy('cattle_count', 'desc')->get();
+        $farms = Farm::withCount('cattle')->orderBy('cattle_count', 'desc')->first();
+
+        return response()->json([
+            'message' => 'Data peternakan dengan sapi terbanyak',
+            'status' => 'success',
+            'data' => $farms
+        ]);
     }
 }

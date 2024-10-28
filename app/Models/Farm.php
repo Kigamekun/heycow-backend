@@ -18,4 +18,9 @@ class Farm extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
+
+    public function cattle()
+    {
+        return $this->hasMany(Cattle::class);
+    }
 }
