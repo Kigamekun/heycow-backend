@@ -12,6 +12,7 @@ class BlogPostControllerApi extends Controller
     public function index()
     {
         // Mendapatkan data BlogPost terbaru
+        
         $blogPosts = BlogPost::latest()->get();
 
         return response()->json([
@@ -24,18 +25,30 @@ class BlogPostControllerApi extends Controller
     public function store(Request $request)
     {
         try {
+            // $request->validate([
+            //     'image' => 'nullable|mimes:png,jpg,jpeg',
+            // ]);
             // Validasi input
             $validatedData = $request->validate([
                 'user_id' => 'required|exists:users,id',
                 'title' => 'required|string|max:255',
                 'content' => 'required|string',
+                'image' => 'nullable|mimes:png,jpg,jpeg|max:2048',
+                'category' => 'nullable|string|in:forum,jual',
+                'published' => 'nullable|string|in:draft,published',
+                "published_at" => "nullable|date"
             ], [
                 'user_id.required' => 'User ID harus diisi',
                 'user_id.exists' => 'User ID tidak valid',
                 'title.required' => 'Judul harus diisi',
                 'content.required' => 'Konten harus diisi',
+                'image.mimes' => 'Format gambar tidak valid',
+                'image.max' => 'Ukuran gambar terlalu besar',
             ]);
 
+            if (empty($validatedData['published_at'])) {
+                $validatedData['published_at'] = now();
+            }
             // Log data validasi untuk debugging
             Log::info('BlogPost validation successful', $validatedData);
 
@@ -60,8 +73,10 @@ class BlogPostControllerApi extends Controller
 
     public function show($id)
     {
-        $blogPost = BlogPost::find($id);
-
+        // $blogPost = BlogPost::find($id);
+        
+        // $blogPost = BlogPost::with('comments')->find($id);
+        $blogPost = BlogPost::with('comments')->find($id);
         if (!$blogPost) {
             return response()->json([
                 'message' => 'BlogPost tidak ditemukan',
@@ -92,6 +107,7 @@ class BlogPostControllerApi extends Controller
             $validatedData = $request->validate([
                 'title' => 'nullable|string|max:255',
                 'content' => 'nullable|string',
+                'image' => 'nullable|mimes:png,jpg,jpeg|max:2048',
             ], [
                 'title.string' => 'Judul harus berupa teks',
                 'content.string' => 'Konten harus berupa teks',
@@ -119,7 +135,11 @@ class BlogPostControllerApi extends Controller
     public function destroy($id)
     {
         $blogPost = BlogPost::find($id);
+        // $blogPost = BlogPost::with('comments')->find($id);
 
+        // if ($blogPost) {
+        //     $blogPost->comments()->delete();
+        // }
         if (!$blogPost) {
             return response()->json([
                 'message' => 'BlogPost tidak ditemukan',
@@ -133,5 +153,37 @@ class BlogPostControllerApi extends Controller
             'message' => 'BlogPost berhasil dihapus',
             'status' => 'success'
         ], 200);
+    }
+
+
+    public function Forum()
+    {
+        try {
+            // Mendapatkan data BlogPost terbaru dengan kategori 'forum'
+            $blogPost = BlogPost::where('category', 'forum')->latest()->get();
+            Log::info($blogPost); // Log untuk debug
+            
+            if ($blogPost->isEmpty()) {
+                return response()->json([
+                    'message' => 'Data BlogPost tidak ditemukan',
+                    'status' => 'error'
+                ], 404);
+            }
+
+            return response()->json([
+                'message' => 'Data BlogPost',
+                'status' => 'success',
+                'data' => $blogPost
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Terjadi kesalahan saat mengambil data BlogPost',
+                'status' => 'error',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+
+
+
     }
 }

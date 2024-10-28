@@ -13,12 +13,14 @@ return new class extends Migration {
         Schema::create('blog_posts', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); // Penulis (user yang memposting)
+            $table->unsignedBigInteger('cattle_id')->nullable(); // ID ternak yang terkait (opsional)
+            $table->foreign('cattle_id')->references('id')->on('cattle')->onDelete('cascade')->onUpdate('cascade'); 
             $table->string('title');
             $table->text('content');
+            $table->enum('category', ['forum','jual'])->default('forum'); // Kategori postingan
             $table->string('image')->nullable(); // URL gambar postingan (opsional)
-            $table->boolean('published')->default(false); // Status apakah postingan sudah dipublish
-            $table->unsignedBigInteger('iot_device_id');
-            $table->foreign('iot_device_id')->references('id')->on('iot_devices')->onDelete('cascade')->onUpdate('cascade');
+            // $table->enum('published')->default(false); // Status apakah postingan sudah dipublish
+            $table->enum('published', ['draft', 'published'])->default('draft'); // Status apakah postingan sudah dipublish
             $table->timestamp('published_at')->nullable(); // Waktu publikasi postingan
             $table->timestamps();
 

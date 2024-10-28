@@ -15,5 +15,14 @@ class Comment extends Model
         'content',
     ];
 
+    public function reply()
+    {
+        return $this->hasMany(Reply::class, 'comment_id');
+    }
+    
+    public function blogPost()
+    {
+        return $this->belongsTo(BlogPost::class, 'post_id');
+    }
     public $timestamps = true; // Ini secara default sudah true, tetapi bisa dinyatakan eksplisit
 }

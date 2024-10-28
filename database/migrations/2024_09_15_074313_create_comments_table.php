@@ -14,10 +14,13 @@ return new class extends Migration
         if (!Schema::hasTable('comments')) {
             Schema::create('comments', function (Blueprint $table) {
                 $table->id();
+                $table->string('image')->nullable(); // URL gambar postingan (opsional)
                 $table->unsignedBigInteger('post_id');
+                $table->foreign('post_id')->references('id')->on('blog_posts')->onDelete('cascade');
                 $table->unsignedBigInteger('user_id');
                 $table->text('content');
                 $table->timestamps();
+                
             });
         }
     }

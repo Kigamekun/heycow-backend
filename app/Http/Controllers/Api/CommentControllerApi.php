@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\BlogPost;
 use App\Models\Comment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -10,9 +11,24 @@ use Illuminate\Support\Facades\Log;
 class CommentControllerApi extends Controller
 {
     // Mengambil semua komentar
-    public function index()
+    public function index($id)
     {
-        $comments = Comment::all();
+        // $comments = Comment::latest()->get();
+        // return response()->json([
+        //     'status' => 'sukses',
+        //     'data' => $comments,
+        // ]);
+        $blogPost = BlogPost::find($id);
+
+        if (!$blogPost) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Blog post tidak ditemukan',
+            ], 404);
+        }
+
+        $comments = $blogPost->comments()->latest()->get();
+
         return response()->json([
             'status' => 'sukses',
             'data' => $comments,
@@ -47,7 +63,8 @@ class CommentControllerApi extends Controller
     // Mengambil komentar spesifik
     public function show($id)
     {
-        $comment = Comment::find($id);
+        // $comment = Comment::find($id);
+        $comment = Comment::with('replies')->find($id);
         if (!$comment) {
             return response()->json(['status' => 'gagal', 'pesan' => 'Komentar tidak ditemukan'], 404);
         }

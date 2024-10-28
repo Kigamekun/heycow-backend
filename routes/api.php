@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\FarmControllerApi;
 use App\Http\Controllers\Api\CattleControllerApi;
 use App\Http\Controllers\Api\IOTDevicesControllerApi;
+use App\Http\Controllers\Api\ReplyControllerApi;
 use App\Http\Controllers\Api\SubscriptionControllerApi;
 use App\Http\Controllers\Api\CommentControllerApi;
 use App\Http\Controllers\Api\BlogPostControllerApi;
@@ -11,6 +12,7 @@ use App\Http\Controllers\Api\TransactionControllerApi;
 use App\Http\Controllers\Api\BreedControllerApi;
 use App\Http\Controllers\Api\UserControllerApi;
 use App\Http\Controllers\Api\HelpCenterControllerApi;
+
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 
@@ -53,21 +55,41 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     // Rute untuk Comments
-    Route::prefix('comments')->group(function () {
-        Route::get('/', [CommentControllerApi::class, 'index']);
-        Route::post('/', [CommentControllerApi::class, 'store']);
-        Route::get('/{id}', [CommentControllerApi::class, 'show']);
-        Route::put('/{id}', [CommentControllerApi::class, 'update']);
-        Route::delete('/{id}', [CommentControllerApi::class, 'destroy']);
-    });
+    // Route::prefix('comments')->group(function () {
+    //     Route::get('/blog-posts/comments', [CommentControllerApi::class, 'index']);
+    //     Route::post('/blog-posts/comments', [CommentControllerApi::class, 'store']);
+    //     Route::get('/blog-posts{id}/comments', [CommentControllerApi::class, 'show']);
+    //     Route::put('/{id}', [CommentControllerApi::class, 'update']);
+    //     Route::delete('/{id}', [CommentControllerApi::class, 'destroy']);
+    // });
 
     // Rute untuk Blog Posts
-    Route::prefix('blog_posts')->group(function () {
+    Route::prefix('blog-posts')->group(function () {
         Route::get('/', [BlogPostControllerApi::class, 'index']);
         Route::post('/', [BlogPostControllerApi::class, 'store']);
         Route::get('/{id}', [BlogPostControllerApi::class, 'show']);
         Route::put('/{id}', [BlogPostControllerApi::class, 'update']);
         Route::delete('/{id}', [BlogPostControllerApi::class, 'destroy']);
+        // Route::get('/{id}/comments', [CommentControllerApi::class, 'index']);
+        
+        // Komentar API
+        Route::get('/{id}/comments', [CommentControllerApi::class, 'index']);
+        Route::post('/{id}/comments/', [CommentControllerApi::class, 'store']);
+        Route::get('/{id}/comments/{comment_id}', [CommentControllerApi::class, 'show']);
+        Route::put('/{id}/comments', [CommentControllerApi::class, 'update']);
+        Route::delete('/{id}/comments', [CommentControllerApi::class, 'destroy']);
+
+        // Forum
+        Route::get('/forum', [BlogPostControllerApi::class, 'Forum']);
+
+
+        // Reply API
+        Route::get('/{id}/comments/{comment_id}/reply', [ReplyControllerApi::class, 'index']);
+        Route::post('/{id}/comments/{comment_id}/reply', [ReplyControllerApi::class, 'store']);
+        Route::get('/{id}/comments/{comment_id}/reply/{reply_id}', [ReplyControllerApi::class, 'show']);
+        Route::put('/{id}/comments/{comment_id}/reply', [ReplyControllerApi::class, 'update']);
+        Route::delete('/{id}/comments/{comment_id}/reply', [ReplyControllerApi::class, 'destroy']);
+
     });
 
     // Rute untuk Health Records
