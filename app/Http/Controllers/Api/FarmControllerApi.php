@@ -9,24 +9,33 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Log;
 
 class FarmControllerApi extends Controller
-{   
+{
+    // public function index()
+    // {
+    //     $farms = Farm::latest()->get();
+
+    //     return response()->json([
+    //         'message' => 'Data peternakan',
+    //         'status' => 'success',
+    //         'data' => $farms
+    //     ]);
+    // }
 
     public function index()
     {
-        if(Auth::user()->role == 'admin') {
-            $farms = Farm::latest()->get();
-
-        } else {
-            $farms = Farm::where('user_id',Auth::user()->id)->first();
-
+        $limit = $_GET['limit'] ?? 10;
+        $data = Farm::orderBy('id', 'DESC');
+        if (isset($_GET['search'])) {
+            $data = $data->where('name', 'like', '%' . $_GET['search'] . '%');
         }
-
-        return response()->json([
-            'message' => 'Data peternakan',
-            'status' => 'success',
-            
-            'data' => $farms
-        ]);
+        if ($data->count() > 0) {
+            $data = $data->paginate($limit);
+            $custom = collect(['status' => 'success', 'statusCode' => 200, 'message' => 'Data berhasil diambil', 'data' => $data, 'timestamp' => now()->toIso8601String()]);
+            return response()->json($custom, 200);
+        } else {
+            $custom = collect(['status' => 'error', 'statusCode' => 404, 'message' => 'Data tidak ditemukan', 'data' => null]);
+            return response()->json($custom, 200);
+        }
     }
 
     public function store(Request $request)
@@ -35,18 +44,15 @@ class FarmControllerApi extends Controller
             $validatedData = $request->validate([
                 'name' => 'required|string|max:255',
                 'address' => 'required|string|max:255',
-                "user_id" => "required|exists:users,id|unique:farms,user_id"
             ], [
                 'name.required' => 'Nama harus diisi',
                 'address.required' => 'Alamat harus diisi',
-                'user_id.required' => 'User ID harus diisi'
             ]);
 
             // Create new farm after validation success
             $farm = Farm::create([
                 'name' => $validatedData['name'],
                 'address' => $validatedData['address'],
-                'user_id' => $validatedData['user_id']
             ]);
 
             return response()->json([
@@ -65,6 +71,24 @@ class FarmControllerApi extends Controller
         }
     }
 
+    public function show($id)
+    {
+        $farm = Farm::find($id);
+
+        if (!$farm) {
+            return response()->json([
+                'message' => 'Farm tidak ditemukan',
+                'status' => 'error'
+            ], 404);
+        }
+
+        return response()->json([
+            'message' => 'Data farm',
+            'status' => 'success',
+            'data' => $farm
+        ], 200);
+    }
+
     public function update(Request $request, $id)
     {
         $farm = Farm::find($id);
@@ -76,7 +100,6 @@ class FarmControllerApi extends Controller
         try {
             // Validasi data input
             $validatedData = $request->validate([
-                'user_id' => 'required|exists:users,id',
                 'name' => 'required|string|max:255',
                 'address' => 'required|string|max:255',
             ]);
@@ -117,5 +140,27 @@ class FarmControllerApi extends Controller
             'message' => 'Farm berhasil dihapus',
             'status' => 'success'
         ], 200);
+    }
+
+
+    public function cattle($id) {
+        $farms = Farm::with('cattle')->where('id',$id)->first();
+
+        return response()->json([
+            'message' => 'Data peternakan dengan sapi',
+            'status' => 'success',
+            'data' => $farms
+        ]);
+    }
+
+    public function mostCattle() {
+        // $farms = Farm::withCount('cattle')->orderBy('cattle_count', 'desc')->get();
+        $farms = Farm::withCount('cattle')->orderBy('cattle_count', 'desc')->first();
+
+        return response()->json([
+            'message' => 'Data peternakan dengan sapi terbanyak',
+            'status' => 'success',
+            'data' => $farms
+        ]);
     }
 }
