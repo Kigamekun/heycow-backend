@@ -51,4 +51,9 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function farms()
+    {
+        return $this->hasOne(Farm::class, 'user_id', 'id');
+    }
 }

@@ -32,6 +32,16 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/{id}', [CattleControllerApi::class, 'show']);
         Route::put('/{id}', [CattleControllerApi::class, 'update']);
         Route::delete('/{id}', [CattleControllerApi::class, 'destroy']);
+
+        Route::post('/iot-devices/search', [CattleControllerApi::class, 'searchIOT']);
+
+        Route::post('/assign-iot-devices/{id}', [CattleControllerApi::class, 'assignIOTDevices'])->name('cattle.assign-iot-devices');
+        Route::post('/remove-iot-devices/{id}', [CattleControllerApi::class, 'removeIOTDevices'])->name('cattle.remove-iot-devices');
+        Route::post('change-status', [CattleControllerApi::class, 'changeStatus'])->name('cattle.change-status');
+        Route::post('/create-request', [CattleControllerApi::class, 'createRequest'])->name('cattle.create-request');
+        Route::post('/respond-request/{id}', [CattleControllerApi::class, 'respondToRequest'])->name('cattle.respond-request');
+        Route::post('/complete-contract/{id}', [CattleControllerApi::class, 'completeContract'])->name('cattle.complete-contract');
+
     });
 
     // Rute untuk IoT Devices

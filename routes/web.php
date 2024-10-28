@@ -52,6 +52,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/store', [CattleController::class, 'store'])->name('cattle.store');
         Route::put('/update/{id}', [CattleController::class, 'update'])->name('cattle.update');
         Route::delete('/delete/{id}', [CattleController::class, 'destroy'])->name('cattle.delete');
+
+
     });
 
     Route::prefix('user')->group(function () { # untuk gabungan
