@@ -100,7 +100,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Rute untuk Breeds
     Route::prefix('breeds')->group(function () {
-        Route::get('/', [BreedControllerApi::class, 'index']);
+        Route::get('/', [CattleControllerApi::class, 'getBreeds']);
         Route::post('/', [BreedControllerApi::class, 'store']);
         Route::delete('/{id}', [BreedControllerApi::class, 'destroy']);
     });
