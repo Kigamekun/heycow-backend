@@ -33,6 +33,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::put('/{id}', [CattleControllerApi::class, 'update']);
         Route::delete('/{id}', [CattleControllerApi::class, 'destroy']);
 
+        Route::post('/iot-devices/search', [CattleControllerApi::class, 'searchIOT']);
 
         Route::post('/assign-iot-devices/{id}', [CattleControllerApi::class, 'assignIOTDevices'])->name('cattle.assign-iot-devices');
         Route::post('/remove-iot-devices/{id}', [CattleControllerApi::class, 'removeIOTDevices'])->name('cattle.remove-iot-devices');

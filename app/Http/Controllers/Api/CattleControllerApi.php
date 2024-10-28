@@ -40,7 +40,7 @@ class CattleControllerApi extends Controller
             return response()->json($custom, 200);
         } else {
             $custom = collect(['status' => 'error', 'statusCode' => 404, 'message' => 'Data tidak ditemukan', 'data' => null]);
-            return response()->json($custom, 404);
+            return response()->json($custom, 200);
         }
     }
 
@@ -55,19 +55,22 @@ class CattleControllerApi extends Controller
                 'birth_date' => 'required|date',
                 'birth_weight' => 'required|numeric',
                 'birth_height' => 'nullable|numeric',
-                'iot_device_id' => 'nullable|exists:iot_devices,id',
-                'last_vaccination' => 'nullable|date',
+                // 'iot_device_id' => 'nullable|exists:iot_devices,id',
+                // 'last_vaccination' => 'nullable|date',
             ]);
             $user = Auth::id();
             $farm = Farm::where('user_id', $user)->first();
             $farm_id = $farm ? $farm->id : null;
             $iot_device_id = $request->iot_device_id;
-            if (Cattle::where('iot_device_id', $iot_device_id)->exists()) {
+
+
+            if ($iot_device_id != null && Cattle::where('iot_device_id', $iot_device_id)->exists()) {
                 return response()->json([
                     'message' => 'Perangkat IoT sudah digunakan',
                     'status' => 'error'
                 ], 400);
             }
+
             $cattleCount = Cattle::where('user_id', $user)->count();
             $cattle = Cattle::create([
                 'name' => 'Sapi ' . ($cattleCount + 1),
@@ -81,7 +84,6 @@ class CattleControllerApi extends Controller
                 'farm_id' => $farm_id,
                 'user_id' => $user,
                 'iot_device_id' => $iot_device_id,
-                'last_vaccination' => $validatedData['last_vaccination'],
             ]);
             return response()->json([
                 'message' => 'Sapi berhasil ditambahkan',
@@ -121,6 +123,7 @@ class CattleControllerApi extends Controller
                 'status' => $cattle->status,
                 'gender' => $cattle->gender,
                 'type' => $cattle->type,
+                'iot_device_id' => optional($cattle->iotDevice)->id,
                 'birth_date' => $cattle->birth_date,
                 'birth_weight' => $cattle->birth_weight,
                 'birth_height' => $cattle->birth_height,
@@ -129,7 +132,7 @@ class CattleControllerApi extends Controller
                     'id' => optional($cattle->farm)->id,
                     'name' => optional($cattle->farm)->name,
                 ],
-                'iotDevice' => [
+                'iot_device' => [
                     'id' => optional($cattle->iotDevice)->id,
                     'serial_number' => optional($cattle->iotDevice)->serial_number,
                     'installation_date' => optional($cattle->iotDevice)->installation_date,
@@ -167,8 +170,6 @@ class CattleControllerApi extends Controller
                 'birth_date' => 'required|date',
                 'birth_weight' => 'required|numeric',
                 'birth_height' => 'nullable|numeric',
-                'iot_device_id' => 'nullable|exists:iot_devices,id',
-                'last_vaccination' => 'nullable|date',
             ]);
 
             // Update data sapi
@@ -180,8 +181,6 @@ class CattleControllerApi extends Controller
                 'birth_date' => $validatedData['birth_date'],
                 'birth_weight' => $validatedData['birth_weight'],
                 'birth_height' => $validatedData['birth_height'],
-                'iot_device_id' => $validatedData['iot_device_id'],
-                'last_vaccination' => $validatedData['last_vaccination'],
             ]);
 
             return response()->json([
@@ -217,6 +216,20 @@ class CattleControllerApi extends Controller
         ], 200);
     }
 
+    public function searchIOT(Request $request)
+    {
+        // Ambil query pencarian dari request
+        $query = $request->input('query');
+
+        // Ambil data IoT device dengan paginasi
+        $devices = IOTDevices::where('serial_number', 'like', '%' . $query . '%')
+            ->limit(10) // Batasi jumlah data yang diambil
+            ->get();
+
+        // Kembalikan hasil dalam format JSON
+        return response()->json($devices);
+    }
+
     public function monitorHealth($id)
     {
         // Logic for monitoring health can be implemented here
@@ -226,14 +239,23 @@ class CattleControllerApi extends Controller
 
     public function assignIOTDevices(Request $request, $id)
     {
-        if (Cattle::where('iot_device_id', $request->iot_device_id)->exists()) {
+        $iotDevice = IOTDevices::where('serial_number', $request->iot_device_id)->first();
+
+        if (!$iotDevice) {
+            return response()->json([
+                'message' => 'Perangkat IoT tidak ditemukan',
+                'status' => 'error'
+            ], 404);
+        }
+
+        if (Cattle::where('iot_device_id', $iotDevice->id)->exists()) {
             return response()->json([
                 'message' => 'Perangkat IoT sudah digunakan',
                 'status' => 'error'
             ], 400);
         }
 
-        Cattle::where('id', $id)->update(['iot_device_id' => $request->iot_device_id]);
+        Cattle::where('id', $id)->update(['iot_device_id' => $iotDevice->id]);
 
         return response()->json(['message' => 'IOT devices assigned to cattle ' . $id, 'status' => 'success', 'statusCode' => 200]);
     }
