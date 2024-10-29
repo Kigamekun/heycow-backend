@@ -133,11 +133,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Rute untuk Transactions
     Route::prefix('transactions')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Api\TransactionControllerApi::class, 'index']);
-        Route::post('/', [\App\Http\Controllers\Api\TransactionControllerApi::class, 'store']);
-        Route::get('/{id}', [\App\Http\Controllers\Api\TransactionControllerApi::class, 'show']);
-        Route::put('/{id}', [\App\Http\Controllers\Api\TransactionControllerApi::class, 'update']);
-        Route::delete('/{id}', [\App\Http\Controllers\Api\TransactionControllerApi::class, 'destroy']);
+        Route::get('/', [TransactionControllerApi::class, 'index']);
+        Route::post('/', [TransactionControllerApi::class, 'store']);
+        Route::get('/{id}', [TransactionControllerApi::class, 'show']);
+        Route::put('/{id}', [TransactionControllerApi::class, 'update']);
+        Route::delete('/{id}', [TransactionControllerApi::class, 'destroy']);
     });
 
     // Rute untuk Breeds
@@ -147,16 +147,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::delete('/{id}', [BreedControllerApi::class, 'destroy']);
     });
 
-    Route::post('/uploadFile', function (Request $request) {
-        if ($request->hasFile('file')) {
-            $file = $request->file('file');
-            $path = $file->store('public/uploads');
-            return response()->json(['status' => 'sukses', 'path' => $path]);
-        }
-        return response()->json(['status' => 'gagal', 'pesan' => 'File tidak ditemukan'], 400);
-    });
-
-
     // Rute untuk Users
     Route::prefix('users')->group(function () {
         Route::get('/', [UserControllerApi::class, 'index']);
@@ -164,13 +154,26 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/{id}', [UserControllerApi::class, 'show']);
         Route::put('/{id}', [UserControllerApi::class, 'update']);
         Route::delete('/{id}', [UserControllerApi::class, 'destroy']);
+        Route::post('/forgot-password', [UserControllerApi::class, 'forgotPassword']);
+        Route::post('/change-password', [UserControllerApi::class, 'changePassword']);
+        Route::post('/request-iot', [UserControllerApi::class, 'requestIot']);
+        Route::post('/assign-farm/{userId}', [UserControllerApi::class, 'assignFarm']);
     });
 
-    // Rute Help Center
+    // Rute untuk Help Center
     Route::prefix('help_centers')->group(function () {
         Route::get('/', [HelpCenterControllerApi::class, 'index']);
         Route::post('/', [HelpCenterControllerApi::class, 'store']);
         Route::delete('/{id}', [HelpCenterControllerApi::class, 'destroy']);
+    });
+
+    Route::post('/uploadFile', function (Request $request) {
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
+            $path = $file->store('public/uploads');
+            return response()->json(['status' => 'sukses', 'path' => $path]);
+        }
+        return response()->json(['status' => 'gagal', 'pesan' => 'File tidak ditemukan'], 400);
     });
 });
 

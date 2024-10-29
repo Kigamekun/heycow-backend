@@ -27,6 +27,7 @@ class User extends Authenticatable
         'gender',
         'bio',
         'avatar',
+        'farm_id',
     ];
 
     /**
