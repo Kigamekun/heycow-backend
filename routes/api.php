@@ -90,7 +90,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::put('/{id}', [BlogPostControllerApi::class, 'update']);
         Route::delete('/{id}', [BlogPostControllerApi::class, 'destroy']);
         // Route::get('/{id}/comments', [CommentControllerApi::class, 'index']);
-        
+
         // Komentar API
         Route::get('/{id}/comments', [CommentControllerApi::class, 'index']);
         Route::post('/{id}/comments', [CommentControllerApi::class, 'store']);
@@ -191,5 +191,11 @@ Route::post('/auth/register', [\App\Http\Controllers\API\AuthController::class, 
 Route::post('/auth/login', [\App\Http\Controllers\API\AuthController::class, 'login']);
 
 Route::get('/getFile/{folder}/{filename}', function ($folder, $filename) {
+    return response()->file(storage_path('app/public/') . $folder . '/' . $filename);
+});
+
+
+
+Route::get('/testing', function ($folder, $filename) {
     return response()->file(storage_path('app/public/') . $folder . '/' . $filename);
 });
