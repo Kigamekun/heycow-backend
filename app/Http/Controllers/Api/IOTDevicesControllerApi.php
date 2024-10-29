@@ -29,7 +29,7 @@ class IOTDevicesControllerApi extends Controller
 
 
         $request->validate([
-            'serial_number' => 'required|string',
+            'serial_number' => 'required|string|unique:iot_devices,serial_number',
             'installation_date' => 'required|date',
             'status' => 'required|string',
         ]);
@@ -99,7 +99,6 @@ class IOTDevicesControllerApi extends Controller
         ], 200);
     }
 
-
     public function destroy($id)
     {
         $device = IOTDevices::find($id);
@@ -118,6 +117,60 @@ class IOTDevicesControllerApi extends Controller
         return response()->json([
             'message' => 'Perangkat IoT berhasil dihapus',
             'status' => 'success'
+        ], 200);
+    }
+
+    public function AssignIOTDevices(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'iot_device_id' => 'required|exists:iot_devices,id',
+        ]);
+
+        $device = IOTDevices::find($request->iot_device_id);
+
+        if (!$device) {
+            return response()->json(['message' => 'Perangkat IoT tidak ditemukan', 'status' => 'error'], 404);
+        }
+
+        $device->update(['user_id' => $request->user_id]);
+
+        return response()->json([
+            'message' => 'Perangkat IoT berhasil diassign',
+            'status' => 'success',
+            'data' => $device
+        ], 200);
+    }
+
+    public function getIOTDevicesByUser()
+    {
+        $devices = IOTDevices::where('user_id', auth()->user()->id)->get();
+
+        return response()->json([
+            'message' => 'Data perangkat IoT',
+            'status' => 'success',
+            'data' => $devices
+        ]);
+    }
+
+    public function changeStatus(Request $request, $id)
+    {
+        $device = IOTDevices::find($id);
+
+        if (!$device) {
+            return response()->json(['message' => 'Perangkat IoT tidak ditemukan', 'status' => 'error'], 404);
+        }
+
+        $request->validate([
+            'status' => 'required|in:active,inactive',
+        ]);
+
+        $device->update(['status' => $request->status]);
+
+        return response()->json([
+            'message' => 'Status perangkat IoT berhasil diubah',
+            'status' => 'success',
+            'data' => $device
         ], 200);
     }
 }

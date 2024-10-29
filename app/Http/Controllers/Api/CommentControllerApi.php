@@ -3,16 +3,34 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\BlogPost;
 use App\Models\Comment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
+use function Pest\Laravel\post;
+
 class CommentControllerApi extends Controller
 {
     // Mengambil semua komentar
-    public function index()
+    public function index($id)
     {
-        $comments = Comment::all();
+        // $comments = Comment::latest()->get();
+        // return response()->json([
+        //     'status' => 'sukses',
+        //     'data' => $comments,
+        // ]);
+        $blogPost = BlogPost::find($id);
+
+        if (!$blogPost) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Blog post tidak ditemukan',
+            ], 404);
+        }
+
+        $comments = $blogPost->comments()->latest()->get();
+
         return response()->json([
             'status' => 'sukses',
             'data' => $comments,
@@ -20,16 +38,22 @@ class CommentControllerApi extends Controller
     }
 
     // Menyimpan komentar baru
-    public function store(Request $request)
+    public function store(Request $request, $id)
     {
         $validatedData = $request->validate([
-            'post_id' => 'required|integer',
-            'user_id' => 'required|integer',
+            // 'post_id' => 'integer',
+            // 'user_id' => 'required|integer',
             'content' => 'required|string',
         ]);
-
+        
         try {
-            $comment = Comment::create($validatedData);
+            $comment = Comment::create([
+                'content' => $validatedData['content'],
+                'user_id' => auth()->user()->id,
+                'post_id' => $id,
+            ]);
+  
+        // Hapus atau komentar baris ini
             return response()->json([
                 'status' => 'sukses',
                 'pesan' => 'Komentar berhasil dibuat',
@@ -47,7 +71,8 @@ class CommentControllerApi extends Controller
     // Mengambil komentar spesifik
     public function show($id)
     {
-        $comment = Comment::find($id);
+        // $comment = Comment::find($id);
+        $comment = Comment::with('replies')->find($id);
         if (!$comment) {
             return response()->json(['status' => 'gagal', 'pesan' => 'Komentar tidak ditemukan'], 404);
         }
@@ -63,7 +88,10 @@ class CommentControllerApi extends Controller
             return response()->json(['status' => 'gagal', 'pesan' => 'Komentar tidak ditemukan'], 404);
         }
 
-        $validatedData = $request->validate(['content' => 'nullable|string']);
+        $validatedData = $request->validate([
+            'content' => 'nullable|string',
+            'like' => 'nullable|String|in:like,dislike'
+        ]);
         $comment->update($validatedData);
 
         return response()->json(['status' => 'sukses', 'pesan' => 'Komentar berhasil diperbarui', 'data' => $comment]);

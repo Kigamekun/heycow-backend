@@ -19,7 +19,6 @@ return new class extends Migration {
         $table->string('image')->nullable();
         $table->timestamps();
 
-        // Definisikan foreign key untuk user_id yang mengacu ke id di tabel users
         $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
     });
 }

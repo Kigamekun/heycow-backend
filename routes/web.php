@@ -52,6 +52,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/store', [CattleController::class, 'store'])->name('cattle.store');
         Route::put('/update/{id}', [CattleController::class, 'update'])->name('cattle.update');
         Route::delete('/delete/{id}', [CattleController::class, 'destroy'])->name('cattle.delete');
+
+
     });
 
     Route::prefix('user')->group(function () { # untuk gabungan
@@ -74,6 +76,14 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::prefix('transaction')->group(function () {
+        Route::get('/', [TransactionController::class, 'index'])->name('transaction.index');
+        Route::get('/{id}', [TransactionController::class, 'detail'])->name('transaction.detail');
+        Route::post('/store', [TransactionController::class, 'store'])->name('transaction.store');
+        Route::put('/update/{id}', [TransactionController::class, 'update'])->name('transaction.update');
+        Route::delete('/delete/{id}', [TransactionController::class, 'destroy'])->name('transaction.delete');
+    });
+
+    Route::prefix('mqtt')->group(function () {
         Route::get('/', [TransactionController::class, 'index'])->name('transaction.index');
         Route::get('/{id}', [TransactionController::class, 'detail'])->name('transaction.detail');
         Route::post('/store', [TransactionController::class, 'store'])->name('transaction.store');

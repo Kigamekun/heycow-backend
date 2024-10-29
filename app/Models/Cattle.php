@@ -9,6 +9,10 @@ class Cattle extends Model
 {
     use HasFactory;
 
+    protected $hidden = [
+        'created_at', 'updated_at','breed_id', 'farm_id', 'user_id'
+    ];
+
     protected $fillable = [
         'name', 'breed_id', 'status', 'gender', 'type', 'birth_date',
         'birth_weight', 'birth_height', 'iot_device_id', 'last_vaccination',
