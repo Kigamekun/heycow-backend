@@ -218,15 +218,18 @@ class CattleControllerApi extends Controller
 
     public function searchIOT(Request $request)
     {
-        // Ambil query pencarian dari request
+        // Get the search query from the request
         $query = $request->input('query');
 
-        // Ambil data IoT device dengan paginasi
+        // Fetch IoT devices not associated with any cattle (iot_device_id not in cattle table)
         $devices = IOTDevices::where('serial_number', 'like', '%' . $query . '%')
-            ->limit(10) // Batasi jumlah data yang diambil
+            ->whereNotIn('id', function($subquery) {
+                $subquery->select('iot_device_id')->from('cattle');
+            })
+            ->limit(10) // Limit the number of results
             ->get();
 
-        // Kembalikan hasil dalam format JSON
+        // Return results in JSON format
         return response()->json($devices);
     }
 
