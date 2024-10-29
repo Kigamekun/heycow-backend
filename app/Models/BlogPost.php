@@ -37,7 +37,7 @@ class BlogPost extends Model
     public function cattle()
     {
         return $this->belongsTo(Cattle::class, 'cattle_id');
-    }
+    }   
 
     public function owner()
     {
