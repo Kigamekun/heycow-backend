@@ -48,6 +48,12 @@ class BreedControllerApi extends Controller
         }
     }
 
+    // API untuk update breed
+    public function update($id){
+        
+    }
+
+
     // API untuk menghapus breed
     public function destroy($id)
     {

@@ -29,7 +29,7 @@ class IOTDevicesControllerApi extends Controller
 
 
         $request->validate([
-            'serial_number' => 'required|string',
+            'serial_number' => 'required|string|unique:iot_devices,serial_number',
             'installation_date' => 'required|date',
             'status' => 'required|string',
         ]);
