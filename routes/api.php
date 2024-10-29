@@ -81,11 +81,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Rute untuk Transactions
     Route::prefix('transactions')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Api\TransactionControllerApi::class, 'index']);
-        Route::post('/', [\App\Http\Controllers\Api\TransactionControllerApi::class, 'store']);
-        Route::get('/{id}', [\App\Http\Controllers\Api\TransactionControllerApi::class, 'show']);
-        Route::put('/{id}', [\App\Http\Controllers\Api\TransactionControllerApi::class, 'update']);
-        Route::delete('/{id}', [\App\Http\Controllers\Api\TransactionControllerApi::class, 'destroy']);
+        Route::get('/', [TransactionControllerApi::class, 'index']);
+        Route::post('/', [TransactionControllerApi::class, 'store']);
+        Route::get('/{id}', [TransactionControllerApi::class, 'show']);
+        Route::put('/{id}', [TransactionControllerApi::class, 'update']);
+        Route::delete('/{id}', [TransactionControllerApi::class, 'destroy']);
     });
 
     // Rute untuk Breeds
@@ -93,6 +93,26 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/', [BreedControllerApi::class, 'index']);
         Route::post('/', [BreedControllerApi::class, 'store']);
         Route::delete('/{id}', [BreedControllerApi::class, 'destroy']);
+    });
+
+    // Rute untuk Users
+    Route::prefix('users')->group(function () {
+        Route::get('/', [UserControllerApi::class, 'index']);
+        Route::post('/', [UserControllerApi::class, 'store']);
+        Route::get('/{id}', [UserControllerApi::class, 'show']);
+        Route::put('/{id}', [UserControllerApi::class, 'update']);
+        Route::delete('/{id}', [UserControllerApi::class, 'destroy']);
+        Route::post('/forgot-password', [UserControllerApi::class, 'forgotPassword']);
+        Route::post('/change-password', [UserControllerApi::class, 'changePassword']);
+        Route::post('/request-iot', [UserControllerApi::class, 'requestIot']);
+        Route::post('/assign-farm/{userId}', [UserControllerApi::class, 'assignFarm']);
+    });
+
+    // Rute untuk Help Center
+    Route::prefix('help_centers')->group(function () {
+        Route::get('/', [HelpCenterControllerApi::class, 'index']);
+        Route::post('/', [HelpCenterControllerApi::class, 'store']);
+        Route::delete('/{id}', [HelpCenterControllerApi::class, 'destroy']);
     });
 
     Route::post('/uploadFile', function (Request $request) {
@@ -103,23 +123,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         }
         return response()->json(['status' => 'gagal', 'pesan' => 'File tidak ditemukan'], 400);
     });
-
-
-    // Rute untuk Users
-    Route::prefix('users')->group(function () {
-        Route::get('/', [UserControllerApi::class, 'index']);
-        Route::post('/', [UserControllerApi::class, 'store']);
-        Route::get('/{id}', [UserControllerApi::class, 'show']);
-        Route::put('/{id}', [UserControllerApi::class, 'update']);
-        Route::delete('/{id}', [UserControllerApi::class, 'destroy']);
-    });
-
-    // Rute Help Center
-    Route::prefix('help_centers')->group(function () {
-        Route::get('/', [HelpCenterControllerApi::class, 'index']);
-        Route::post('/', [HelpCenterControllerApi::class, 'store']);
-        Route::delete('/{id}', [HelpCenterControllerApi::class, 'destroy']);
-    });
 });
 
 Route::post('/login', [UserControllerApi::class, 'login']);
@@ -127,8 +130,6 @@ Route::post('/login', [UserControllerApi::class, 'login']);
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
-
-
 
 Route::post('/auth/register', [\App\Http\Controllers\API\AuthController::class, 'register']);
 Route::post('/auth/login', [\App\Http\Controllers\API\AuthController::class, 'login']);

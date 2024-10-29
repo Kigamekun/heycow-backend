@@ -18,6 +18,7 @@ class FarmControllerApi extends Controller
             'message' => 'Data peternakan',
             'status' => 'success',
             'data' => $farms
+            
         ]);
     }
 

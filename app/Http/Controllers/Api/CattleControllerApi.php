@@ -22,6 +22,7 @@ class CattleControllerApi extends Controller
             'message' => 'Data Sapi dan Perangkat IoT',
             'status' => 'success',
             'data' => $cattles
+            
         ]);
     }
 
