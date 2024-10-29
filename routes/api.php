@@ -194,8 +194,6 @@ Route::get('/getFile/{folder}/{filename}', function ($folder, $filename) {
     return response()->file(storage_path('app/public/') . $folder . '/' . $filename);
 });
 
-
-
 Route::get('/testing', function ($folder, $filename) {
     return response()->file(storage_path('app/public/') . $folder . '/' . $filename);
 });
