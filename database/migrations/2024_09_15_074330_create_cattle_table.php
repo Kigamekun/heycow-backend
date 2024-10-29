@@ -14,6 +14,8 @@ return new class extends Migration {
             $table->id();
             $table->string('name');
             $table->string('breed');
+            $table->unsignedBigInteger('breed_id')->after('name');
+            $table->foreign('breed_id')->references('id')->on('breeds')->onDelete('cascade')->onUpdate('cascade');
             $table->enum('status', ['sehat', 'sakit', 'mati', 'dijual']);
             $table->enum('gender', ['jantan', 'betina']);
             $table->enum('type', ['pedaging', 'perah', 'peranakan', 'lainnya']);
