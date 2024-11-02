@@ -36,14 +36,31 @@ class UserControllerApi extends Controller
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
+            'role' => 'nullable|string|in:admin,cattleman',
             'password' => 'required|string|min:8',
+            'phone_number' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:255',
+            'bio' => 'nullable|string|max:500',
+            'avatar' => 'nullable|file|mimes:jpeg,png,jpg,gif,svg|max:204'
         ]);
-
+    
         try {
-            $validatedData['password'] = Hash::make($validatedData['password']);
-            $validatedData['role'] = 'user'; // Atur role menjadi 'user'
+            // $validatedData -> ['password'] = Hash::make($validatedData['password']);
+            // $validatedData['password'] = Hash::make($validatedData['password']);
 
-            $user = User::create($validatedData);
+            // $validatedData['role'] = 'user'; // Atur role menjadi 'user'
+
+            $user = User::create([
+                'name' => $validatedData['name'],
+                'email' => $validatedData['email'],
+                'password' => $validatedData['password'] = Hash::make($validatedData['password']),
+                'phone_number' => $validatedData['phone_number'],
+                'address' => $validatedData['address'],
+                'bio' => $validatedData['bio'],
+                'avatar' => $request->file('avatar') ? $request->file('avatar')->store('avatar', 'public') : null,
+                // 'role' => $validatedData['role'],
+            ]);
+
             return response()->json([
                 'status' => 'sukses',
                 'pesan' => 'Pengguna berhasil dibuat',
@@ -61,20 +78,41 @@ class UserControllerApi extends Controller
     // Memperbarui data pengguna berdasarkan ID
     public function update(Request $request, $id)
     {
-        $validatedData = $request->validate([
-            'name' => 'nullable|string|max:255',
-            'email' => 'nullable|string|email|max:255|unique:users,email,' . $id,
-            'password' => 'nullable|string|min:8',
-        ]);
+
+        $user = User::find($id);
+        
 
         try {
-            $user = User::findOrFail($id);
+            $validatedData = $request->validate([
+                'name' => 'nullable|string|max:255',
+                'email' => 'nullable|string|email|max:255|unique:users,email,' . $id,
+                'password' => 'nullable|string|min:8',
+                'phone_number' => 'nullable|string|max:15',
+                'address' => 'nullable|string|max:255',
+                'bio' => 'nullable|string|max:500',
+                'avatar' => 'nullable|mimes:jpeg,png,jpg,gif,svg|max:2048'
+    
+            ],
+            [
+                'email.unique' => 'Email sudah digunakan oleh pengguna lain',
+                'avatar.avatar' => 'File harus berupa gambar',
+                'avatar.mimes' => 'File harus berformat jpeg, png, jpg, gif, atau svg',
+                'avatar.max' => 'Ukuran file tidak boleh lebih dari 2MB',
 
+            ]);
             if (isset($validatedData['password'])) {
                 $validatedData['password'] = Hash::make($validatedData['password']);
             }
 
-            $user->update(array_filter($validatedData)); // filter untuk menghindari null
+            $user->update(([
+                'name' => $validatedData['name'] ?? $user->name,
+                'email' => $validatedData['email'] ?? $user->email,
+                'password' => $validatedData['password'] ?? $user->password,
+                'phone_number' => $validatedData['phone_number'] ?? $user->phone_number,
+                'address' => $validatedData['address'] ?? $user->address,
+                'bio' => $validatedData['bio'] ?? $user->bio,
+                'avatar' => $request->file('avatar') ? $request->file('avatar')->store('avatar', 'public') : $user->avatar ?? null,
+            ])); // filter untuk menghindari null
 
             return response()->json([
                 'status' => 'sukses',

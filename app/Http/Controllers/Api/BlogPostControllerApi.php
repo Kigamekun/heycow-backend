@@ -12,78 +12,12 @@ use Illuminate\Support\Facades\Log;
 class BlogPostControllerApi extends Controller
 {
     
-    // public function showForumPosts()
-    // {
-    //     try {
-    //         // Mendapatkan data BlogPost terbaru dengan kategori 'forum'
-    //         $blogPosts = BlogPost::where('category', 'forum')->latest()->get();
-
-    //         // Debugging: Dump and die
-    //         // dd($blogPosts);
-            
-    //         if ($blogPosts->isEmpty()) {
-    //             return response()->json([
-    //                 'message' => 'BlogPost tidak ditemukan',
-    //                 'status' => 'error'
-    //             ], 404);
-    //         }
-
-    //         return response()->json([
-    //             'message' => 'Data BlogPost ditemukan',
-    //             'status' => 'success',
-    //             'data' => $blogPosts
-    //         ], 200);
-
-    //     } catch (\Exception $e) {
-    //         Log::error('Error saat mengambil data BlogPost: ' . $e->getMessage());
-    //         return response()->json([
-    //             'message' => 'Terjadi kesalahan saat mengambil data BlogPost',
-    //             'status' => 'error',
-    //             'error' => $e->getMessage()
-    //         ], 500);
-    //     }
-    // }
-
-    
-    // public function showJualPosts()
-    // {
-    //     try {
-    //         // Mendapatkan data BlogPost terbaru dengan kategori 'jual'
-    //         $blogPosts = BlogPost::where('category', 'jual')->latest()->get();
-
-    //         if ($blogPosts->isEmpty()) {
-    //             return response()->json([
-    //                 'message' => 'BlogPost tidak ditemukan',
-    //                 'status' => 'error'
-    //             ], 404);
-    //         }
-
-    //         return response()->json([
-    //             'message' => 'Data BlogPost ditemukan',
-    //             'status' => 'success',
-    //             'data' => $blogPosts
-    //         ], 200);
-
-    //     } catch (\Exception $e) {
-    //         Log::error('Error saat mengambil data BlogPost: ' . $e->getMessage());
-    //         return response()->json([
-    //             'message' => 'Terjadi kesalahan saat mengambil data BlogPost',
-    //             'status' => 'error',
-    //             'error' => $e->getMessage()
-    //         ], 500);
-    //     }
-    // }
-
     public function index(Request $request)
     {
-        $user = Auth::id();
-        $blogPosts = BlogPost::where('user_id', $user)
-            ->with(['comments', 'likes', 'cattle'])
+        $blogPosts = BlogPost::with(['comments', 'likes', 'cattle'])
             ->get()
             ->makeHidden(['user_id', 'cattle_id']);
-        // Mendapatkan data BlogPost terbaru
-        
-        // Ambil parameter query untuk sorting, pagination, dan pencarian
+
         $sortBy = $request->query('sort_by', 'created_at'); // Default sorting by 'created_at'
         $sortOrder = $request->query('sort_order', 'desc'); // Default sorting order 'desc'
         $perPage = $request->query('per_page', 10); // Default items per page
@@ -108,15 +42,14 @@ class BlogPostControllerApi extends Controller
         }
 
         // Ambil data BlogPost dengan sorting, pagination, dan pencarian
-        $blogPosts = BlogPost::where('user_id', $user)
-            ->where(function($query) use ($search) {
+        $blogPosts = BlogPost::where(function($query) use ($search) {
             if ($search) {
-                $query->where('title', 'like', "%{$search}%")
+            $query->where('title', 'like', "%{$search}%")
                   ->orWhere('content', 'like', "%{$search}%");
             }
-            })
-            ->orderBy($sortBy, $sortOrder)
-            ->paginate($perPage);
+        })
+        ->orderBy($sortBy, $sortOrder)
+        ->paginate($perPage);
 
 
         // Kita ambil category menggunakan params yakni forum atau jual
