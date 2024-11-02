@@ -14,9 +14,57 @@ use App\Http\Controllers\Api\UserControllerApi;
 use App\Http\Controllers\Api\HelpCenterControllerApi;
 use App\Http\Controllers\Api\LikeControllerApi;
 use Illuminate\Support\Facades\Route;
+use App\Models\{Cattle, IOTDevices, Farm};
 use Illuminate\Http\Request;
 
 Route::middleware(['auth:sanctum'])->group(function () {
+
+    Route::get('/dashboard', function () {
+        $userId = auth()->user()->id;
+        $cattleSick = Cattle::where('user_id', $userId)->where('status', 'sakit')->count();
+        $cattleHealthy = Cattle::where('user_id', $userId)->where('status', 'sehat')->count();
+        $cattleDead = Cattle::where('user_id', $userId)->where('status', 'mati')->count();
+        $iotDevices = IOTDevices::where('user_id', $userId)->count();
+        $pengangon = 4;
+        $farm = Farm::where('user_id', $userId)->first();
+        $cattle_count = Cattle::where('user_id', $userId)->count();
+        $cattle = Cattle::with([
+            'breed',
+            'iotDevice',
+        ])
+            ->where('user_id', $userId)
+            ->limit(5)
+            ->get()
+            ->map(function ($cattle) {
+                $hr = DB::table('health_records')->where('cattle_id', $cattle->id)->orderBy('created_at', 'desc')->first();
+                return [
+                    'id' => $cattle->id,
+                    'name' => $cattle->name,
+                    'status' => $cattle->status,
+                    'user_id' => $cattle->user_id,
+                    'gender' => $cattle->gender,
+                    'type' => $cattle->type,
+                    'birth_date' => $cattle->birth_date,
+                    'breed' => $cattle->breed->name ?? 'Unknown',
+                    'breed_id' => $cattle->breed_id,
+                    'birth_weight' => $cattle->birth_weight ?? 'Unknown',
+                    'birth_height' => $cattle->birth_height ?? 'Unknown',
+                    'iot_devices' => $cattle->iotDevice,
+                    'latest_health_status' => $hr
+                ];
+            });
+
+        return response()->json([
+            'cattle_sick' => $cattleSick,
+            'cattle_healthy' => $cattleHealthy,
+            'cattle_dead' => $cattleDead,
+            'iot_devices' => $iotDevices,
+            'pengangon' => $pengangon,
+            'farm' => $farm,
+            'cattle_count' => $cattle_count,
+            'cattle' => $cattle
+        ]);
+    });
 
     // Rute untuk Farms
     Route::prefix('farms')->group(function () {
@@ -25,9 +73,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/{id}', [FarmControllerApi::class, 'show']);
         Route::put('/{id}', [FarmControllerApi::class, 'update']);
         Route::delete('/{id}', [FarmControllerApi::class, 'destroy'])->middleware('checkRole:admin');
-
         Route::get('/cattle/{id}', [FarmControllerApi::class, 'cattle'])
-        ->where('id', '[0-9]+');
+            ->where('id', '[0-9]+');
         Route::get('/cattle/most-cattle', [FarmControllerApi::class, 'mostCattle']);
 
     });
@@ -39,9 +86,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/{id}', [CattleControllerApi::class, 'show']);
         Route::put('/{id}', [CattleControllerApi::class, 'update']);
         Route::delete('/{id}', [CattleControllerApi::class, 'destroy']);
-
         Route::post('/iot-devices/search', [CattleControllerApi::class, 'searchIOT']);
-
         Route::patch('/assign-iot-devices/{id}', [CattleControllerApi::class, 'assignIOTDevices'])->name('cattle.assign-iot-devices');
         Route::delete('/remove-iot-devices/{id}', [CattleControllerApi::class, 'removeIOTDevices'])->name('cattle.remove-iot-devices');
         Route::patch('change-status/{id}', [CattleControllerApi::class, 'changeStatus'])->name('cattle.change-status');
@@ -58,7 +103,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/{id}', [IOTDevicesControllerApi::class, 'show'])->where('id', '[0-9]+');
         Route::put('/{id}', [IOTDevicesControllerApi::class, 'update'])->middleware('checkRole:admin');
         Route::delete('/{id}', [IOTDevicesControllerApi::class, 'destroy'])->middleware('checkRole:admin');
-
         Route::post('/assign-iot-devices', [IOTDevicesControllerApi::class, 'AssignIOTDevices']);
         Route::put('/change-status/{id}', [IOTDevicesControllerApi::class, 'changeStatus']);
         Route::get('/get-iot-devices-by-user', [IOTDevicesControllerApi::class, 'getIOTDevicesByUser']);
@@ -72,15 +116,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::put('/{id}', [SubscriptionControllerApi::class, 'update']);
         Route::delete('/{id}', [SubscriptionControllerApi::class, 'destroy']);
     });
-
-    // Rute untuk Comments
-    // Route::prefix('comments')->group(function () {
-    //     Route::get('/blog-posts/comments', [CommentControllerApi::class, 'index']);
-    //     Route::post('/blog-posts/comments', [CommentControllerApi::class, 'store']);
-    //     Route::get('/blog-posts{id}/comments', [CommentControllerApi::class, 'show']);
-    //     Route::put('/{id}', [CommentControllerApi::class, 'update']);
-    //     Route::delete('/{id}', [CommentControllerApi::class, 'destroy']);
-    // });
 
     // Rute untuk Blog Posts
     Route::prefix('blog-posts')->group(function () {
@@ -103,9 +138,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/{id}/likes', [LikeControllerApi::class, 'store']);
         Route::get('/{id}/likes/{like_id}', [LikeControllerApi::class, 'show']);
         Route::put('/{id}/likes', [LikeControllerApi::class, 'update']);
-
-        // // Forum
-        // Route::get('/{category}', [BlogPostControllerApi::class, 'showCategory']);
 
         // Forum Category
         Route::get('/forum', [BlogPostControllerApi::class, 'showForumPosts']);
@@ -134,7 +166,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Rute untuk Transactions
     Route::prefix('transactions')->group(function () {
         Route::get('/', [TransactionControllerApi::class, 'index']);
-        Route::post('/', [TransactionControllerApi::class, 'store']);
+        Route::post('/create-charge', [TransactionControllerApi::class, 'createCharge']);
         Route::get('/{id}', [TransactionControllerApi::class, 'show']);
         Route::put('/{id}', [TransactionControllerApi::class, 'update']);
         Route::delete('/{id}', [TransactionControllerApi::class, 'destroy']);
@@ -191,9 +223,5 @@ Route::post('/auth/register', [\App\Http\Controllers\API\AuthController::class, 
 Route::post('/auth/login', [\App\Http\Controllers\API\AuthController::class, 'login']);
 
 Route::get('/getFile/{folder}/{filename}', function ($folder, $filename) {
-    return response()->file(storage_path('app/public/') . $folder . '/' . $filename);
-});
-
-Route::get('/testing', function ($folder, $filename) {
     return response()->file(storage_path('app/public/') . $folder . '/' . $filename);
 });

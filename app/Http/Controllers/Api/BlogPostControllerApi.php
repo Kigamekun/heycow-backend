@@ -8,127 +8,59 @@ use App\Models\Cattle;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class BlogPostControllerApi extends Controller
 {
-    
-    // public function showForumPosts()
-    // {
-    //     try {
-    //         // Mendapatkan data BlogPost terbaru dengan kategori 'forum'
-    //         $blogPosts = BlogPost::where('category', 'forum')->latest()->get();
-
-    //         // Debugging: Dump and die
-    //         // dd($blogPosts);
-            
-    //         if ($blogPosts->isEmpty()) {
-    //             return response()->json([
-    //                 'message' => 'BlogPost tidak ditemukan',
-    //                 'status' => 'error'
-    //             ], 404);
-    //         }
-
-    //         return response()->json([
-    //             'message' => 'Data BlogPost ditemukan',
-    //             'status' => 'success',
-    //             'data' => $blogPosts
-    //         ], 200);
-
-    //     } catch (\Exception $e) {
-    //         Log::error('Error saat mengambil data BlogPost: ' . $e->getMessage());
-    //         return response()->json([
-    //             'message' => 'Terjadi kesalahan saat mengambil data BlogPost',
-    //             'status' => 'error',
-    //             'error' => $e->getMessage()
-    //         ], 500);
-    //     }
-    // }
-
-    
-    // public function showJualPosts()
-    // {
-    //     try {
-    //         // Mendapatkan data BlogPost terbaru dengan kategori 'jual'
-    //         $blogPosts = BlogPost::where('category', 'jual')->latest()->get();
-
-    //         if ($blogPosts->isEmpty()) {
-    //             return response()->json([
-    //                 'message' => 'BlogPost tidak ditemukan',
-    //                 'status' => 'error'
-    //             ], 404);
-    //         }
-
-    //         return response()->json([
-    //             'message' => 'Data BlogPost ditemukan',
-    //             'status' => 'success',
-    //             'data' => $blogPosts
-    //         ], 200);
-
-    //     } catch (\Exception $e) {
-    //         Log::error('Error saat mengambil data BlogPost: ' . $e->getMessage());
-    //         return response()->json([
-    //             'message' => 'Terjadi kesalahan saat mengambil data BlogPost',
-    //             'status' => 'error',
-    //             'error' => $e->getMessage()
-    //         ], 500);
-    //     }
-    // }
 
     public function index(Request $request)
     {
-        $user = Auth::id();
-        $blogPosts = BlogPost::where('user_id', $user)
-            ->with(['comments', 'likes', 'cattle'])
-            ->get()
-            ->makeHidden(['user_id', 'cattle_id']);
-        // Mendapatkan data BlogPost terbaru
-        
-        // Ambil parameter query untuk sorting, pagination, dan pencarian
-        $sortBy = $request->query('sort_by', 'created_at'); // Default sorting by 'created_at'
-        $sortOrder = $request->query('sort_order', 'desc'); // Default sorting order 'desc'
-        $perPage = $request->query('per_page', 10); // Default items per page
-        $search = $request->query('search', ''); // Default search query
+        $sortBy = $request->query('sort_by', 'created_at');
+        $sortOrder = $request->query('sort_order', 'desc');
+        $perPage = $request->query('per_page', 10);
+        $search = $request->query('search', '');
+        $category = $request->query('category', '');
 
-        // Validasi parameter sorting
-        $allowedSortBy = ['created_at', 'title', 'published_at']; // Kolom yang diizinkan untuk sorting
-        
+        $allowedSortBy = ['created_at', 'title', 'published_at'];
         if (!in_array($sortBy, $allowedSortBy)) {
             return response()->json([
-            'message' => 'Kolom sorting tidak valid',
-            'status' => 'error'
+                'message' => 'Kolom sorting tidak valid',
+                'status' => 'error'
             ], 400);
         }
 
         $allowedSortOrder = ['asc', 'desc'];
         if (!in_array($sortOrder, $allowedSortOrder)) {
             return response()->json([
-            'message' => 'Arah sorting tidak valid',
-            'status' => 'error'
+                'message' => 'Arah sorting tidak valid',
+                'status' => 'error'
             ], 400);
         }
 
-        // Ambil data BlogPost dengan sorting, pagination, dan pencarian
-        $blogPosts = BlogPost::where('user_id', $user)
-            ->where(function($query) use ($search) {
-            if ($search) {
-                $query->where('title', 'like', "%{$search}%")
-                  ->orWhere('content', 'like', "%{$search}%");
-            }
-            })
-            ->orderBy($sortBy, $sortOrder)
-            ->paginate($perPage);
+        // Build the query with optional search, category filter, and like count
+        $query = BlogPost::with([ 'cattle', 'user'])
+            ->withCount('likes','comments') // This adds likes_count attribute
+            ->where(function ($query) use ($search) {
+                if ($search) {
+                    $query->where('title', 'like', "%{$search}%")
+                        ->orWhere('content', 'like', "%{$search}%");
+                }
+            });
 
+        if ($category) {
+            $query->where('category', $category);
+        }
 
-        // Kita ambil category menggunakan params yakni forum atau jual
-       // forum
-        if ($request->query('category') == 'forum') {
-            $blogPosts = BlogPost::where('category', 'forum')->get();
-        }
-        // jual
-        if ($request->query('category') == 'jual') {
-            $blogPosts = BlogPost::where('category', 'jual')->get();
-        }
-        // $blogPosts = BlogPost::latest()->get();
+        $blogPosts = $query->orderBy($sortBy, $sortOrder)->paginate($perPage);
+
+        // Modify each blog post to have relative time for `published_at`
+        $blogPosts->getCollection()->transform(function ($post) {
+            $post->published_at = $post->published_at
+                ? Carbon::parse($post->published_at)->diffForHumans()
+                : null;
+
+            return $post;
+        });
 
         return response()->json([
             'message' => 'Data BlogPost',
@@ -136,6 +68,7 @@ class BlogPostControllerApi extends Controller
             'data' => $blogPosts
         ]);
     }
+
 
     public function store(Request $request)
     {
@@ -145,7 +78,7 @@ class BlogPostControllerApi extends Controller
             // ]);
             // Validasi input
 
-            
+
             $validatedData = $request->validate([
                 'user_id' => 'exists:users,id',
                 'title' => 'required|string|max:255',
@@ -168,24 +101,24 @@ class BlogPostControllerApi extends Controller
                 $validatedData['published_at'] = now();
             }
             $user = Auth::id();
-            
+
             // $cattle_id = $cattle ? $cattle->id : null;
-            
+
             // Log data validasi untuk debugging
             Log::info('BlogPost validation successful', $validatedData);
-            
+
             $cattle = Cattle::where('user_id', $user)->first();
 
             // Simpan blog post
             $blogPost = BlogPost::create([
                 'user_id' => $user,
-            'title' => $validatedData['title'],
-            'content' => $validatedData['content'],
-            'image' => $request->file('image') ? $request->file('image')->store('blog_images', 'public') : null,
-            // 'cattle_id' => $cattle->id,
-            'category' => $validatedData['category'],
-            // 'published' => $validatedData['published'],
-            'published_at' => $validatedData['published_at']
+                'title' => $validatedData['title'],
+                'content' => $validatedData['content'],
+                'image' => $request->file('image') ? $request->file('image')->store('blog_images', 'public') : null,
+                // 'cattle_id' => $cattle->id,
+                'category' => $validatedData['category'],
+                // 'published' => $validatedData['published'],
+                'published_at' => $validatedData['published_at']
             ]);
 
             return response()->json([
@@ -207,7 +140,7 @@ class BlogPostControllerApi extends Controller
     public function show($id)
     {
         // $blogPost = BlogPost::find($id);
-        
+
         // $blogPost = BlogPost::with('comments')->find($id);
         $blogPost = BlogPost::with('comments', 'likes')->find($id);
         if (!$blogPost) {
