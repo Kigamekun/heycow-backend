@@ -9,15 +9,23 @@ class BlogPost extends Model
 {
     // protected $collection = "";
     protected $fillable = [
-        'title', 
-        'content', 
+        'title',
+        'content',
         'image',
         'category',
         'cattle_id',
-        'published', 
+        'published',
         'user_id'
     ];
     use HasFactory;
+
+    protected $appends = ['full_image_url'];
+
+    public function getFullImageUrlAttribute()
+    {
+        return $this->image ? url('api/getFile/' . $this->image) : null;
+    }
+
     protected $content;
     public $timestamps = true;
     public function comments()
@@ -29,19 +37,21 @@ class BlogPost extends Model
     {
         return $this->hasMany(Like::class, 'post_id');
     }
-    // public function reply()
-    // {
-    //     return $this->hasMany(Reply::class, 'comment_id');
-    // }
 
     public function cattle()
     {
         return $this->belongsTo(Cattle::class, 'cattle_id');
-    }   
+    }
 
     public function owner()
     {
         return $this->belongsTo(User::class, 'user_id');
     }
+
+    public function user()
+{
+    return $this->belongsTo(User::class);
+}
+
 
 }
