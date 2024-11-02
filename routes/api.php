@@ -115,6 +115,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/{id}', [SubscriptionControllerApi::class, 'show']);
         Route::put('/{id}', [SubscriptionControllerApi::class, 'update']);
         Route::delete('/{id}', [SubscriptionControllerApi::class, 'destroy']);
+        Route::get('/status/{userId}', [SubscriptionControllerApi::class, 'checkStatus']);
+        Route::get('/plans', [SubscriptionControllerApi::class, 'listPlans']);
+        Route::post('/pay', [SubscriptionControllerApi::class, 'initiatePayment']);
+        Route::get('/transactions/{userId}', [SubscriptionControllerApi::class, 'transactionHistory']);
+        Route::put('/transaction-status/{transactionId}', [SubscriptionControllerApi::class, 'updateSubscriptionStatus']);
     });
 
     // Rute untuk Blog Posts
@@ -170,7 +175,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/{id}', [TransactionControllerApi::class, 'show']);
         Route::put('/{id}', [TransactionControllerApi::class, 'update']);
         Route::delete('/{id}', [TransactionControllerApi::class, 'destroy']);
+        Route::put('/{id}/confirm', [TransactionControllerApi::class, 'confirm']);
+        Route::get('/user/{userId}', [TransactionControllerApi::class, 'getUserTransactions']);
     });
+    
 
     // Rute untuk Breeds
     Route::prefix('breeds')->group(function () {
