@@ -19,4 +19,10 @@ class Subscription extends Model
         'status',
         'active',
     ];
+
+    // Jika Anda ingin menambahkan relasi dengan model User, Anda bisa menambahkan ini
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

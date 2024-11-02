@@ -77,58 +77,43 @@ class BlogPostControllerApi extends Controller
     public function index(Request $request)
     {
         $user = Auth::id();
-        $blogPosts = BlogPost::where('user_id', $user)
-            ->with(['comments', 'likes', 'cattle'])
-            ->get()
-            ->makeHidden(['user_id', 'cattle_id']);
-        // Mendapatkan data BlogPost terbaru
-        
-        // Ambil parameter query untuk sorting, pagination, dan pencarian
-        $sortBy = $request->query('sort_by', 'created_at'); // Default sorting by 'created_at'
-        $sortOrder = $request->query('sort_order', 'desc'); // Default sorting order 'desc'
-        $perPage = $request->query('per_page', 10); // Default items per page
-        $search = $request->query('search', ''); // Default search query
 
-        // Validasi parameter sorting
-        $allowedSortBy = ['created_at', 'title', 'published_at']; // Kolom yang diizinkan untuk sorting
-        
+        $query = BlogPost::where('user_id', $user)
+            ->with(['comments', 'likes', 'cattle'])
+            ->withCount(['comments', 'likes']);
+
+        // Sorting, pagination, dan pencarian
+        $sortBy = $request->query('sort_by', 'created_at');
+        $sortOrder = $request->query('sort_order', 'desc');
+        $perPage = $request->query('per_page', 10);
+        $search = $request->query('search', '');
+        $allowedSortBy = ['created_at', 'title', 'published_at'];
+        $allowedSortOrder = ['asc', 'desc'];
+
+        // Validasi kolom sorting
         if (!in_array($sortBy, $allowedSortBy)) {
             return response()->json([
-            'message' => 'Kolom sorting tidak valid',
-            'status' => 'error'
+                'message' => 'Kolom sorting tidak valid',
+                'status' => 'error'
             ], 400);
         }
 
-        $allowedSortOrder = ['asc', 'desc'];
+        // Validasi arah sorting
         if (!in_array($sortOrder, $allowedSortOrder)) {
             return response()->json([
-            'message' => 'Arah sorting tidak valid',
-            'status' => 'error'
+                'message' => 'Arah sorting tidak valid',
+                'status' => 'error'
             ], 400);
         }
 
-        // Ambil data BlogPost dengan sorting, pagination, dan pencarian
-        $blogPosts = BlogPost::where('user_id', $user)
-            ->where(function($query) use ($search) {
-            if ($search) {
+        if ($search) {
+            $query->where(function($query) use ($search) {
                 $query->where('title', 'like', "%{$search}%")
-                  ->orWhere('content', 'like', "%{$search}%");
-            }
-            })
-            ->orderBy($sortBy, $sortOrder)
-            ->paginate($perPage);
-
-
-        // Kita ambil category menggunakan params yakni forum atau jual
-       // forum
-        if ($request->query('category') == 'forum') {
-            $blogPosts = BlogPost::where('category', 'forum')->get();
+                    ->orWhere('content', 'like', "%{$search}%");
+            });
         }
-        // jual
-        if ($request->query('category') == 'jual') {
-            $blogPosts = BlogPost::where('category', 'jual')->get();
-        }
-        // $blogPosts = BlogPost::latest()->get();
+
+        $blogPosts = $query->orderBy($sortBy, $sortOrder)->paginate($perPage);
 
         return response()->json([
             'message' => 'Data BlogPost',
@@ -136,6 +121,8 @@ class BlogPostControllerApi extends Controller
             'data' => $blogPosts
         ]);
     }
+
+
 
     public function store(Request $request)
     {
@@ -206,23 +193,25 @@ class BlogPostControllerApi extends Controller
 
     public function show($id)
     {
-        // $blogPost = BlogPost::find($id);
-        
-        // $blogPost = BlogPost::with('comments')->find($id);
-        $blogPost = BlogPost::with('comments', 'likes')->find($id);
+        $blogPost = BlogPost::with('comments', 'likes')
+            ->withCount(['comments', 'likes']) // Menghitung jumlah komentar dan like
+            ->find($id);
+    
         if (!$blogPost) {
             return response()->json([
                 'message' => 'BlogPost tidak ditemukan',
                 'status' => 'error'
             ], 404);
         }
-
+    
         return response()->json([
             'message' => 'Data BlogPost ditemukan',
             'status' => 'success',
             'data' => $blogPost
         ]);
     }
+    
+
 
     public function update(Request $request, $id)
     {
