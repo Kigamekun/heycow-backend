@@ -17,6 +17,8 @@ use Illuminate\Support\Facades\Route;
 use App\Models\{Cattle, IOTDevices, Farm};
 use Illuminate\Http\Request;
 
+
+
 Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::get('/dashboard', function () {
@@ -173,7 +175,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Rute untuk Transactions
     Route::prefix('transactions')->group(function () {
         Route::get('/', [TransactionControllerApi::class, 'index']);
-        Route::post('/create-charge', [TransactionControllerApi::class, 'createCharge']);
         Route::get('/{id}', [TransactionControllerApi::class, 'show']);
         Route::put('/{id}', [TransactionControllerApi::class, 'update']);
         Route::delete('/{id}', [TransactionControllerApi::class, 'destroy']);
