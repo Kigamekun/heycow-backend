@@ -12,9 +12,15 @@ use Carbon\Carbon;
 
 class BlogPostControllerApi extends Controller
 {
-
     public function index(Request $request)
     {
+        $user = Auth::id();
+
+        $query = BlogPost::where('user_id', $user)
+            ->with(['comments', 'likes', 'cattle'])
+            ->withCount(['comments', 'likes']);
+
+        // Sorting, pagination, dan pencarian
         $sortBy = $request->query('sort_by', 'created_at');
         $sortOrder = $request->query('sort_order', 'desc');
         $perPage = $request->query('per_page', 10);
@@ -22,6 +28,9 @@ class BlogPostControllerApi extends Controller
         $category = $request->query('category', '');
 
         $allowedSortBy = ['created_at', 'title', 'published_at'];
+        $allowedSortOrder = ['asc', 'desc'];
+
+        // Validasi kolom sorting
         if (!in_array($sortBy, $allowedSortBy)) {
             return response()->json([
                 'message' => 'Kolom sorting tidak valid',
@@ -29,7 +38,7 @@ class BlogPostControllerApi extends Controller
             ], 400);
         }
 
-        $allowedSortOrder = ['asc', 'desc'];
+        // Validasi arah sorting
         if (!in_array($sortOrder, $allowedSortOrder)) {
             return response()->json([
                 'message' => 'Arah sorting tidak valid',
@@ -37,15 +46,12 @@ class BlogPostControllerApi extends Controller
             ], 400);
         }
 
-        // Build the query with optional search, category filter, and like count
-        $query = BlogPost::with([ 'cattle', 'user'])
-            ->withCount('likes','comments') // This adds likes_count attribute
-            ->where(function ($query) use ($search) {
-                if ($search) {
-                    $query->where('title', 'like', "%{$search}%")
-                        ->orWhere('content', 'like', "%{$search}%");
-                }
+        if ($search) {
+            $query->where(function($query) use ($search) {
+                $query->where('title', 'like', "%{$search}%")
+                      ->orWhere('content', 'like', "%{$search}%");
             });
+        }
 
         if ($category) {
             $query->where('category', $category);
@@ -69,25 +75,17 @@ class BlogPostControllerApi extends Controller
         ]);
     }
 
-
     public function store(Request $request)
     {
         try {
-            // $request->validate([
-            //     'image' => 'nullable|mimes:png,jpg,jpeg',
-            // ]);
-            // Validasi input
-
-
             $validatedData = $request->validate([
                 'user_id' => 'exists:users,id',
                 'title' => 'required|string|max:255',
                 'content' => 'required|string',
                 'image' => 'nullable|mimes:png,jpg,jpeg|max:2048',
-                // 'cattle_id' => 'nullable|exists:cattles,id',
                 'category' => 'nullable|string|in:forum,jual',
                 'published' => 'nullable|string|in:draft,published',
-                "published_at" => "nullable|date"
+                'published_at' => 'nullable|date'
             ], [
                 'user_id.required' => 'User ID harus diisi',
                 'user_id.exists' => 'User ID tidak valid',
@@ -102,8 +100,6 @@ class BlogPostControllerApi extends Controller
             }
             $user = Auth::id();
 
-            // $cattle_id = $cattle ? $cattle->id : null;
-
             // Log data validasi untuk debugging
             Log::info('BlogPost validation successful', $validatedData);
 
@@ -115,9 +111,7 @@ class BlogPostControllerApi extends Controller
                 'title' => $validatedData['title'],
                 'content' => $validatedData['content'],
                 'image' => $request->file('image') ? $request->file('image')->store('blog_images', 'public') : null,
-                // 'cattle_id' => $cattle->id,
                 'category' => $validatedData['category'],
-                // 'published' => $validatedData['published'],
                 'published_at' => $validatedData['published_at']
             ]);
 
@@ -139,10 +133,10 @@ class BlogPostControllerApi extends Controller
 
     public function show($id)
     {
-        // $blogPost = BlogPost::find($id);
+        $blogPost = BlogPost::with(['comments', 'likes'])
+            ->withCount(['comments', 'likes']) // Menghitung jumlah komentar dan like
+            ->find($id);
 
-        // $blogPost = BlogPost::with('comments')->find($id);
-        $blogPost = BlogPost::with('comments', 'likes')->find($id);
         if (!$blogPost) {
             return response()->json([
                 'message' => 'BlogPost tidak ditemukan',
@@ -173,7 +167,7 @@ class BlogPostControllerApi extends Controller
             $validatedData = $request->validate([
                 'title' => 'nullable|string|max:255',
                 'content' => 'nullable|string',
-                // 'image' => 'nullable|mimes:png,jpg,jpeg|max:2048',
+                'image' => 'nullable|mimes:png,jpg,jpeg|max:2048',
             ], [
                 'title.string' => 'Judul harus berupa teks',
                 'content.string' => 'Konten harus berupa teks',
@@ -183,7 +177,7 @@ class BlogPostControllerApi extends Controller
             $blogPost->update([
                 'title' => $validatedData['title'] ?? $blogPost->title,
                 'content' => $validatedData['content'] ?? $blogPost->content,
-                // 'image' => $request->file('image') ? $request->file('image')->store('blog_images', 'public') : $blogPost->image,
+                'image' => $request->file('image') ? $request->file('image')->store('blog_images', 'public') : $blogPost->image,
             ]);
 
             return response()->json([
@@ -205,11 +199,7 @@ class BlogPostControllerApi extends Controller
     public function destroy($id)
     {
         $blogPost = BlogPost::find($id);
-        // $blogPost = BlogPost::with('comments')->find($id);
 
-        // if ($blogPost) {
-        //     $blogPost->comments()->delete();
-        // }
         if (!$blogPost) {
             return response()->json([
                 'message' => 'BlogPost tidak ditemukan',
@@ -224,7 +214,4 @@ class BlogPostControllerApi extends Controller
             'status' => 'success'
         ], 200);
     }
-
-
-
 }

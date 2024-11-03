@@ -16,7 +16,12 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|string|max:255|unique:users',
-            'password' => 'required|string|min:8'
+            'password' => 'required|string|min:8',
+            'phone_number' => 'nullable|string|max:255',
+            'address' => 'nullable|string|max:255',
+            'gender' => 'nullable|string|in:male,female',
+            'bio' => 'nullable|string|max:500',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048'
         ]);
 
         if ($validator->fails()) {
@@ -27,7 +32,12 @@ class AuthController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'role' => 'cattleman',
-            'password' => Hash::make($request->password)
+            'password' => Hash::make($request->password),
+            'phone_number' => $request->phone_number,
+            'address' => $request->address,
+            'bio' => $request->bio,
+            'gender' => $request->gender,
+            'avatar' => $request->file('avatar') ? $request->file('avatar')->store('avatar', 'public') : null,
         ]);
 
         $nameFarm = explode(' ', $request->name)[0];

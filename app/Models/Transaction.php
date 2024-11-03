@@ -10,8 +10,15 @@ class Transaction extends Model
     use HasFactory;
 
     protected $fillable = [
+        'user_id',
         'amount',
+        'type',
         'status',
-        'transaction_date',
+        'herder_name',
+        'cattle_name',
+        'duration',
+        'cost',
+        'activity',
+        'cattle_count',
     ];
 }
