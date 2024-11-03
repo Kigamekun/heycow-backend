@@ -7,8 +7,22 @@ use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
+
+use Midtrans\Config;
+use Midtrans\Snap;
+
+
 class TransactionControllerApi extends Controller
 {
+    public function __construct()
+    {
+        Config::$serverKey = config('midtrans.server_key');
+        Config::$isProduction = config('midtrans.is_production');
+        Config::$isSanitized = config('midtrans.is_sanitized');
+        Config::$is3ds = config('midtrans.is_3ds');
+    }
+
+
     // Mengambil semua transaksi
     public function index()
     {
@@ -18,6 +32,90 @@ class TransactionControllerApi extends Controller
             'data' => $transactions,
         ]);
     }
+
+
+    public function createCharge(Request $request)
+    {
+        $params = [
+            'transaction_details' => [
+                'order_id' => rand(),
+                'gross_amount' => 10000,
+            ],
+            'credit_card' => [
+                'secure' => true
+            ],
+            'customer_details' => [
+                'first_name' => 'Reksa',
+                'last_name' => 'Syahputra',
+                'email' => 'reksa.prayoga1012@gmail.com',
+                'phone' => '0895331493506',
+            ],
+        ];
+
+        $snapToken = Snap::getSnapToken($params);
+        return view('api.charge', compact('snapToken'));
+    }
+
+
+    public function cst(Request $request)
+    {
+
+        // dd($request->all());
+        // try {
+        //     Auction::where('id', $request->auction)->update([
+        //         'transaction_time' => $request->result['transaction_time'],
+        //         'payment_type' => $request->result['payment_type'] . "-" . $request->result['bank'],
+        //         'payment_status_message' => $request->result['status_message'],
+        //         'transaction_id' => $request->result['transaction_id'],
+
+        //         'jumlah_pembayaran' => $request->result['gross_amount'],
+        //     ]);
+        // } catch (\Throwable $th) {
+        //     Auction::where('id', $request->auction)->update([
+        //         'transaction_time' => $request->result['transaction_time'],
+        //         'payment_type' => $request->result['payment_type'],
+        //         'payment_status_message' => $request->result['status_message'],
+        //         'transaction_id' => $request->result['transaction_id'],
+
+        //         'jumlah_pembayaran' => $request->result['gross_amount'],
+        //     ]);
+        // }
+        // if ($request->status == "success") {
+        //     Auction::where('id', $request->auction)->update([
+        //         'payment_status' => 2,
+        //     ]);
+        // } elseif ($request->status == 'pending') {
+        //     Auction::where('id', $request->auction)->update([
+        //         'paymment_status' => 1,
+        //     ]);
+        // } elseif ($request->status == 'error') {
+        //     Auction::where('id', $request->auction)->update([
+        //         'paymment_status' => 4,
+        //     ]);
+        // }
+
+
+        // Product::where('id', Auction::where('id', $request->auction)->first()->product_id)->update([
+        //     'status' => '0',
+        // ]);
+
+
+        // Mail::to(Auction::where('id', $request->auction)->first()->user->email)->send(new WinnerAuctionMail($request->auction));
+
+        return response()->json(['message' => 'Update Transaction', 'status' => 'success'], 200);
+    }
+
+    public function payFinish()
+    {
+        return view('api.pay-finish');
+    }
+
+
+
+
+
+
+
 
     // Menyimpan transaksi baru
     public function store(Request $request)
