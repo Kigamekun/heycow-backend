@@ -85,14 +85,13 @@ class BlogPostControllerApi extends Controller
         try {
             $validatedData = $request->validate([
                 'user_id' => 'exists:users,id',
-                
                 'title' => 'required|string|max:255',
                 'content' => 'required|string',
                 'image' => 'nullable|mimes:png,jpg,jpeg|max:2048',
                 'category' => 'nullable|string|in:forum,jual',
                 'published' => 'nullable|string|in:draft,published',
                 'published_at' => 'nullable|date',
-                'get_full_image_url' => 'nullable|string',
+                // 'get_full_image_url' => 'nullable|string',
             ], [
                 'user_id.required' => 'User ID harus diisi',
                 'user_id.exists' => 'User ID tidak valid',
@@ -118,7 +117,7 @@ class BlogPostControllerApi extends Controller
                 'title' => $validatedData['title'],
                 'content' => $validatedData['content'],
                 'image' => $request->file('image') ? $request->file('image')->store('blog_images', 'public') : null,
-                'get_full_image_url' => $validatedData['get_full_image_url'],
+                // 'get_full_image_url' => $validatedData['get_full_image_url'],
                 'category' => $validatedData['category'],
                 'published_at' => $validatedData['published_at']
             ]);
