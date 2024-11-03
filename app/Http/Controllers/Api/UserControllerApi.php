@@ -41,7 +41,7 @@ class UserControllerApi extends Controller
             'phone_number' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
             'bio' => 'nullable|string|max:500',
-            'avatar' => 'nullable|file|mimes:jpeg,png,jpg,gif,svg|max:204'
+            'avatar' => 'nullable|file|mimes:jpeg,png,jpg,svg|max:204'
         ]);
     
         try {
@@ -57,7 +57,8 @@ class UserControllerApi extends Controller
                 'phone_number' => $validatedData['phone_number'],
                 'address' => $validatedData['address'],
                 'bio' => $validatedData['bio'],
-                'avatar' => $request->file('avatar') ? $request->file('avatar')->store('avatar', 'public') : null,
+                'avatar' => $request->file('avatar') ? $request->file('avatar')->store('avatars', 'public') : null,
+                // 'avatar' => $request->file('avatar') ? $request->file('avatar')->store('avatar', 'public') : null,
                 // 'role' => $validatedData['role'],
             ]);
 
@@ -90,20 +91,23 @@ class UserControllerApi extends Controller
                 'phone_number' => 'nullable|string|max:15',
                 'address' => 'nullable|string|max:255',
                 'bio' => 'nullable|string|max:500',
-                'avatar' => 'nullable|mimes:jpeg,png,jpg,gif,svg|max:2048'
+                'avatar' => 'nullable|mimes:jpeg,png,jpg,svg|max:2048'
     
             ],
             [
                 'email.unique' => 'Email sudah digunakan oleh pengguna lain',
                 'avatar.avatar' => 'File harus berupa gambar',
-                'avatar.mimes' => 'File harus berformat jpeg, png, jpg, gif, atau svg',
+                'avatar.mimes' => 'File harus berformat jpeg, png, jpg, atau svg',
                 'avatar.max' => 'Ukuran file tidak boleh lebih dari 2MB',
 
             ]);
             if (isset($validatedData['password'])) {
                 $validatedData['password'] = Hash::make($validatedData['password']);
             }
-
+            if ($request->hasFile('avatar')) {
+                $avatarPath = $request->file('avatar')->store('avatars', 'public');
+                $validatedData['avatar'] = $avatarPath;
+            }
             $user->update(([
                 'name' => $validatedData['name'] ?? $user->name,
                 'email' => $validatedData['email'] ?? $user->email,
@@ -111,7 +115,8 @@ class UserControllerApi extends Controller
                 'phone_number' => $validatedData['phone_number'] ?? $user->phone_number,
                 'address' => $validatedData['address'] ?? $user->address,
                 'bio' => $validatedData['bio'] ?? $user->bio,
-                'avatar' => $request->file('avatar') ? $request->file('avatar')->store('avatar', 'public') : $user->avatar ?? null,
+                
+                'avatar' => $request->file('avatar') ? $request->file('avatar')->store('avatar', 'public') : $user->avatar,
             ])); // filter untuk menghindari null
 
             return response()->json([
