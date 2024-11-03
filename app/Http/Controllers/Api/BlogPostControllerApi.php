@@ -16,9 +16,14 @@ class BlogPostControllerApi extends Controller
     {
         $user = Auth::id();
 
+        // $posByMe = BlogPost::where('user_id', $user)->get();
+        
+        // Query untuk mengambil data blog post
         $query = BlogPost::where('user_id', $user)
             ->with(['comments', 'likes', 'cattle'])
             ->withCount(['comments', 'likes']);
+
+        
 
         // Sorting, pagination, dan pencarian
         $sortBy = $request->query('sort_by', 'created_at');
@@ -26,7 +31,6 @@ class BlogPostControllerApi extends Controller
         $perPage = $request->query('per_page', 10);
         $search = $request->query('search', '');
         $category = $request->query('category', '');
-
         $allowedSortBy = ['created_at', 'title', 'published_at'];
         $allowedSortOrder = ['asc', 'desc'];
 
@@ -61,6 +65,7 @@ class BlogPostControllerApi extends Controller
 
         // Modify each blog post to have relative time for `published_at`
         $blogPosts->getCollection()->transform(function ($post) {
+            $post->user = $post->user->name;
             $post->published_at = $post->published_at
                 ? Carbon::parse($post->published_at)->diffForHumans()
                 : null;
@@ -80,12 +85,14 @@ class BlogPostControllerApi extends Controller
         try {
             $validatedData = $request->validate([
                 'user_id' => 'exists:users,id',
+                
                 'title' => 'required|string|max:255',
                 'content' => 'required|string',
                 'image' => 'nullable|mimes:png,jpg,jpeg|max:2048',
                 'category' => 'nullable|string|in:forum,jual',
                 'published' => 'nullable|string|in:draft,published',
-                'published_at' => 'nullable|date'
+                'published_at' => 'nullable|date',
+                'get_full_image_url' => 'nullable|string',
             ], [
                 'user_id.required' => 'User ID harus diisi',
                 'user_id.exists' => 'User ID tidak valid',
@@ -111,6 +118,7 @@ class BlogPostControllerApi extends Controller
                 'title' => $validatedData['title'],
                 'content' => $validatedData['content'],
                 'image' => $request->file('image') ? $request->file('image')->store('blog_images', 'public') : null,
+                'get_full_image_url' => $validatedData['get_full_image_url'],
                 'category' => $validatedData['category'],
                 'published_at' => $validatedData['published_at']
             ]);
