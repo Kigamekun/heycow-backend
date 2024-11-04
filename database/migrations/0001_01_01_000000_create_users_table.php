@@ -22,7 +22,7 @@ return new class extends Migration {
             $table->string('address')->nullable();
             $table->enum('gender', ['male', 'female'])->nullable();
             $table->text('bio')->nullable();
-
+            
             $table->string('avatar', 2048)->nullable();
             $table->timestamps();
         });

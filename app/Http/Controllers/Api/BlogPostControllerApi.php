@@ -19,9 +19,11 @@ class BlogPostControllerApi extends Controller
         // $posByMe = BlogPost::where('user_id', $user)->get();
         $allBlogPosts = BlogPost::all();
         // Query untuk mengambil data blog post
-        $query = BlogPost::with(['user', 'comments', 'likes', 'cattle']);
-            // ->with(['comments', 'likes', 'cattle'])
-            // ->withCount(['comments', 'likes']);
+        $query = BlogPost::where('user_id', $user)
+            ->with(['comments', 'likes', 'cattle'])
+            ->withCount(['comments', 'likes']);
+        
+            
 
         
 
@@ -194,7 +196,6 @@ class BlogPostControllerApi extends Controller
             ], 200);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
-            // Tangkapan error validasi
             return response()->json([
                 'message' => 'Validasi gagal',
                 'errors' => $e->errors(),

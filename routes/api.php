@@ -133,6 +133,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::delete('/{id}', [BlogPostControllerApi::class, 'destroy']);
         // Route::get('/{id}/comments', [CommentControllerApi::class, 'index']);
 
+        // get by 
         
 
         // Komentar API

@@ -12,14 +12,8 @@ use function Pest\Laravel\post;
 
 class CommentControllerApi extends Controller
 {
-    // Mengambil semua komentar
     public function index($id)
     {
-        // $comments = Comment::latest()->get();
-        // return response()->json([
-        //     'status' => 'sukses',
-        //     'data' => $comments,
-        // ]);
         $blogPost = BlogPost::find($id);
 
         if (!$blogPost) {
@@ -30,12 +24,17 @@ class CommentControllerApi extends Controller
         }
 
         $comments = $blogPost->comments()->latest()->get();
+        $commentCount = $comments->count(); // Menghitung jumlah komentar
 
         return response()->json([
             'status' => 'sukses',
-            'data' => $comments,
+            'data' => [
+                'comments' => $comments,
+                'comment_count' => $commentCount, // Menambahkan jumlah komentar
+            ],
         ]);
     }
+
 
     // Menyimpan komentar baru
     public function store(Request $request, $id)
