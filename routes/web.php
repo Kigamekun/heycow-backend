@@ -3,7 +3,7 @@
 use App\Http\Controllers\{ProfileController, FarmController, IOTDevicesController, CattleController, UserController, BlogPostController, TransactionController};
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\TransactionControllerApi;
-
+use App\Events\MyEvent;
 use App\Http\Controllers\LandingPageController;
 
 
@@ -22,6 +22,7 @@ Route::get('/pay-api-finish', [TransactionControllerApi::class, 'payFinish'])->n
 
 
 
+Route::get('/test', [LandingPageController::class, 'test']);
 
 
 
