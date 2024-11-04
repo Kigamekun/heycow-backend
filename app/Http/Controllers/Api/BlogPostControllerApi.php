@@ -17,11 +17,11 @@ class BlogPostControllerApi extends Controller
         $user = Auth::id();
 
         // $posByMe = BlogPost::where('user_id', $user)->get();
-        
+        $allBlogPosts = BlogPost::all();
         // Query untuk mengambil data blog post
-        $query = BlogPost::where('user_id', $user)
-            ->with(['comments', 'likes', 'cattle'])
-            ->withCount(['comments', 'likes']);
+        $query = BlogPost::with(['user', 'comments', 'likes', 'cattle']);
+            // ->with(['comments', 'likes', 'cattle'])
+            // ->withCount(['comments', 'likes']);
 
         
 

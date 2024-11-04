@@ -29,6 +29,9 @@ class CattleControllerApi extends Controller
 
     public function index()
     {
+        $user = Auth::id();
+        $cattlesByUser = Cattle::where('user_id', $user)->get();
+        
         $limit = $_GET['limit'] ?? 10;
         $data = Cattle::with(['iotDevice', 'breed', 'farm'])->orderBy('id', 'DESC');
         if (isset($_GET['search'])) {
