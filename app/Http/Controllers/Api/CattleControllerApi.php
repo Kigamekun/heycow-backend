@@ -77,9 +77,16 @@ class CattleControllerApi extends Controller
                 ], 400);
             }
 
+            if (isset($request->name) && $request->name != '') {
+                $name = $request->name;
+            } else {
+                $cattleCount = Cattle::where('user_id', $user)->count();
+                $name = 'Sapi ' . ($cattleCount + 1);
+            }
+
             $cattleCount = Cattle::where('user_id', $user)->count();
             $cattle = Cattle::create([
-                'name' => 'Sapi ' . ($cattleCount + 1),
+                'name' => $name,
                 'breed_id' => $validatedData['breed_id'],
                 'status' => $validatedData['status'],
                 'gender' => $validatedData['gender'],
@@ -178,8 +185,15 @@ class CattleControllerApi extends Controller
                 'birth_height' => 'nullable|numeric',
             ]);
 
+            if (isset($request->name) && $request->name != '') {
+                $name = $request->name;
+            } else {
+                $name = $cattle->name;
+            }
+
             // Update data sapi
             $cattle->update([
+                'name' => $name,
                 'breed_id' => $validatedData['breed_id'],
                 'status' => $validatedData['status'],
                 'gender' => $validatedData['gender'],
