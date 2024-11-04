@@ -189,7 +189,6 @@ class BlogPostControllerApi extends Controller
             ], 200);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
-            // Tangkapan error validasi
             return response()->json([
                 'message' => 'Validasi gagal',
                 'errors' => $e->errors(),
