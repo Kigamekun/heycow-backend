@@ -38,4 +38,10 @@ class Cattle extends Model
     {
         return $this->hasMany(HealthRecord::class);
     }
+
+    public function latestHealthRecord()
+    {
+        return $this->hasOne(HealthRecord::class)->latest();
+    }
+
 }

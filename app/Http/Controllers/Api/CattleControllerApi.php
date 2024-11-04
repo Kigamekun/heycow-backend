@@ -34,6 +34,9 @@ class CattleControllerApi extends Controller
         if (isset($_GET['search'])) {
             $data = $data->where('name', 'like', '%' . $_GET['search'] . '%');
         }
+        if (auth()->user()->role == 'user' || auth()->user()->role == 'cattleman') {
+            $data = $data->where('user_id', auth()->id());
+        }
         if ($data->count() > 0) {
             $data = $data->paginate($limit);
             $custom = collect(['status' => 'success', 'statusCode' => 200, 'message' => 'Data berhasil diambil', 'data' => $data, 'timestamp' => now()->toIso8601String()]);
@@ -223,11 +226,10 @@ class CattleControllerApi extends Controller
 
         // Fetch IoT devices not associated with any cattle (iot_device_id not in cattle table)
         $devices = IOTDevices::where('serial_number', 'like', '%' . $query . '%')
-            ->whereNotIn('id', function($subquery) {
-                $subquery->select('iot_device_id')->from('cattle');
-            })
+            ->whereNotIn('id', Cattle::whereNotNull('iot_device_id')->pluck('iot_device_id'))
             ->limit(10) // Limit the number of results
             ->get();
+
 
         // Return results in JSON format
         return response()->json($devices);

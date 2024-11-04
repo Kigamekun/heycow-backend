@@ -9,25 +9,25 @@
   <meta name="keywords" content="">
 
   <!-- Favicons -->
-  <link href="assets_lp/img/favicomatic/favicon-1.png" rel="icon">
-  <link href="assets_lp/img/favicomatic/favicon-2.png" rel="icon">
-  <link href="assets_lp/img/favicomatic/favicon-3.png" rel="icon">
-  <link href="assets_lp/img/favicomatic/favicon-4.png" rel="icon">
-  <link href="assets_lp/img/favicomatic/favicon-5.png" rel="icon">
-  <link href="assets_lp/img/favicomatic/favicon-6.png" rel="icon">
-  <link href="assets_lp/img/favicomatic/apple-touch-icon-1.png" rel="apple-touch-icon">
-  <link href="assets_lp/img/favicomatic/apple-touch-icon-2.png" rel="apple-touch-icon">
-  <link href="assets_lp/img/favicomatic/apple-touch-icon-3.png" rel="apple-touch-icon">
-  <link href="assets_lp/img/favicomatic/apple-touch-icon-4.png" rel="apple-touch-icon">
-  <link href="assets_lp/img/favicomatic/apple-touch-icon-5.png" rel="apple-touch-icon">
-  <link href="assets_lp/img/favicomatic/apple-touch-icon-6.png" rel="apple-touch-icon">
-  <link href="assets_lp/img/favicomatic/apple-touch-icon-7.png" rel="apple-touch-icon">
-  <link href="assets_lp/img/favicomatic/apple-touch-icon-8.png" rel="apple-touch-icon">
-  <link href="assets_lp/img/favicomatic/mstile-1.png" rel="apple-touch-icon">
-  <link href="assets_lp/img/favicomatic/mstile-2.png" rel="apple-touch-icon">
-  <link href="assets_lp/img/favicomatic/mstile-3.png" rel="apple-touch-icon">
-  <link href="assets_lp/img/favicomatic/mstile-4.png" rel="apple-touch-icon">
-  <link href="assets_lp/img/favicomatic/mstile-5.png" rel="apple-touch-icon">
+  <link href="{{ url('assets_lp/img/favicomatic/favicon-1.png') }}" rel="icon">
+  <link href="{{ url('assets_lp/img/favicomatic/favicon-2.png') }}" rel="icon">
+  <link href="{{ url('assets_lp/img/favicomatic/favicon-3.png') }}" rel="icon">
+  <link href="{{ url('assets_lp/img/favicomatic/favicon-4.png') }}" rel="icon">
+  <link href="{{ url('assets_lp/img/favicomatic/favicon-5.png') }}" rel="icon">
+  <link href="{{ url('assets_lp/img/favicomatic/favicon-6.png') }}" rel="icon">
+  <link href="{{ url('assets_lp/img/favicomatic/apple-touch-icon-1.png') }}" rel="apple-touch-icon">
+  <link href="{{ url('assets_lp/img/favicomatic/apple-touch-icon-2.png') }}" rel="apple-touch-icon">
+  <link href="{{ url('assets_lp/img/favicomatic/apple-touch-icon-3.png') }}" rel="apple-touch-icon">
+  <link href="{{ url('assets_lp/img/favicomatic/apple-touch-icon-4.png') }}" rel="apple-touch-icon">
+  <link href="{{ url('assets_lp/img/favicomatic/apple-touch-icon-5.png') }}" rel="apple-touch-icon">
+  <link href="{{ url('assets_lp/img/favicomatic/apple-touch-icon-6.png') }}" rel="apple-touch-icon">
+  <link href="{{ url('assets_lp/img/favicomatic/apple-touch-icon-7.png') }}" rel="apple-touch-icon">
+  <link href="{{ url('assets_lp/img/favicomatic/apple-touch-icon-8.png') }}" rel="apple-touch-icon">
+  <link href="{{ url('assets_lp/img/favicomatic/mstile-1.png') }}" rel="apple-touch-icon">
+  <link href="{{ url('assets_lp/img/favicomatic/mstile-2.png') }}" rel="apple-touch-icon">
+  <link href="{{ url('assets_lp/img/favicomatic/mstile-3.png') }}" rel="apple-touch-icon">
+  <link href="{{ url('assets_lp/img/favicomatic/mstile-4.png') }}" rel="apple-touch-icon">
+  <link href="{{ url('assets_lp/img/favicomatic/mstile-5.png') }}" rel="apple-touch-icon">
 
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com" rel="preconnect">
@@ -35,14 +35,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Raleway:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
 
   <!-- Vendor CSS Files -->
-  <link href="assets_lp/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-  <link href="assets_lp/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
-  <link href="assets_lp/vendor/aos/aos.css" rel="stylesheet">
-  <link href="assets_lp/vendor/swiper/swiper-bundle.min.css" rel="stylesheet">
-  <link href="assets_lp/vendor/glightbox/css/glightbox.min.css" rel="stylesheet">
+  <link href="{{ url('assets_lp/vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
+  <link href="{{ url('assets_lp/vendor/bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet">
+  <link href="{{ url('assets_lp/vendor/aos/aos.css') }}" rel="stylesheet">
+  <link href="{{ url('assets_lp/vendor/swiper/swiper-bundle.min.css') }}" rel="stylesheet">
+  <link href="{{ url('assets_lp/vendor/glightbox/css/glightbox.min.css') }}" rel="stylesheet">
 
   <!-- Main CSS File -->
-  <link href="{{ asset('assets_lp/css/main.css') }}" rel="stylesheet">
+  <link href="{{ url('assets_lp/css/main.css') }}" rel="stylesheet">
 
 </head>
 
@@ -65,7 +65,7 @@
         </ul>
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
-    
+
       <a href="{{route('login')}}" class="btn btn-light">Login</a>
 
     </div>
@@ -113,7 +113,7 @@
       <div class="col-xl-6 content">
         <!-- <h3>About Us</h3> -->
         <h2>About HeyCow.com</h2>
-        <p>Aplikasi HeyCow! menyediakan layanan manajemen ternak sapi yang mencakup pengelolaan ternak, integrasi perangkat IoT, dan pemantauan kesehatan ternak. Aplikasi ini dirancang untuk para peternak yang meminjamkan sapi mereka kepada HeyCow! untuk digembalakan dan dirawat. 
+        <p>Aplikasi HeyCow! menyediakan layanan manajemen ternak sapi yang mencakup pengelolaan ternak, integrasi perangkat IoT, dan pemantauan kesehatan ternak. Aplikasi ini dirancang untuk para peternak yang meminjamkan sapi mereka kepada HeyCow! untuk digembalakan dan dirawat.
         Dengan bantuan teknologi, peternak dapat memantau kondisi kesehatan sapi dan mendapatkan solusi manajemen ternak yang lebih efektif.</p>
         <a href="#" class="read-more"><span>Read More</span><i class="bi bi-arrow-right"></i></a>
       </div>
@@ -233,7 +233,7 @@
     </div>
 
   </section><!-- /Featured Section -->
-  
+
   <!-- /Banner Section -->
   <div class="banner">
     <div class="text-section">
@@ -249,7 +249,7 @@
     </div>
 </div>  <!-- /End Banner Section -->
 
-   
+
 
    <!-- Docum Section -->
 <section id="docum" class="docum section">
@@ -388,7 +388,7 @@
 
       <div class="col-lg-6">
         <div class="map">
-          <iframe 
+          <iframe
             src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15853.851300654514!2d106.78809035541991!3d-6.589250499999998!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e69c5d2e602b501%3A0x25a12f0f97fac4ee!2sSchool%20of%20Vocational%20Studies%20-%20IPB%20University!5e0!3m2!1sen!2sid!4v1726549637387!5m2!1sen!2sid"
             class="iframe-map"
             style="border:0;"
@@ -420,7 +420,7 @@
       <hr>
       <div class="container">
         <div class="copyright">
-          <strong class="px-1 sitename">© 2024  HeyCow | Bogor | Jawa Barat | Indonesia</strong> 
+          <strong class="px-1 sitename">© 2024  HeyCow | Bogor | Jawa Barat | Indonesia</strong>
         </div>
       </div>
     </div>
@@ -456,12 +456,12 @@
       <hr>
       <div class="container">
         <div class="copyright">
-          <strong class="px-1 sitename">© 2024  HeyCow | Bogor | Jawa Barat | Indonesia</strong> 
+          <strong class="px-1 sitename">© 2024  HeyCow | Bogor | Jawa Barat | Indonesia</strong>
         </div>
       </div>
     </div>
   </footer>
-  
+
 
   <!-- Scroll Top -->
   <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
