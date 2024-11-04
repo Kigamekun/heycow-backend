@@ -13,24 +13,28 @@ class LikeControllerApi extends Controller
      * Display a listing of the resource.
      */
     public function index($id)
-    {
-        //
-        $blogPost = BlogPost::find($id);
+{
+    $blogPost = BlogPost::find($id);
 
-        if (!$blogPost) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Blog post tidak ditemukan',
-            ], 404);
-        }
-
-        $likes = $blogPost->likes()->latest()->get();
-
+    if (!$blogPost) {
         return response()->json([
-            'status' => 'sukses',
-            'data' => $likes,
-        ]);
+            'status' => 'error',
+            'message' => 'Blog post tidak ditemukan',
+        ], 404);
     }
+
+    $likes = $blogPost->likes()->latest()->get();
+    $likeCount = $likes->count(); // Menghitung jumlah like
+
+    return response()->json([
+        'status' => 'sukses',
+        'data' => [
+            'likes' => $likes,
+            'like_count' => $likeCount, // Menambahkan jumlah like
+        ],
+    ]);
+}
+
 
     /**
      * Show the form for creating a new resource.

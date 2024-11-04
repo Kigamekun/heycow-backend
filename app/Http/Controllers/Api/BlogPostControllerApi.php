@@ -81,6 +81,8 @@ class BlogPostControllerApi extends Controller
         $query = BlogPost::where('user_id', $user)
             ->with(['comments', 'likes', 'cattle'])
             ->withCount(['comments', 'likes']);
+        
+            
 
         // Sorting, pagination, dan pencarian
         $sortBy = $request->query('sort_by', 'created_at');
