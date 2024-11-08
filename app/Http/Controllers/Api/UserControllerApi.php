@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Pengangon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
@@ -29,6 +30,41 @@ class UserControllerApi extends Controller
             ], 500);
         }
     }
+
+    public function submitRequestForm(Request $request, $userId)
+    {
+        // Validasi input dari form
+        $request->validate([
+            'nik' => 'required',
+            'ktp' => 'required|image',
+            'alamat' => 'required',
+            'upah' => 'required|numeric',
+            'selfie_ktp' => 'required|image',
+        ]);
+
+        // Cari user berdasarkan ID
+        $user = User::findOrFail($userId); // Menggunakan $userId untuk keterkaitan dengan user
+        
+        // Simpan data pengangon ke dalam kolom pengguna
+        $user->nik = $request->nik;
+        $user->ktp = $request->ktp->store('ktp'); // Menyimpan file KTP
+        $user->alamat = $request->alamat;
+        $user->upah = $request->upah;
+        $user->selfie_ktp = $request->selfie_ktp->store('selfie_ktp');
+        $user->save();
+
+        // Update status pengangon pada kolom is_pengangon jika ada
+        $user->update([
+            'is_pengangon' => 1 // Misalnya status pengangon ada di kolom is_pengangon
+        ]);
+
+        // Kirim respons sukses
+        return response()->json([
+            'status' => 'Pengangon berhasil aktif!',
+            'user' => $user
+        ]);
+    }
+
 
     // Menyimpan pengguna baru
     public function store(Request $request)

@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\BreedControllerApi;
 use App\Http\Controllers\Api\UserControllerApi;
 use App\Http\Controllers\Api\HelpCenterControllerApi;
 use App\Http\Controllers\Api\LikeControllerApi;
+use App\Http\Controllers\Api\HistoryRecordControllerApi;
 use Illuminate\Support\Facades\Route;
 use App\Models\{Cattle, IOTDevices, Farm};
 use Illuminate\Http\Request;
@@ -96,7 +97,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::put('/{id}', [CattleControllerApi::class, 'update']);
         Route::delete('/{id}', [CattleControllerApi::class, 'destroy']);
         Route::post('/iot-devices/search', [CattleControllerApi::class, 'searchIOT']);
-        Route::patch('/assign-iot-devices/{id}', [CattleControllerApi::class, 'assignIOTDevices'])->name('cattle.assign-iot-devices');
+        Route::patch('/assign-iot-devices/{id}', [CattleControllerApi::class, 'assignIOTDevices']);
         Route::delete('/remove-iot-devices/{id}', [CattleControllerApi::class, 'removeIOTDevices'])->name('cattle.remove-iot-devices');
         Route::patch('change-status/{id}', [CattleControllerApi::class, 'changeStatus'])->name('cattle.change-status');
         Route::post('/create-request', [CattleControllerApi::class, 'createRequest'])->name('cattle.create-request');
@@ -176,6 +177,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::delete('/{id}', [HealthRecordControllerApi::class, 'destroy']);
     });
 
+        // Rute untuk History Records
+        Route::prefix('history_records')->group(function () {
+            Route::get('/cattle/{cattle_id}', [HistoryRecordControllerApi::class, 'getHistoryByCattleId']);
+            Route::get('/{id}', [HistoryRecordControllerApi::class, 'getHistoryDetail']);
+        });
+
     // Rute untuk Transactions
     Route::prefix('transactions')->group(function () {
         Route::get('/', [TransactionControllerApi::class, 'index']);
@@ -205,6 +212,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/change-password', [UserControllerApi::class, 'changePassword']);
         Route::post('/request-iot', [UserControllerApi::class, 'requestIot']);
         Route::post('/assign-farm/{userId}', [UserControllerApi::class, 'assignFarm']);
+        Route::post('/submit-request-form/{userId}', [UserControllerApi::class, 'submitRequestForm']);
+
     });
 
     // Rute untuk Help Center

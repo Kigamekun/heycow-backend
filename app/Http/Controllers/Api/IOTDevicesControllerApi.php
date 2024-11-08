@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\Cattle;
 use App\Models\IOTDevices;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
@@ -120,27 +121,6 @@ class IOTDevicesControllerApi extends Controller
         ], 200);
     }
 
-    public function AssignIOTDevices(Request $request)
-    {
-        $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'iot_device_id' => 'required|exists:iot_devices,id',
-        ]);
-
-        $device = IOTDevices::find($request->iot_device_id);
-
-        if (!$device) {
-            return response()->json(['message' => 'Perangkat IoT tidak ditemukan', 'status' => 'error'], 404);
-        }
-
-        $device->update(['user_id' => $request->user_id]);
-
-        return response()->json([
-            'message' => 'Perangkat IoT berhasil diassign',
-            'status' => 'success',
-            'data' => $device
-        ], 200);
-    }
 
     public function getIOTDevicesByUser()
     {
