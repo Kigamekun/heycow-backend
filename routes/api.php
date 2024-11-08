@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\FarmControllerApi;
 use App\Http\Controllers\Api\CattleControllerApi;
 use App\Http\Controllers\Api\IOTDevicesControllerApi;
 use App\Http\Controllers\Api\ReplyControllerApi;
+use App\Http\Controllers\Api\RequestAngonControllerApi;
 use App\Http\Controllers\Api\SubscriptionControllerApi;
 use App\Http\Controllers\Api\CommentControllerApi;
 use App\Http\Controllers\Api\BlogPostControllerApi;
@@ -82,6 +83,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     });
 
+     // Rute untuk Farms
+     Route::prefix('request-angon')->group(function () {
+        Route::get('/', [RequestAngonControllerApi::class, 'index']);
+    });
+
+
     // Rute untuk Cattle
     Route::prefix('cattle')->group(function () {
         Route::get('/', [CattleControllerApi::class, 'index']);
@@ -132,9 +139,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/{id}', [BlogPostControllerApi::class, 'show']);
         Route::put('/{id}', [BlogPostControllerApi::class, 'update']);
         Route::delete('/{id}', [BlogPostControllerApi::class, 'destroy']);
-        // Route::get('/{id}/comments', [CommentControllerApi::class, 'index']);
-
-        
 
         // Komentar API
         Route::get('/{id}/comments', [CommentControllerApi::class, 'index']);
@@ -188,7 +192,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::put('/{id}/confirm', [TransactionControllerApi::class, 'confirm']);
         Route::get('/user/{userId}', [TransactionControllerApi::class, 'getUserTransactions']);
     });
-    
+
 
     // Rute untuk Breeds
     Route::prefix('breeds')->group(function () {

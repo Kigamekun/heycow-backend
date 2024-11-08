@@ -77,7 +77,11 @@ class UserControllerApi extends Controller
             'phone_number' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
             'bio' => 'nullable|string|max:500',
-            'avatar' => 'nullable|file|mimes:jpeg,png,jpg,svg|max:204'
+            'avatar' => 'nullable|file|mimes:jpeg,png,jpg,svg|max:204',
+            'nik' => 'nullable|string|max:255',
+            'upah' => 'nullable|string|max:255',
+            'ktp' => 'nullable|file|mimes:jpeg,png,jpg,svg|max:204',
+            'selfie_ktp' => 'nullable|file|mimes:jpeg,png,jpg,svg|max:204',
         ]);
     
         try {
@@ -94,6 +98,10 @@ class UserControllerApi extends Controller
                 'address' => $validatedData['address'],
                 'bio' => $validatedData['bio'],
                 'avatar' => $request->file('avatar') ? $request->file('avatar')->store('avatars', 'public') : null,
+                'nik' => $validatedData['nik'],
+                'upah' => $validatedData['upah'],
+                'ktp' => $request->file('ktp') ? $request->file('ktp')->store('ktp', 'public') : null,
+                'selfie_ktp' => $request->file('selfie_ktp') ? $request->file('selfie_ktp')->store('selfie_ktp', 'public') : null,
                 // 'avatar' => $request->file('avatar') ? $request->file('avatar')->store('avatar', 'public') : null,
                 // 'role' => $validatedData['role'],
             ]);
