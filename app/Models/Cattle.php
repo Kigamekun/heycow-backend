@@ -44,4 +44,10 @@ class Cattle extends Model
         return $this->hasOne(HealthRecord::class)->latest();
     }
 
+    public function historyRecords()
+    {
+        return $this->hasMany(HistoryRecord::class);
+    }
+
+
 }
