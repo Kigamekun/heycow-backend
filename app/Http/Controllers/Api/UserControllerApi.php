@@ -4,16 +4,18 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Models\Pengangon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
+
 
 class UserControllerApi extends Controller
 {
-    // Mengambil semua pengguna
     public function index()
     {
         try {
@@ -37,18 +39,18 @@ class UserControllerApi extends Controller
         $request->validate([
             'nik' => 'required',
             'ktp' => 'required|image',
-            'alamat' => 'required',
+            'address' => 'required',
             'upah' => 'required|numeric',
             'selfie_ktp' => 'required|image',
         ]);
 
         // Cari user berdasarkan ID
-        $user = User::findOrFail($userId); // Menggunakan $userId untuk keterkaitan dengan user
-        
+        $user = User::findOrFail($userId);
+
         // Simpan data pengangon ke dalam kolom pengguna
         $user->nik = $request->nik;
         $user->ktp = $request->ktp->store('ktp'); // Menyimpan file KTP
-        $user->alamat = $request->alamat;
+        $user->address = $request->address;
         $user->upah = $request->upah;
         $user->selfie_ktp = $request->selfie_ktp->store('selfie_ktp');
         $user->save();
@@ -65,45 +67,40 @@ class UserControllerApi extends Controller
         ]);
     }
 
-
     // Menyimpan pengguna baru
     public function store(Request $request)
     {
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'role' => 'nullable|string|in:admin,cattleman',
             'password' => 'required|string|min:8',
             'phone_number' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
             'bio' => 'nullable|string|max:500',
-            'avatar' => 'nullable|file|mimes:jpeg,png,jpg,svg|max:204',
+            'avatar' => 'nullable|file|mimes:jpeg,png,jpg,svg|max:2048',
             'nik' => 'nullable|string|max:255',
-            'upah' => 'nullable|string|max:255',
-            'ktp' => 'nullable|file|mimes:jpeg,png,jpg,svg|max:204',
-            'selfie_ktp' => 'nullable|file|mimes:jpeg,png,jpg,svg|max:204',
+            'upah' => 'nullable|numeric',
+            'ktp' => 'nullable|file|mimes:jpeg,png,jpg,svg|max:2048',
+            'selfie_ktp' => 'nullable|file|mimes:jpeg,png,jpg,svg|max:2048',
         ]);
-    
-        try {
-            // $validatedData -> ['password'] = Hash::make($validatedData['password']);
-            // $validatedData['password'] = Hash::make($validatedData['password']);
 
-            // $validatedData['role'] = 'user'; // Atur role menjadi 'user'
+        try {
+            $avatarPath = $request->file('avatar') ? $request->file('avatar')->store('avatars', 'public') : null;
+            $ktpPath = $request->file('ktp') ? $request->file('ktp')->store('ktp', 'public') : null;
+            $selfieKtpPath = $request->file('selfie_ktp') ? $request->file('selfie_ktp')->store('selfie_ktp', 'public') : null;
 
             $user = User::create([
                 'name' => $validatedData['name'],
                 'email' => $validatedData['email'],
-                'password' => $validatedData['password'] = Hash::make($validatedData['password']),
+                'password' => Hash::make($validatedData['password']),
                 'phone_number' => $validatedData['phone_number'],
                 'address' => $validatedData['address'],
                 'bio' => $validatedData['bio'],
-                'avatar' => $request->file('avatar') ? $request->file('avatar')->store('avatars', 'public') : null,
+                'avatar' => $avatarPath,
                 'nik' => $validatedData['nik'],
                 'upah' => $validatedData['upah'],
-                'ktp' => $request->file('ktp') ? $request->file('ktp')->store('ktp', 'public') : null,
-                'selfie_ktp' => $request->file('selfie_ktp') ? $request->file('selfie_ktp')->store('selfie_ktp', 'public') : null,
-                // 'avatar' => $request->file('avatar') ? $request->file('avatar')->store('avatar', 'public') : null,
-                // 'role' => $validatedData['role'],
+                'ktp' => $ktpPath,
+                'selfie_ktp' => $selfieKtpPath,
             ]);
 
             return response()->json([
@@ -120,12 +117,187 @@ class UserControllerApi extends Controller
         }
     }
 
-    // Memperbarui data pengguna berdasarkan ID
+    public function getDetailPengangon($id)
+    {
+        try {
+            // Ambil data detail pengangon berdasarkan user_id
+      $pengangon = User::where('users.id', $id)->where('users.is_pengangon', 1)
+        ->whereNotNull('users.upah')
+        ->join('farms', 'farms.user_id', '=', 'users.id')
+        ->leftJoin('request_ngangons', 'request_ngangons.peternak_id', '=', 'users.id')
+        ->leftJoin(
+            DB::raw('(SELECT request_ngangons.peternak_id, COALESCE(AVG(contracts.rate), 0) as avg_rate
+                      FROM contracts
+                      JOIN request_ngangons ON request_ngangons.id = contracts.request_id
+                      GROUP BY request_ngangons.peternak_id) as contract_avg'),
+            'contract_avg.peternak_id', '=', 'users.id'
+        )
+        ->select(
+            'users.id',
+            'users.name',
+            'farms.name as farms',
+            'users.address',
+            'users.upah',
+            'users.avatar',
+            DB::raw('COALESCE(contract_avg.avg_rate, 0) as avg_rate')
+        )
+        ->groupBy('users.id', 'users.name', 'farms.name', 'users.address', 'users.upah', 'users.avatar')->first();
+            // Jika tidak ditemukan
+            if (!$pengangon) {
+                return response()->json([
+                    'status' => 'gagal',
+                    'message' => 'Data pengangon tidak ditemukan',
+                    'data' => [],
+                ], 404);
+            }
+
+            // Ambil riwayat kontrak yang terkait dengan farm_id dan user_id
+            $riwayatPelanggan = DB::table('contracts') // Mengambil data kontrak dari tabel contract
+                                  ->join('farms', 'contracts.farm_id', '=', 'farms.id') // Join dengan farms untuk dapatkan nama farm
+                                  ->where('farms.user_id', $id) // Filter berdasarkan user_id
+                                  ->join('cattle', 'contracts.cattle_id', '=', 'cattle.id') // Gabungkan dengan data sapi
+                                  ->join('users', 'farms.user_id', '=', 'users.id') // Join dengan tabel users untuk mengambil nama pelanggan
+                                  ->select(
+                                      'contracts.start_date',
+                                      'contracts.end_date',
+                                      'cattle.name as cow_name',
+                                      'users.name as customer_name' // Nama pelanggan diambil dari tabel users
+                                  )
+                                  ->get();
+
+            // Format data untuk riwayat pelanggan
+            $riwayatFormatted = $riwayatPelanggan->map(function ($item) {
+                $startDate = Carbon::parse($item->start_date);
+                $endDate = Carbon::parse($item->end_date);
+                $durasi = $startDate->diffInDays($endDate) . ' hari'; // Hitung durasi dalam hari
+
+                return [
+                    'durasi' => $durasi,
+                    'cow_name' => $item->cow_name,
+                    'customer_name' => $item->customer_name,
+                ];
+            });
+
+
+$result = [
+    'pengangon' => [
+        'id' => $pengangon->id,
+        'name' => $pengangon->name,
+        'address' => $pengangon->address ?? 'Alamat tidak tersedia',
+        'upah' => "Rp " . number_format($pengangon->upah, 0, ',', '.'),
+        'avatar' => $pengangon->avatar ?? null,
+        'bio' => $pengangon->bio ?? 'Bio tidak tersedia',
+        'rate' => $pengangon->avg_rate ? (int) $pengangon->avg_rate : 0,
+        'farm' => $pengangon->farms ?? 'Farm tidak tersedia',
+    ],
+    'riwayat_pelanggan' => $riwayatFormatted
+];
+
+
+            return response()->json([
+                'status' => 'sukses',
+                'message' => 'Detail pengangon dan riwayat pelanggan berhasil diambil',
+                'data' => $result,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'gagal',
+                'message' => 'Gagal mengambil data pengangon dan riwayat pelanggan',
+                'data' => [],
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
+
+    public function getUserByPengangon(Request $request)
+{
+    try {
+
+        $search = $request->input('search', '');
+
+        // Ambil data pengguna dengan filter 'is_pengangon' = 1 dan 'upah' yang valid
+        $users = User::where('users.is_pengangon', 1)
+        ->whereNotNull('users.upah')
+        ->join('farms', 'farms.user_id', '=', 'users.id')
+        ->leftJoin('request_ngangons', 'request_ngangons.peternak_id', '=', 'users.id')
+        ->leftJoin(
+            DB::raw('(SELECT request_ngangons.peternak_id, COALESCE(AVG(contracts.rate), 0) as avg_rate
+                      FROM contracts
+                      JOIN request_ngangons ON request_ngangons.id = contracts.request_id
+                      GROUP BY request_ngangons.peternak_id) as contract_avg'),
+            'contract_avg.peternak_id', '=', 'users.id'
+        )
+        ->select(
+            'users.id',
+            'users.name',
+            'farms.name as farms',
+            'users.address',
+            'users.upah',
+            'users.avatar',
+            DB::raw('COALESCE(contract_avg.avg_rate, 0) as avg_rate')
+        )
+        ->groupBy('users.id', 'users.name', 'farms.name', 'users.address', 'users.upah', 'users.avatar');
+
+
+        // Jika ada parameter pencarian, filter berdasarkan nama atau farm
+        if ($search) {
+            $users = $users->where(function ($query) use ($search) {
+                $query->where('users.name', 'like', '%' . $search . '%') // Tentukan 'users.name'
+                    ->orWhereHas('farms', function ($query) use ($search) {
+                        $query->where('farms.name', 'like', '%' . $search . '%'); // Tentukan 'farms.name'
+                    });
+            });
+        }
+
+        // Ambil hasil pencarian
+        $users = $users->get();
+
+        // Mengecek apakah data ditemukan
+        if ($users->isEmpty()) {
+            return response()->json([
+                'status' => 'gagal',
+                'message' => 'Data pengguna pengangon tidak ditemukan',
+                'data' => [],
+            ], 404);
+        }
+
+        // Proses data pengguna
+        $result = $users->map(function ($user) {
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'farm' => $user->farms ? $user->farms : 'Farm tidak ditemukan',
+                'address' => $user->address ?? 'Alamat tidak tersedia',
+                'upah' => $user->upah ? "Rp " . number_format($user->upah, 0, ',', '.') : 'Upah tidak tersedia',
+                'avatar' => $user->avatar ?? null,
+                'bio' => $user->bio ?? 'Bio tidak tersedia',
+                'rate' => $user->avg_rate ? (int) $user->avg_rate : 0
+            ];
+        });
+
+
+        // Mengembalikan respons dengan status sukses
+        return response()->json([
+            'status' => 'sukses',
+            'message' => 'Data pengguna pengangon berhasil diambil',
+            'data' => $result,
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'gagal',
+            'message' => 'Gagal mengambil data pengguna',
+            'data' => [],
+            'error' => $e->getMessage(),
+        ], 500);
+    }
+}
+
     public function update(Request $request, $id)
     {
-
         $user = User::find($id);
-        
 
         try {
             $validatedData = $request->validate([
@@ -136,32 +308,18 @@ class UserControllerApi extends Controller
                 'address' => 'nullable|string|max:255',
                 'bio' => 'nullable|string|max:500',
                 'avatar' => 'nullable|mimes:jpeg,png,jpg,svg|max:2048'
-    
-            ],
-            [
-                'email.unique' => 'Email sudah digunakan oleh pengguna lain',
-                'avatar.avatar' => 'File harus berupa gambar',
-                'avatar.mimes' => 'File harus berformat jpeg, png, jpg, atau svg',
-                'avatar.max' => 'Ukuran file tidak boleh lebih dari 2MB',
-
             ]);
+
             if (isset($validatedData['password'])) {
                 $validatedData['password'] = Hash::make($validatedData['password']);
             }
+
             if ($request->hasFile('avatar')) {
                 $avatarPath = $request->file('avatar')->store('avatars', 'public');
                 $validatedData['avatar'] = $avatarPath;
             }
-            $user->update(([
-                'name' => $validatedData['name'] ?? $user->name,
-                'email' => $validatedData['email'] ?? $user->email,
-                'password' => $validatedData['password'] ?? $user->password,
-                'phone_number' => $validatedData['phone_number'] ?? $user->phone_number,
-                'address' => $validatedData['address'] ?? $user->address,
-                'bio' => $validatedData['bio'] ?? $user->bio,
-                
-                'avatar' => $request->file('avatar') ? $request->file('avatar')->store('avatar', 'public') : $user->avatar,
-            ])); // filter untuk menghindari null
+
+            $user->update($validatedData);
 
             return response()->json([
                 'status' => 'sukses',
@@ -177,7 +335,6 @@ class UserControllerApi extends Controller
         }
     }
 
-    // Menghapus pengguna berdasarkan ID
     public function destroy($id)
     {
         try {
@@ -197,7 +354,6 @@ class UserControllerApi extends Controller
         }
     }
 
-    // Login pengguna
     public function login(Request $request)
     {
         $request->validate([
@@ -226,7 +382,6 @@ class UserControllerApi extends Controller
         }
     }
 
-    // Search, Sort, Limit, Paging
     public function search(Request $request)
     {
         $query = User::query();
@@ -236,143 +391,11 @@ class UserControllerApi extends Controller
                   ->orWhere('email', 'like', '%' . $request->search . '%');
         }
 
-        if ($request->has('sort_by') && in_array($request->sort_by, ['name', 'email'])) {
-            $query->orderBy($request->sort_by, $request->sort_direction ?? 'asc');
-        }
-
-        $limit = $request->input('limit', 10);
-        $users = $query->paginate($limit);
+        $users = $query->get();
 
         return response()->json([
             'status' => 'sukses',
-            'data' => $users,
+            'data' => $users
         ]);
-    }
-
-    // Forgot Password
-    public function forgotPassword(Request $request)
-    {
-        $request->validate(['email' => 'required|email']);
-
-        try {
-            $status = Password::sendResetLink(
-                $request->only('email')
-            );
-
-            return response()->json([
-                'status' => $status === Password::RESET_LINK_SENT ? 'sukses' : 'gagal',
-                'pesan' => $status === Password::RESET_LINK_SENT ? 'Link reset password berhasil dikirim' : 'Gagal mengirim link reset password',
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'gagal',
-                'pesan' => 'Gagal mengirim link reset password',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
-    }   
-
-    // Menampilkan pengguna berdasarkan ID
-    public function show($id)
-    {
-        try {
-            $user = User::findOrFail($id); // Mencari pengguna berdasarkan ID
-            return response()->json([
-                'status' => 'sukses',
-                'data' => $user,
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'gagal',
-                'pesan' => 'Gagal mengambil data pengguna',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
-    }
-
-
-    // Change Password
-    public function changePassword(Request $request)
-    {
-        $request->validate([
-            'current_password' => 'required|string',
-            'new_password' => 'required|string|min:8|confirmed',
-        ]);
-
-        try {
-            $user = Auth::user();
-
-            if (!Hash::check($request->current_password, $user->password)) {
-                return response()->json([
-                    'status' => 'gagal',
-                    'pesan' => 'Password saat ini salah',
-                ], 400);
-            }
-
-            $user->password = Hash::make($request->new_password);
-            $user->save();
-
-            return response()->json([
-                'status' => 'sukses',
-                'pesan' => 'Password berhasil diubah',
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'gagal',
-                'pesan' => 'Gagal mengubah password',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
-    }
-
-    // Request IOT Device
-    public function requestIOT(Request $request)
-    {
-        $request->validate([
-            'iot' => 'required|string|exists:iot_devices,id',
-            'reason' => 'nullable|string|max:500',
-        ]);
-
-        try {
-            // Logika request IOT device di sini
-            // Misalnya, membuat request untuk perangkat tertentu
-
-            return response()->json([
-                'status' => 'sukses',
-                'pesan' => 'Permintaan IOT berhasil diajukan',
-            ], 201);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'gagal',
-                'pesan' => 'Gagal melakukan permintaan IOT',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
-    }
-
-    // Assign Farm to User
-    public function assignFarm(Request $request, $userId)
-    {
-        $request->validate([
-            'farm_id' => 'required|exists:farms,id',
-        ]);
-
-        try {
-            $user = User::findOrFail($userId);
-            $user->farm_id = $request->farm_id; // Asumsi ada kolom `farm_id` di tabel `users`
-            $user->save();
-
-            return response()->json([
-                'status' => 'sukses',
-                'pesan' => 'Farm berhasil ditugaskan ke pengguna',
-                'data' => $user,
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'gagal',
-                'pesan' => 'Gagal menugaskan farm',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
     }
 }

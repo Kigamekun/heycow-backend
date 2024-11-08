@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\{Cattle, Farm, Breed, IOTDevices, RequestNgangon, Contract, HistoryRecord};
+use App\Models\{Cattle, Farm, Breed, IOTDevices,HealthRecord, RequestNgangon, Contract, HistoryRecord};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -31,7 +31,7 @@ class CattleControllerApi extends Controller
     {
         $user = Auth::id();
         $cattlesByUser = Cattle::where('user_id', $user)->get();
-        
+
         $limit = $_GET['limit'] ?? 10;
         $data = Cattle::with(['iotDevice', 'breed', 'farm'])->orderBy('id', 'DESC');
         if (isset($_GET['search'])) {
@@ -112,15 +112,34 @@ class CattleControllerApi extends Controller
         }
     }
 
+    public function searchIOT(Request $request)
+    {
+        // Get the search query from the request
+        $query = $request->input('query');
+
+        // Fetch IoT devices not associated with any cattle (iot_device_id not in cattle table)
+        $devices = IOTDevices::where('serial_number', 'like', '%' . $query . '%')
+            ->whereNotIn('id', Cattle::whereNotNull('iot_device_id')->pluck('iot_device_id'))
+            ->limit(10) // Limit the number of results
+            ->get();
+
+
+        // Return results in JSON format
+        return response()->json($devices);
+    }
+
+
     public function assignIOTDevices(Request $request, $id)
     {
+
         // Validasi data input
         $request->validate([
-            'iot_devices_id' => 'required|string|exists:iot_devices,serial_number',
+            'iot_device_id' => 'required|string|exists:iot_devices,serial_number',
         ]);
 
+
         // Cari perangkat IoT berdasarkan serial_number
-        $iotDevice = IOTDevices::where('serial_number', $request->iot_devices_id)->first();
+        $iotDevice = IOTDevices::where('serial_number', $request->iot_device_id)->first();
         if (!$iotDevice) {
             return response()->json([
                 'message' => 'Perangkat IoT tidak ditemukan',
@@ -130,7 +149,7 @@ class CattleControllerApi extends Controller
 
         // Cari sapi berdasarkan ID
         $cattle = Cattle::findOrFail($id);
-        
+
         // Asumsikan kamu memiliki relasi antara sapi dan perangkat IoT
         $cattle->iot_device_id = $iotDevice->id;  // Atau gunakan method associate jika memakai relasi
         $cattle->save();
@@ -142,10 +161,20 @@ class CattleControllerApi extends Controller
         ], 200);
     }
 
+
+    public function removeIOTDevices(Request $request, $id)
+    {
+        Cattle::where('id', $id)->update(['iot_device_id' => null]);
+
+        return response()->json(['message' => 'IOT devices removed from cattle ' . $id, 'status' => 'success', 'statusCode' => 200]);
+    }
+
     public function show($id)
     {
         $cattle = Cattle::with(['iotDevice', 'breed', 'farm', 'healthRecords'])->findOrFail($id);
         $cattle->makeHidden(['created_at', 'updated_at', 'farm_id', 'user_id']); // Menyembunyikan atribut
+
+        $healthRecords = HealthRecord::where('cattle_id', $id)->orderBy('created_at', 'DESC')->first();
 
         return response()->json([
             'message' => 'Data Sapi ditemukan',
@@ -174,66 +203,65 @@ class CattleControllerApi extends Controller
                     'serial_number' => optional($cattle->iotDevice)->serial_number,
                     'installation_date' => optional($cattle->iotDevice)->installation_date,
                 ],
-                'healthRecords' => $cattle->healthRecords->map(function ($record) {
-                    return [
-                        'id' => $record->id,
-                        'date' => $record->date,
-                        'status' => $record->status,
-                        'temperature' => $record->temperature,
-                    ];
-                })
+                'healthRecords' => $healthRecords
             ]
         ]);
     }
 
     public function update(Request $request, $id)
-{
-    try {
-        $validatedData = $request->validate([
-            'status' => 'required|in:sehat,sakit,mati,dijual',
-            'gender' => 'required|in:jantan,betina',
-            'type' => 'required|in:pedaging,perah,peranakan,lainnya',
-            'birth_date' => 'required|date',
-            'birth_weight' => 'required|numeric',
-            'birth_height' => 'nullable|numeric',
-        ]);
+    {
+        $cattle = Cattle::find($id);
 
-        $user = Auth::id();
-        $cattle = Cattle::findOrFail($id);
-
-        // Menyimpan old_value dan new_value hanya jika ada perubahan
-        $oldData = $cattle->getAttributes();
-        $cattle->update($validatedData);
-        $newData = $cattle->getAttributes();
-
-        // Bandingkan data lama dan baru
-        $changes = $this->getChanges($oldData, $newData);
-
-        if (!empty($changes)) {
-            // Log perubahan ke history
-            HistoryRecord::create([
-                'cattle_id' => $cattle->id,
-                'record_type' => 'update',
-                'old_value' => json_encode($changes['old_value']),
-                'new_value' => json_encode($changes['new_value']),
-                'recorded_at' => now(),
-                'created_by' => $user,
-            ]);
+        if (!$cattle) {
+            return response()->json([
+                'message' => 'Cattle tidak ditemukan',
+                'status' => 'error'
+            ], 404);
         }
 
-        return response()->json([
-            'message' => 'Sapi berhasil diperbarui',
-            'status' => 'success',
-            'data' => $cattle
-        ], 200);
-    } catch (\Illuminate\Validation\ValidationException $e) {
-        return response()->json([
-            'message' => 'Validasi gagal',
-            'errors' => $e->errors(),
-            'status' => 'error'
-        ], 422);
+        try {
+            // Validasi data input
+            $validatedData = $request->validate([
+                'breed_id' => 'required|exists:breeds,id',
+                'status' => 'required|in:sehat,sakit,mati,dijual',
+                'gender' => 'required|in:jantan,betina',
+                'type' => 'required|in:pedaging,perah,peranakan,lainnya',
+                'birth_date' => 'required|date',
+                'birth_weight' => 'required|numeric',
+                'birth_height' => 'nullable|numeric',
+            ]);
+
+            if (isset($request->name) && $request->name != '') {
+                $name = $request->name;
+            } else {
+                $name = $cattle->name;
+            }
+
+            // Update data sapi
+            $cattle->update([
+                'name' => $name,
+                'breed_id' => $validatedData['breed_id'],
+                'status' => $validatedData['status'],
+                'gender' => $validatedData['gender'],
+                'type' => $validatedData['type'],
+                'birth_date' => $validatedData['birth_date'],
+                'birth_weight' => $validatedData['birth_weight'],
+                'birth_height' => $validatedData['birth_height'],
+            ]);
+
+            return response()->json([
+                'message' => 'Sapi berhasil diupdate',
+                'status' => 'success',
+                'data' => $cattle
+            ], 200);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Validasi gagal',
+                'errors' => $e->errors(),
+                'status' => 'error'
+            ], 422);
+        }
     }
-}
 
 private function getChanges($oldData, $newData)
 {

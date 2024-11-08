@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\UserControllerApi;
 use App\Http\Controllers\Api\HelpCenterControllerApi;
 use App\Http\Controllers\Api\LikeControllerApi;
 use App\Http\Controllers\Api\HistoryRecordControllerApi;
+use App\Http\Controllers\Api\ContractControllerApi;
 use Illuminate\Support\Facades\Route;
 use App\Models\{Cattle, IOTDevices, Farm};
 use Illuminate\Http\Request;
@@ -22,7 +23,6 @@ use Illuminate\Http\Request;
 
 
 Route::middleware(['auth:sanctum'])->group(function () {
-
     Route::get('/dashboard', function () {
         $userId = auth()->user()->id;
         $cattleSick = Cattle::where('user_id', $userId)->where('status', 'sakit')->count();
@@ -80,14 +80,22 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/cattle/{id}', [FarmControllerApi::class, 'cattle'])
             ->where('id', '[0-9]+');
         Route::get('/cattle/most-cattle', [FarmControllerApi::class, 'mostCattle']);
-
     });
 
      // Rute untuk Farms
      Route::prefix('request-angon')->group(function () {
         Route::get('/', [RequestAngonControllerApi::class, 'index']);
+        Route::post('/', [RequestAngonControllerApi::class, 'store']);
+        Route::put('/{id}/approve', [RequestAngonControllerApi::class, 'approveRequest']);
+        Route::put('/{id}/reject', [RequestAngonControllerApi::class, 'rejectRequest']);
     });
 
+    Route::prefix('contract')->group(function () {
+        Route::get('/', [ContractControllerApi::class, 'index']);
+        Route::get('/{id}', [ContractControllerApi::class, 'show']);
+        Route::post('/{id}/return', [ContractControllerApi::class, 'returnContract']);
+
+    });
 
     // Rute untuk Cattle
     Route::prefix('cattle')->group(function () {
@@ -177,11 +185,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::delete('/{id}', [HealthRecordControllerApi::class, 'destroy']);
     });
 
-        // Rute untuk History Records
-        Route::prefix('history_records')->group(function () {
-            Route::get('/cattle/{cattle_id}', [HistoryRecordControllerApi::class, 'getHistoryByCattleId']);
-            Route::get('/{id}', [HistoryRecordControllerApi::class, 'getHistoryDetail']);
-        });
+    // Rute untuk History Records
+    Route::prefix('history_records')->group(function () {
+        Route::get('/cattle/{cattle_id}', [HistoryRecordControllerApi::class, 'getHistoryByCattleId']);
+        Route::get('/{id}', [HistoryRecordControllerApi::class, 'getHistoryDetail']);
+    });
 
     // Rute untuk Transactions
     Route::prefix('transactions')->group(function () {
@@ -193,7 +201,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/user/{userId}', [TransactionControllerApi::class, 'getUserTransactions']);
     });
 
-
     // Rute untuk Breeds
     Route::prefix('breeds')->group(function () {
         Route::get('/', [CattleControllerApi::class, 'getBreeds']);
@@ -201,11 +208,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::delete('/{id}', [BreedControllerApi::class, 'destroy']);
     });
 
-    // Rute untuk Users
     Route::prefix('users')->group(function () {
         Route::get('/', [UserControllerApi::class, 'index']);
         Route::post('/', [UserControllerApi::class, 'store']);
-        Route::get('/{id}', [UserControllerApi::class, 'show']);
+        Route::get('/{id}', [UserControllerApi::class, 'show'])->where('id', '[0-9]+');
         Route::put('/{id}', [UserControllerApi::class, 'update']);
         Route::delete('/{id}', [UserControllerApi::class, 'destroy']);
         Route::post('/forgot-password', [UserControllerApi::class, 'forgotPassword']);
@@ -213,6 +219,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/request-iot', [UserControllerApi::class, 'requestIot']);
         Route::post('/assign-farm/{userId}', [UserControllerApi::class, 'assignFarm']);
         Route::post('/submit-request-form/{userId}', [UserControllerApi::class, 'submitRequestForm']);
+        Route::get('/pengangon', [UserControllerApi::class, 'getUserByPengangon']);
+        Route::get('/{id}/detail', [UserControllerApi::class, 'getDetailPengangon']);
+        Route::post('/request-ngangon', [UserControllerApi::class, 'requestNgangon']);
+
 
     });
 
@@ -243,8 +253,8 @@ Route::get('/me', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::post('/auth/register', [\App\Http\Controllers\API\AuthController::class, 'register']);
-Route::post('/auth/login', [\App\Http\Controllers\API\AuthController::class, 'login']);
+Route::post('/auth/register', [\App\Http\Controllers\Api\AuthController::class, 'register']);
+Route::post('/auth/login', [\App\Http\Controllers\Api\AuthController::class, 'login']);
 
 Route::get('/getFile/{folder}/{filename}', function ($folder, $filename) {
     return response()->file(storage_path('app/public/') . $folder . '/' . $filename);
