@@ -31,24 +31,45 @@ class CattleControllerApi extends Controller
     {
         $user = Auth::id();
         $cattlesByUser = Cattle::where('user_id', $user)->get();
-
         $limit = $_GET['limit'] ?? 10;
-        $data = Cattle::with(['iotDevice', 'breed', 'farm'])->orderBy('id', 'DESC');
+
+        $data = Cattle::with(['iotDevice', 'breed', 'farm']) // Add 'healthRecords' relationship
+            ->orderBy('id', 'DESC');
+
         if (isset($_GET['search'])) {
             $data = $data->where('name', 'like', '%' . $_GET['search'] . '%');
         }
         if (auth()->user()->role == 'user' || auth()->user()->role == 'cattleman') {
             $data = $data->where('user_id', auth()->id());
         }
+
+        // Retrieve the data and load the first health record
+        $data = $data->get()->map(function ($cattle) {
+            // Add the first health record for each cattle, if exists
+            $cattle->first_health_record = $cattle->healthRecords()->first();
+            return $cattle;
+        });
+
         if ($data->count() > 0) {
-            $data = $data->paginate($limit);
-            $custom = collect(['status' => 'success', 'statusCode' => 200, 'message' => 'Data berhasil diambil', 'data' => $data, 'timestamp' => now()->toIso8601String()]);
+            $custom = collect([
+                'status' => 'success',
+                'statusCode' => 200,
+                'message' => 'Data berhasil diambil',
+                'data' => $data,
+                'timestamp' => now()->toIso8601String()
+            ]);
             return response()->json($custom, 200);
         } else {
-            $custom = collect(['status' => 'error', 'statusCode' => 404, 'message' => 'Data tidak ditemukan', 'data' => null]);
+            $custom = collect([
+                'status' => 'error',
+                'statusCode' => 404,
+                'message' => 'Data tidak ditemukan',
+                'data' => null
+            ]);
             return response()->json($custom, 200);
         }
     }
+
 
     public function store(Request $request)
     {
@@ -112,6 +133,47 @@ class CattleControllerApi extends Controller
         }
     }
 
+    public function iotDevices($id)
+    {
+
+        $iot = IOTDevices::where('serial_number',$id)->first();
+
+        $cattle = Cattle::with(['iotDevice', 'breed', 'farm', 'healthRecords'])->where('iot_device_id',$iot['id'])->first();
+
+        $healthRecords = HealthRecord::where('cattle_id', $cattle->id)->orderBy('created_at', 'DESC')->first();
+
+        return response()->json([
+            'message' => 'Data Sapi ditemukan',
+            'status' => 'success',
+            'data' => [
+                'id' => $cattle->id,
+                'name' => $cattle->name,
+                'breed' => [
+                    'id' => $cattle->breed->id,
+                    'name' => $cattle->breed->name,
+                ],
+                'status' => $cattle->status,
+                'gender' => $cattle->gender,
+                'type' => $cattle->type,
+                'iot_device_id' => optional($cattle->iotDevice)->id,
+                'birth_date' => $cattle->birth_date,
+                'birth_weight' => $cattle->birth_weight,
+                'birth_height' => $cattle->birth_height,
+                'last_vaccination' => $cattle->last_vaccination,
+                'farm' => [
+                    'id' => optional($cattle->farm)->id,
+                    'name' => optional($cattle->farm)->name,
+                ],
+                'iot_device' => [
+                    'id' => optional($cattle->iotDevice)->id,
+                    'serial_number' => optional($cattle->iotDevice)->serial_number,
+                    'installation_date' => optional($cattle->iotDevice)->installation_date,
+                ],
+                'healthRecords' => $healthRecords
+            ]
+        ]);
+    }
+
     public function searchIOT(Request $request)
     {
         // Get the search query from the request
@@ -119,6 +181,7 @@ class CattleControllerApi extends Controller
 
         // Fetch IoT devices not associated with any cattle (iot_device_id not in cattle table)
         $devices = IOTDevices::where('serial_number', 'like', '%' . $query . '%')
+            ->where('user_id', Auth::id())
             ->whereNotIn('id', Cattle::whereNotNull('iot_device_id')->pluck('iot_device_id'))
             ->limit(10) // Limit the number of results
             ->get();
@@ -127,7 +190,6 @@ class CattleControllerApi extends Controller
         // Return results in JSON format
         return response()->json($devices);
     }
-
 
     public function assignIOTDevices(Request $request, $id)
     {
@@ -161,7 +223,6 @@ class CattleControllerApi extends Controller
         ], 200);
     }
 
-
     public function removeIOTDevices(Request $request, $id)
     {
         Cattle::where('id', $id)->update(['iot_device_id' => null]);
@@ -176,10 +237,14 @@ class CattleControllerApi extends Controller
 
         $healthRecords = HealthRecord::where('cattle_id', $id)->orderBy('created_at', 'DESC')->first();
 
+        $diAngon = !is_null(RequestNgangon::where('cattle_id', $id)->where('status', 'approved')->first()) ? true : false;
+
+
         return response()->json([
             'message' => 'Data Sapi ditemukan',
             'status' => 'success',
             'data' => [
+                'diAngon' => $diAngon,
                 'id' => $cattle->id,
                 'name' => $cattle->name,
                 'breed' => [
@@ -263,23 +328,22 @@ class CattleControllerApi extends Controller
         }
     }
 
-private function getChanges($oldData, $newData)
-{
-    $changes = [
-        'old_value' => [],
-        'new_value' => []
-    ];
+    private function getChanges($oldData, $newData)
+    {
+        $changes = [
+            'old_value' => [],
+            'new_value' => []
+        ];
 
-    foreach ($oldData as $key => $oldValue) {
-        if (array_key_exists($key, $newData) && $oldValue != $newData[$key]) {
-            $changes['old_value'][$key] = $oldValue;
-            $changes['new_value'][$key] = $newData[$key];
+        foreach ($oldData as $key => $oldValue) {
+            if (array_key_exists($key, $newData) && $oldValue != $newData[$key]) {
+                $changes['old_value'][$key] = $oldValue;
+                $changes['new_value'][$key] = $newData[$key];
+            }
         }
+
+        return $changes;
     }
-
-    return $changes;
-}
-
 
     public function destroy($id)
     {

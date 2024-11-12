@@ -19,5 +19,12 @@ class HealthRecord extends Model
         'veterinarian',
     ];
 
+    // Menambahkan properti $casts untuk memastikan kolom tanggal di-cast menjadi objek Carbon
+    protected $casts = [
+        'checkup_time' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
     public $timestamps = true;
 }

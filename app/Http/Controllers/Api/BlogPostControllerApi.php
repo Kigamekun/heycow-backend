@@ -12,22 +12,18 @@ use Carbon\Carbon;
 
 class BlogPostControllerApi extends Controller
 {
+    private function formatPrice($price)
+    {
+        return 'Rp ' . number_format($price, 0, '', '.');
+    }
+
     public function index(Request $request)
     {
         $user = Auth::id();
 
-        // $posByMe = BlogPost::where('user_id', $user)->get();
-        $allBlogPosts = BlogPost::all();
-        // Query untuk mengambil data blog post
-        $query = BlogPost::where('user_id', $user)
-            ->with(['comments', 'likes', 'cattle'])
+        $query = BlogPost::with(['comments', 'likes', 'cattle'])
             ->withCount(['comments', 'likes']);
-        
-            
 
-        
-
-        // Sorting, pagination, dan pencarian
         $sortBy = $request->query('sort_by', 'created_at');
         $sortOrder = $request->query('sort_order', 'desc');
         $perPage = $request->query('per_page', 10);
@@ -36,7 +32,6 @@ class BlogPostControllerApi extends Controller
         $allowedSortBy = ['created_at', 'title', 'published_at'];
         $allowedSortOrder = ['asc', 'desc'];
 
-        // Validasi kolom sorting
         if (!in_array($sortBy, $allowedSortBy)) {
             return response()->json([
                 'message' => 'Kolom sorting tidak valid',
@@ -44,7 +39,6 @@ class BlogPostControllerApi extends Controller
             ], 400);
         }
 
-        // Validasi arah sorting
         if (!in_array($sortOrder, $allowedSortOrder)) {
             return response()->json([
                 'message' => 'Arah sorting tidak valid',
@@ -52,11 +46,8 @@ class BlogPostControllerApi extends Controller
             ], 400);
         }
 
-        if ($search) {
-            $query->where(function($query) use ($search) {
-                $query->where('title', 'like', "%{$search}%")
-                      ->orWhere('content', 'like', "%{$search}%");
-            });
+        if (!empty($search)) {
+            $query->where('title', 'like', '%' . $search . '%');
         }
 
         if ($category) {
@@ -65,15 +56,17 @@ class BlogPostControllerApi extends Controller
 
         $blogPosts = $query->orderBy($sortBy, $sortOrder)->paginate($perPage);
 
-        // Modify each blog post to have relative time for `published_at`
-        $blogPosts->getCollection()->transform(function ($post) {
+        $user = auth()->user(); // atau cara lain untuk mendapatkan user yang sedang login
+        $blogPosts->getCollection()->transform(function ($post) use ($user) {
             $post->user = $post->user->name;
             $post->published_at = $post->published_at
                 ? Carbon::parse($post->published_at)->diffForHumans()
                 : null;
-
+            $post->price = $post->price ? $this->formatPrice($post->price) : null;
+            $post->isLiked = $post->likes->contains('user_id', $user->id); // Pastikan $user->id adalah ID yang benar
             return $post;
         });
+
 
         return response()->json([
             'message' => 'Data BlogPost',
@@ -91,11 +84,13 @@ class BlogPostControllerApi extends Controller
                 'content' => 'required|string',
                 'image' => 'nullable|mimes:png,jpg,jpeg|max:2048',
                 'category' => 'nullable|string|in:forum,jual',
+                'price' => 'nullable|integer',
+                'cattle_id' => 'nullable|exists:cattle,id',
                 'published' => 'nullable|string|in:draft,published',
                 'published_at' => 'nullable|date',
-                // 'get_full_image_url' => 'nullable|string',
             ], [
                 'user_id.required' => 'User ID harus diisi',
+                'cattle_id.exists' => 'Cattle ID tidak valid',
                 'user_id.exists' => 'User ID tidak valid',
                 'title.required' => 'Judul harus diisi',
                 'content.required' => 'Konten harus diisi',
@@ -108,18 +103,18 @@ class BlogPostControllerApi extends Controller
             }
             $user = Auth::id();
 
-            // Log data validasi untuk debugging
             Log::info('BlogPost validation successful', $validatedData);
 
             $cattle = Cattle::where('user_id', $user)->first();
 
-            // Simpan blog post
             $blogPost = BlogPost::create([
                 'user_id' => $user,
                 'title' => $validatedData['title'],
                 'content' => $validatedData['content'],
+                'cattle_id'=>$validatedData['cattle_id'],
+                // 'cattle_id' => $cattle ? $cattle->id : null,
                 'image' => $request->file('image') ? $request->file('image')->store('blog_images', 'public') : null,
-                // 'get_full_image_url' => $validatedData['get_full_image_url'],
+                'price' => $validatedData['price'] ?? null,
                 'category' => $validatedData['category'],
                 'published_at' => $validatedData['published_at']
             ]);
@@ -127,11 +122,11 @@ class BlogPostControllerApi extends Controller
             return response()->json([
                 'message' => 'BlogPost berhasil ditambahkan',
                 'status' => 'success',
+                'statusCode' => 200,
                 'data' => $blogPost
-            ], 201);
+            ], 200);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
-            // Tangani kesalahan validasi
             return response()->json([
                 'message' => 'Validasi gagal',
                 'errors' => $e->errors(),
@@ -140,10 +135,11 @@ class BlogPostControllerApi extends Controller
         }
     }
 
+
     public function show($id)
     {
-        $blogPost = BlogPost::with(['comments', 'likes'])
-            ->withCount(['comments', 'likes']) // Menghitung jumlah komentar dan like
+        $blogPost = BlogPost::with(['comments', 'likes', 'user', 'cattle'])
+            ->withCount(['comments', 'likes'])
             ->find($id);
 
         if (!$blogPost) {
@@ -153,10 +149,16 @@ class BlogPostControllerApi extends Controller
             ], 404);
         }
 
+        $user = Auth::id();
+        $isLiked = $blogPost->likes->contains('user_id', $user);
+
+        $blogPost->price = $blogPost->price ? $this->formatPrice($blogPost->price) : null;
+        $blogPost->isLiked = $isLiked;
+
         return response()->json([
             'message' => 'Data BlogPost ditemukan',
             'status' => 'success',
-            'data' => $blogPost
+            'data' => $blogPost,
         ]);
     }
 
@@ -172,21 +174,21 @@ class BlogPostControllerApi extends Controller
         }
 
         try {
-            // Validasi data input
             $validatedData = $request->validate([
                 'title' => 'nullable|string|max:255',
                 'content' => 'nullable|string',
                 'image' => 'nullable|mimes:png,jpg,jpeg|max:2048',
+                'price' => 'nullable|integer',
             ], [
                 'title.string' => 'Judul harus berupa teks',
                 'content.string' => 'Konten harus berupa teks',
             ]);
 
-            // Update blog post jika validasi berhasil
             $blogPost->update([
                 'title' => $validatedData['title'] ?? $blogPost->title,
                 'content' => $validatedData['content'] ?? $blogPost->content,
                 'image' => $request->file('image') ? $request->file('image')->store('blog_images', 'public') : $blogPost->image,
+                'price' => $validatedData['price'] ?? $blogPost->price,
             ]);
 
             return response()->json([

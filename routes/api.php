@@ -14,10 +14,11 @@ use App\Http\Controllers\Api\BreedControllerApi;
 use App\Http\Controllers\Api\UserControllerApi;
 use App\Http\Controllers\Api\HelpCenterControllerApi;
 use App\Http\Controllers\Api\LikeControllerApi;
+use App\Http\Controllers\Api\NotificationControllerApi;
 use App\Http\Controllers\Api\HistoryRecordControllerApi;
 use App\Http\Controllers\Api\ContractControllerApi;
 use Illuminate\Support\Facades\Route;
-use App\Models\{Cattle, IOTDevices, Farm};
+use App\Models\{Cattle, IOTDevices, Farm, RequestAngon};
 use Illuminate\Http\Request;
 
 
@@ -29,9 +30,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
         $cattleHealthy = Cattle::where('user_id', $userId)->where('status', 'sehat')->count();
         $cattleDead = Cattle::where('user_id', $userId)->where('status', 'mati')->count();
         $iotDevices = IOTDevices::where('user_id', $userId)->count();
-        $pengangon = 4;
+        $contract = RequestAngon::where('user_id',$userId)->where('status','approved')->count();
         $farm = Farm::where('user_id', $userId)->first();
         $cattle_count = Cattle::where('user_id', $userId)->count();
+        $notif_count = DB::table('notifications')->where([
+            'to_user'=>auth()->user()->id,
+            'is_read'=>0
+        ])->count();
         $cattle = Cattle::with([
             'breed',
             'iotDevice',
@@ -59,11 +64,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
             });
 
         return response()->json([
+            'notif_count' => $notif_count,
             'cattle_sick' => $cattleSick,
             'cattle_healthy' => $cattleHealthy,
             'cattle_dead' => $cattleDead,
             'iot_devices' => $iotDevices,
-            'pengangon' => $pengangon,
+            'contract' => $contract,
             'farm' => $farm,
             'cattle_count' => $cattle_count,
             'cattle' => $cattle
@@ -88,12 +94,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/', [RequestAngonControllerApi::class, 'store']);
         Route::put('/{id}/approve', [RequestAngonControllerApi::class, 'approveRequest']);
         Route::put('/{id}/reject', [RequestAngonControllerApi::class, 'rejectRequest']);
+        Route::post('/contract/{contractId}/approve', [RequestAngonControllerApi::class, 'approveOrDeclineRequest']);
+        Route::post('/contract/{contractId}/pay', [RequestAngonControllerApi::class, 'payForContract']);
     });
 
     Route::prefix('contract')->group(function () {
         Route::get('/', [ContractControllerApi::class, 'index']);
         Route::get('/{id}', [ContractControllerApi::class, 'show']);
-        Route::post('/{id}/return', [ContractControllerApi::class, 'returnContract']);
+        Route::post('/contract/{contractId}/return', [ContractControllerApi::class, 'returnCattle']);
 
     });
 
@@ -102,6 +110,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/', [CattleControllerApi::class, 'index']);
         Route::post('/', [CattleControllerApi::class, 'store']);
         Route::get('/{id}', [CattleControllerApi::class, 'show']);
+        Route::get('/iot-devices/{id}', [CattleControllerApi::class, 'iotDevices']);
         Route::put('/{id}', [CattleControllerApi::class, 'update']);
         Route::delete('/{id}', [CattleControllerApi::class, 'destroy']);
         Route::post('/iot-devices/search', [CattleControllerApi::class, 'searchIOT']);
@@ -111,7 +120,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/create-request', [CattleControllerApi::class, 'createRequest'])->name('cattle.create-request');
         Route::patch('/respond-request/{id}', [CattleControllerApi::class, 'respondToRequest'])->name('cattle.respond-request');
         Route::post('/complete-contract/{id}', [CattleControllerApi::class, 'completeContract'])->name('cattle.complete-contract');
-
     });
 
     // Rute untuk IoT Devices
@@ -161,11 +169,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/{id}/likes/{like_id}', [LikeControllerApi::class, 'show']);
         Route::put('/{id}/likes', [LikeControllerApi::class, 'update']);
 
-        // Forum Category
-        Route::get('/forum', [BlogPostControllerApi::class, 'showForumPosts']);
+        // // Forum Category
+        // Route::get('/forum', [BlogPostControllerApi::class, 'showForumPosts']);
 
-        // Jual Category
-        Route::get('/jual', [BlogPostControllerApi::class, 'showJualCategory']);
+        // // Jual Category
+        // Route::get('/jual', [BlogPostControllerApi::class, 'showJualCategory']);
 
         // Reply API
         Route::get('/{id}/comments/{comment_id}/reply', [ReplyControllerApi::class, 'index']);
@@ -176,6 +184,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     });
 
+
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/notifications', [NotificationControllerApi::class, 'getUserNotifications']);
+        Route::put('/notifications/{id}/read', [NotificationControllerApi::class, 'markAsRead']);
+    });
+
     // Rute untuk Health Records
     Route::prefix('health_records')->group(function () {
         Route::get('/', [HealthRecordControllerApi::class, 'index']);
@@ -183,12 +197,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/{id}', [HealthRecordControllerApi::class, 'show']);
         Route::put('/{id}', [HealthRecordControllerApi::class, 'update']);
         Route::delete('/{id}', [HealthRecordControllerApi::class, 'destroy']);
+        Route::get('/cattle/{id}/monthly-health-records', [HealthRecordControllerApi::class, 'showMonthlyHealthRecords']);
+
     });
 
     // Rute untuk History Records
     Route::prefix('history_records')->group(function () {
-        Route::get('/cattle/{cattle_id}', [HistoryRecordControllerApi::class, 'getHistoryByCattleId']);
-        Route::get('/{id}', [HistoryRecordControllerApi::class, 'getHistoryDetail']);
+        Route::get('/', [HistoryRecordControllerApi::class, 'index']);
     });
 
     // Rute untuk Transactions
@@ -218,10 +233,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/change-password', [UserControllerApi::class, 'changePassword']);
         Route::post('/request-iot', [UserControllerApi::class, 'requestIot']);
         Route::post('/assign-farm/{userId}', [UserControllerApi::class, 'assignFarm']);
-        Route::post('/submit-request-form/{userId}', [UserControllerApi::class, 'submitRequestForm']);
+        Route::post('/submit-request-form', [UserControllerApi::class, 'submitRequestForm']);
         Route::get('/pengangon', [UserControllerApi::class, 'getUserByPengangon']);
         Route::get('/{id}/detail', [UserControllerApi::class, 'getDetailPengangon']);
         Route::post('/request-ngangon', [UserControllerApi::class, 'requestNgangon']);
+        Route::patch('/{userId}/approve', [UserControllerApi::class, 'approveRequest']);
+        Route::put('/{userId}/reject', [UserControllerApi::class, 'rejectRequest']);
 
 
     });
@@ -249,13 +266,77 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::get('/me', function (Request $request) {
-    return $request->user();
+
+
+Route::post('/update-profile', function (Request $request) {
+    // Validate the incoming request data
+    $request->validate([
+        'name' => 'nullable|string|max:255',
+        'email' => 'nullable|email|max:255',
+        'phone_number' => 'nullable|string|max:20',
+        'address' => 'nullable|string|max:255',
+        'farm_name' => 'nullable|string|max:255',
+        'farm_address' => 'nullable|string|max:255',
+        'upah' => 'nullable|numeric',
+        'avatar' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:2048', // 2MB max
+    ]);
+
+    $user = $request->user(); // Get the authenticated user
+
+    // Prepare data for updating
+    $data = [
+        'name' => $request->input('name'),
+        'email' => $request->input('email'),
+        'phone_number' => $request->input('phone_number'),
+        'address' => $request->input('address'),
+        'upah' => $request->input('upah'),
+    ];
+
+    if ($request->hasFile('avatar')) {
+        if ($user->avatar) {
+            Storage::delete($user->avatar);
+        }
+
+
+        $path = $request->file('avatar')->store('avatars','public');
+        $data['avatar'] = $path;
+    }
+
+    $user->update($data);
+
+    $farm = Farm::where('user_id',$user->id)->first();
+
+    if (!is_null($farm)) {
+        Farm::where('user_id',$user->id)->update([
+            'name'=>$request->farm_name,
+            'address'=>$request->farm_address,
+        ]);
+    }
+
+
+
+    return response()->json([
+        'message' => 'Profile updated successfully',
+        'user' => $user,
+    ], 200);
 })->middleware('auth:sanctum');
 
 Route::post('/auth/register', [\App\Http\Controllers\Api\AuthController::class, 'register']);
 Route::post('/auth/login', [\App\Http\Controllers\Api\AuthController::class, 'login']);
 
+
+Route::get('/me', function (Request $request) {
+    $user = $request->user();
+    if ($user->avatar && !str_starts_with($user->avatar, 'https')) {
+        $user->avatar = url("/api/getFile/{$user->avatar}");
+    }
+    $user->farm = Farm::where('user_id',auth()->user()->id)->first();
+    return $user;
+})->middleware('auth:sanctum');
+
 Route::get('/getFile/{folder}/{filename}', function ($folder, $filename) {
     return response()->file(storage_path('app/public/') . $folder . '/' . $filename);
 });
+
+
+

@@ -10,6 +10,17 @@ use Illuminate\Http\Request;
 
 class HistoryRecordControllerApi extends Controller
 {
+
+    public function index(){
+        $devices = DB::table('history')->where('user_id',auth()->user()->id)->get();
+
+        return response()->json([
+            'message' => 'Data History',
+            'status' => 'success',
+            'data' => $devices
+        ],200);
+
+    }
     // Fungsi untuk mendapatkan semua riwayat perubahan berdasarkan cattle_id
     public function getHistoryByCattleId($cattle_id)
     {

@@ -23,9 +23,21 @@ class CommentControllerApi extends Controller
             ], 404);
         }
 
-        $comments = $blogPost->comments()->latest()->get();
+        $comments = $blogPost->comments()->with('user')->latest()->get();
         $commentCount = $comments->count(); // Menghitung jumlah komentar
-
+        $comments = $comments->map(function ($comment) {
+            return [
+                'id' => $comment->id,
+                'content' => $comment->content,
+                'created_at' => $comment->created_at,
+                'updated_at' => $comment->updated_at,
+                'user' => [
+                    'id' => $comment->user->id,
+                    'name' => $comment->user->name,
+                    'avatar' => $comment->user->avatar,
+                ],
+            ];
+        });
         return response()->json([
             'status' => 'sukses',
             'data' => [
@@ -44,14 +56,14 @@ class CommentControllerApi extends Controller
             // 'user_id' => 'required|integer',
             'content' => 'required|string',
         ]);
-        
+
         try {
             $comment = Comment::create([
                 'content' => $validatedData['content'],
                 'user_id' => auth()->user()->id,
                 'post_id' => $id,
             ]);
-  
+
         // Hapus atau komentar baris ini
             return response()->json([
                 'status' => 'sukses',

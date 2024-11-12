@@ -13,13 +13,14 @@ Route::get('/welcome', function () {
     return view('welcome');
 });
 
-Route::get('/transactions/create-charge', [TransactionControllerApi::class, 'createCharge']);
+Route::get('/transactions/create-charge/{id}', [TransactionControllerApi::class, 'createCharge']);
 
 Route::get('/pay-api/{id}', [TransactionControllerApi::class, 'pay'])->name('pay-api');
 Route::get('/pay-api-finish', [TransactionControllerApi::class, 'payFinish'])->name('pay-api-finish');
 
-
-
+Route::post('/cst', [TransactionControllerApi::class, 'cst'])->name('cst');
+Route::match(['get', 'post'],'/refresh', [TransactionControllerApi::class, 'refresh'])->name('refresh');
+Route::match(['get', 'post'],'/history', [TransactionControllerApi::class, 'history'])->name('history');
 
 
 Route::get('/test', [LandingPageController::class, 'test']);

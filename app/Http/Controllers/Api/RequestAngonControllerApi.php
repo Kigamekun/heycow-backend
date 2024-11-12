@@ -31,17 +31,16 @@ class RequestAngonControllerApi extends Controller
 
                  $peternak = DB::table('users')->where('id', $item->peternak_id)->first();
                  $user = DB::table('users')->where('id', $item->user_id)->first();
-
                  $title = $is_pengangon
                      ? "Permintaan mengangon dari " . $item->user->name . ": " . $item->cattle->name
                      : "Request Angon " . $item->cattle->name . " ke " . $item->peternak->name;
 
                  return [
                     'id' => $item->id,
-                     'title' => $title,
-                     'is_pengangon' => $is_pengangon,
-                     'status' => $item->status,
-                     'tanggal' => $item->created_at->toIso8601String(),
+                    'title' => $title,
+                    'is_pengangon' => $is_pengangon,
+                    'status' => $item->status,
+                    'tanggal' => $item->created_at->toIso8601String(),
                  ];
              });
 
@@ -67,51 +66,78 @@ class RequestAngonControllerApi extends Controller
      }
 
      public function approveRequest($id)
-{
-    // Ambil data request berdasarkan ID
-    $requestAngon = RequestAngon::find($id);
+    {
+        // Ambil data request berdasarkan ID
+        $requestAngon = RequestAngon::find($id);
 
-    if (!$requestAngon) {
-        return response()->json(['message' => 'Request not found'], 404);
-    }
+        if (!$requestAngon) {
+            return response()->json(['message' => 'Request not found'], 404);
+        }
 
-    // Jika status sudah approved, kembalikan response dengan kode 200
-    if ($requestAngon->status == 'approved') {
-        return response()->json(['message' => 'Request already approved'], 200);
-    }
+        // Jika status sudah approved, kembalikan response dengan kode 200
+        if ($requestAngon->status == 'approved') {
+            return response()->json(['message' => 'Request already approved'], 200);
+        }
 
-    // Update status menjadi approved
-    $requestAngon->status = 'approved';
-    $requestAngon->save();
+        // Update status menjadi approved
+        $requestAngon->status = 'approved';
+        $requestAngon->save();
 
-    $prefix = 'CONTRACT'; $length = 6;
-    $date = date('Ymd');
+        // Mengambil data pengguna terkait (misal user yang mengajukan request)
+        $user = $requestAngon->user; // Pastikan relasi `user()` sudah ada di model RequestAngon
 
-    // Generate a random alphanumeric string of the desired length
-    $randomString = substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, $length);
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
 
-    // Combine the prefix, date, and random string to form the contract code
-    $contractCode = $prefix . '-' . $date . '-' . $randomString;
-    // Membuat kontrak otomatis setelah request di-approve
-    $contract = new Contract();
-    $contract->contract_code=$contractCode;
-    $contract->request_id = $requestAngon->id;
-    $contract->cattle_id = $requestAngon->cattle_id;
-    $contract->farm_id = $requestAngon->peternak_id;
-    $contract->start_date = now()->toDateString();
-    $contract->end_date = now()->addMonths(1)->toDateString(); // Misal kontrak 1 bulan
-    $contract->rate = 100.00; // Tentukan rate yang sesuai
-    $contract->initial_weight = 0.00; // Tentukan nilai berat awal
-    $contract->initial_height = 0.00; // Tentukan nilai tinggi awal
-    $contract->status = 'pending'; // Status kontrak draft atau pending
-    $contract->save();
+        // Generate contract code dan kontrak otomatis
+        $prefix = 'CONTRACT';
+        $length = 6;
+        $date = date('Ymd');
+        $randomString = substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, $length);
+        $contractCode = $prefix . '-' . $date . '-' . $randomString;
 
-    // Mengembalikan response sukses
-    return response()->json([
-        'message' => 'Request approved and contract created',
-        'contract' => $contract
-    ], 200);
+
+
+
+
+        $peternak = User::where('id',$requestAngon->peternak_id)->first();
+        $cattle = Cattle::where('id',$requestAngon->cattle_id)->first();
+
+
+
+        // Membuat kontrak otomatis setelah request di-approve
+        $contract = new Contract();
+        $contract->contract_code = $contractCode;
+        $contract->request_id = $requestAngon->id;
+        $contract->cattle_id = $requestAngon->cattle_id;
+        $contract->farm_id = $requestAngon->farm_id;
+        $contract->user_id = $user->id;
+        $contract->start_date = now()->toDateString();
+        $contract->end_date = now()->addMonths($requestAngon->duration)->toDateString();
+        $contract->rate = $peternak->upah;
+        $contract->initial_weight = $cattle->birth_weight;
+        $contract->initial_height = $cattle->birth_height;
+        $contract->final_weight = null;
+        $contract->final_height = null;
+        $contract->status = 'pending';
+        $contract->total_cost = $peternak->upah * $requestAngon->duration;
+        $contract->snap_token = null;
+        $contract->transaction_time = null;
+        $contract->payment_type = null;
+        $contract->payment_status_message = null;
+        $contract->transaction_id = null;
+        $contract->jumlah_pembayaran = null;
+        $contract->payment_status = null;
+        $contract->save();
+
+        // Mengembalikan response sukses dengan data kontrak yang valid
+        return response()->json([
+            'message' => 'Request approved and contract created',
+            'contract' => $contract
+        ], 200);
 }
+
 
 public function rejectRequest($id)
 {
@@ -155,9 +181,25 @@ public function rejectRequest($id)
                 'status' => 'pending',
             ]);
 
+            $pengangon = DB::table('users')->where('id', $request->peternak_id)->first();
+            $cattle = DB::table('cattle')->where('id', $request->cattle_id)->first();
+
+
+            $formattedDate = now()->addDays(3)->format('d F Y - H:i');
+
+
+            $data = [
+                'nama_pengangon' => $pengangon->name,
+                'nama_sapi' => $cattle->name,
+                'durasi' => $request->durasi,
+                'tanggal' => $formattedDate,
+                'biaya' => 'Rp. '.$pengangon->upah * $request->durasi,
+            ];
+
         return response()->json([
             'message' => 'Data Request',
             'status' => 'success',
+            'data' => $data
         ], 200);
     }
 

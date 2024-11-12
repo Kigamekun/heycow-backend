@@ -23,13 +23,14 @@ class ContractControllerApi extends Controller
             })
             ->select('contracts.*');
 
-        $limit = request()->get('limit', 10);
+         $limit = $_GET['limit'] ?? 10;
+
 
         if ($data->exists()) {
-            $data = $data->paginate($limit)->through(function ($item) use ($user) {
+            $data = $data->paginate($limit)->map(function ($item) use ($user) {
                 return [
                     'id' => $item->id,
-                    'title' => "Contract " . $item->contract_code,
+                    'title' =>  $item->contract_code,
                     'status' => $item->status,
                     'tanggal' => $item->created_at->toIso8601String(),
                 ];
@@ -62,6 +63,14 @@ class ContractControllerApi extends Controller
     public function show($id)
     {
         $contract = Contract::find($id);
+
+        $contract->farmName = $contract->farm->name;
+        $contract->cattleName = $contract->cattle->name;
+        $contract->farmAddress = $contract->farm->address ?? '-';
+        $contract->pengangonPhone = $contract->request->peternak->phone ?? '-';
+        $contract->pengangonName = $contract->request->peternak->name ?? '-';
+        $contract->pengangonFee = 'Rp. '.$contract->total_cost;
+
 
         if (!$contract) {
             return response()->json([

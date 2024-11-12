@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="{{ url('assets/vendor/css/core.css') }}" class="template-customizer-core-css" />
     <link rel="stylesheet" href="{{ url('assets/vendor/css/theme-default.css') }}" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Document</title>
+    <title>Midtrans Payment Gateaway</title>
 </head>
 
 <body>
@@ -38,7 +38,7 @@
                     url: "/cst",
                     method: "POST",
                     data: {
-                        auction: 'ada',
+                        id: @json($id),
                         status: 'success',
                         result: result
                     },
@@ -59,7 +59,7 @@
                     url: "/cst",
                     method: "POST",
                     data: {
-                        auction: 'ada',
+                        id: @json($id),
                         status: 'warning',
                         result: result
                     },
@@ -80,7 +80,7 @@
                     url: "/cst",
                     method: "POST",
                     data: {
-                        auction: 'ada',
+                        id: @json($id),
                         status: 'error',
                         result: result
                     },

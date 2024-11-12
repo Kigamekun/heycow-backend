@@ -39,52 +39,47 @@ class LikeControllerApi extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    // 
+    //
 
     /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request, $id)
-{
-    $validatedData = $request->validate([
-        'like' => 'required|string|in:like,dislike',
-    ]);
+    {
+        // Cek apakah pengguna sudah memberi like pada post
+        $existingLike = Like::where('post_id', $id)
+            ->where('user_id', auth()->user()->id)
+            ->first();
 
-    // Cek apakah pengguna sudah memberi like pada post
-    $existingLike = Like::where('post_id', $id)
-        ->where('user_id', auth()->user()->id)
-        ->first();
-
-    try {
-        if ($existingLike) {
-            // Update existing like
-            $existingLike->update(['like' => $validatedData['like']]);
+        try {
+            if ($existingLike) {
+                // Hapus like yang sudah ada
+                $existingLike->delete();
+                return response()->json([
+                    'status' => 'sukses',
+                    'pesan' => 'Like berhasil dihapus',
+                ], 200);
+            } else {
+                // Buat like baru
+                $like = Like::create([
+                    'like' => 1,
+                    'user_id' => auth()->user()->id,
+                    'post_id' => $id,
+                ]);
+                return response()->json([
+                    'status' => 'sukses',
+                    'pesan' => 'Like berhasil dibuat',
+                    'data' => $like,
+                ], 200);
+            }
+        } catch (\Exception $e) {
             return response()->json([
-                'status' => 'sukses',
-                'pesan' => 'Like berhasil diperbarui',
-                'data' => $existingLike,
-            ], 200);
-        } else {
-            // Buat like baru
-            $like = Like::create([
-                'like' => $validatedData['like'],
-                'user_id' => auth()->user()->id,
-                'post_id' => $id,
-            ]);
-            return response()->json([
-                'status' => 'sukses',
-                'pesan' => 'Like berhasil dibuat',
-                'data' => $like,
-            ], 201);
+                'status' => 'gagal',
+                'pesan' => 'Gagal mengubah like',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-    } catch (\Exception $e) {
-        return response()->json([
-            'status' => 'gagal',
-            'pesan' => 'Gagal membuat like',
-            'error' => $e->getMessage(),
-        ], 500);
     }
-}
 
 
     /**
@@ -115,7 +110,7 @@ class LikeControllerApi extends Controller
     {
         // //
         // $like = Like::find('post_id', $id);
-        
+
         // $validatedData = $request->validate([
         //     'like' => 'required|string|in:like,dislike',
         // ]);
@@ -127,7 +122,7 @@ class LikeControllerApi extends Controller
         if (!$like) {
             return response()->json(['status' => 'gagal', 'pesan' => 'Like tidak ditemukan'], 404);
         }
-        
+
     }
 
 

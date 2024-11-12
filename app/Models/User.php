@@ -47,14 +47,17 @@ class User extends Authenticatable
         return $this->belongsTo(User::class, 'farm_id', 'id');
     }
 
-
     // Update status pengangon
     public function updatePengangonStatus($status)
     {
         $this->is_pengangon = $status;
         $this->save();
     }
-
+    protected $appends = ['full_avatar_url'];
+    public function getFullAvatarUrlAttribute()
+    {
+        return $this->avatar ? url('api/getFile/' . $this->avatar) : null;
+    }
     public function getDetailPengangon($id)
     {
         try {

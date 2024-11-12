@@ -4,17 +4,48 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\HealthRecord;
+use App\Models\Cattle;
 use Illuminate\Http\Request;
 
 class HealthRecordControllerApi extends Controller
 {
-    // Mengambil semua rekaman kesehatan
+    // Mengambil semua rekaman kesehatan, dipisahkan berdasarkan bulan dan tahun
     public function index()
     {
         $healthRecords = HealthRecord::all();
+
+        // Mengelompokkan berdasarkan bulan dan tahun
+        $groupedRecords = $healthRecords->groupBy(function ($item) {
+            return $item->checkup_time->format('F Y'); // Menggunakan bulan dan tahun untuk grup
+        });
+
+        // Format data untuk ditampilkan
+        $formattedRecords = [];
+
+        foreach ($groupedRecords as $period => $records) {
+            $monthYear = explode(' ', $period);
+            $month = $monthYear[0];
+            $year = $monthYear[1];
+
+            $formattedRecords[] = [
+                'month' => $month,
+                'year' => $year,
+                'records' => $records->map(function ($record) {
+                    return [
+                        'weight' => $record->weight,
+                        'temperature' => $record->temperature,
+                        'heart_rate' => $record->heart_rate,
+                        'status' => $record->status,
+                        'checkup_time' => $record->checkup_time->format('d-m-Y'),
+                        'veterinarian' => $record->veterinarian,
+                    ];
+                }),
+            ];
+        }
+
         return response()->json([
             'status' => 'sukses',
-            'data' => $healthRecords,
+            'data' => $formattedRecords,
         ]);
     }
 
@@ -33,6 +64,7 @@ class HealthRecordControllerApi extends Controller
             ]);
 
             $healthRecord = HealthRecord::create($validatedData);
+
             return response()->json([
                 'status' => 'sukses',
                 'data' => $healthRecord,
@@ -44,6 +76,55 @@ class HealthRecordControllerApi extends Controller
                 'error' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    // Di dalam HealthRecordControllerApi
+    public function showMonthlyHealthRecords($id)
+    {
+        $cattle = Cattle::find($id);
+
+        // Cek apakah sapi ditemukan
+        if (!$cattle) {
+            return response()->json(['error' => 'Sapi tidak ditemukan'], 404);
+        }
+
+        // Ambil semua health record berdasarkan bulan dan tahun
+        $healthRecords = HealthRecord::where('cattle_id', $id)
+            ->orderBy('checkup_time', 'desc') // Urutkan berdasarkan tanggal
+            ->get();
+
+        $groupedRecords = $healthRecords->groupBy(function($item) {
+            return \Carbon\Carbon::parse($item->checkup_time)->format('F Y'); // Grup berdasarkan bulan dan tahun
+        });
+
+        $formattedRecords = [];
+
+        foreach ($groupedRecords as $monthYear => $records) {
+            $formattedRecords[] = [
+                'month_year' => $monthYear,
+                'records' => $records->map(function($record) {
+                    return [
+                        'checkup_time' => \Carbon\Carbon::parse($record->checkup_time)->format('d-m-Y'), // Format tanggal
+                        'veterinarian' => $record->veterinarian ?? 'N/A',
+                        'weight' => $record->weight ? $record->weight . ' kg' : 'N/A',
+                        'heart_rate' => $record->heart_rate ? $record->heart_rate . ' hr/m' : 'N/A',
+                        'temperature' => $record->temperature ? $record->temperature . '℃' : 'N/A',
+                        'status' => $record->status,
+                    ];
+                })
+            ];
+        }
+
+        return response()->json([
+            'status' => 'sukses',
+            'cattle' => [
+                'id' => $cattle->id,
+                'name' => $cattle->name,
+                'species' => $cattle->species,
+                'gender' => $cattle->gender,
+                'health_records' => $formattedRecords
+            ]
+        ]);
     }
 
     // Mengambil rekaman kesehatan spesifik

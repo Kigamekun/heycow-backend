@@ -35,7 +35,6 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
             'phone_number' => $request->phone_number,
             'address' => $request->address,
-            'bio' => $request->bio,
             'gender' => $request->gender,
             'avatar' => $request->file('avatar') ? $request->file('avatar')->store('avatar', 'public') : null,
         ]);

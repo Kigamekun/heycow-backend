@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Transaction;
+use App\Models\{Transaction,Contract,RequestAngon,User};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -34,74 +34,86 @@ class TransactionControllerApi extends Controller
     }
 
 
-    public function createCharge(Request $request)
+    public function createCharge(Request $request,$id)
     {
-        $params = [
-            'transaction_details' => [
-                'order_id' => rand(),
-                'gross_amount' => 10000,
-            ],
-            'credit_card' => [
-                'secure' => true
-            ],
-            'customer_details' => [
-                'first_name' => 'Reksa',
-                'last_name' => 'Syahputra',
-                'email' => 'reksa.prayoga1012@gmail.com',
-                'phone' => '0895331493506',
-            ],
-        ];
 
-        $snapToken = Snap::getSnapToken($params);
-        return view('api.charge', compact('snapToken'));
+        $contract = Contract::where('id',$id)->first();
+        $req = RequestAngon::where('id',$contract->request_id)->first();
+        $user = User::where('id',$req->user_id)->first();
+
+        $snapToken = $contract->snap_token;
+        if (is_null($snapToken)) {
+            $params = [
+                'transaction_details' => [
+                    'order_id' => rand(),
+                    'gross_amount' => $contract->total_cost,
+                ],
+                'credit_card' => [
+                    'secure' => true
+                ],
+                'customer_details' => [
+                    'first_name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $user->phone,
+                ],
+            ];
+
+            $snapToken = Snap::getSnapToken($params);
+
+            $contract->snap_token = $snapToken;
+            $contract->save();
+        }
+
+
+        return view('api.charge', compact('snapToken','id'));
     }
 
+    public function refresh(){
+        return redirect()->secure(route('history'));
+    }
+
+    public function history(){
+        return 'selesai';
+    }
 
     public function cst(Request $request)
     {
 
-        // dd($request->all());
-        // try {
-        //     Auction::where('id', $request->auction)->update([
-        //         'transaction_time' => $request->result['transaction_time'],
-        //         'payment_type' => $request->result['payment_type'] . "-" . $request->result['bank'],
-        //         'payment_status_message' => $request->result['status_message'],
-        //         'transaction_id' => $request->result['transaction_id'],
+        try {
+            Contract::where('id', $request->id)->update([
+                'transaction_time' => $request->result['transaction_time'],
+                'payment_type' => $request->result['payment_type'] . "-" . $request->result['bank'],
+                'payment_status_message' => $request->result['status_message'],
+                'transaction_id' => $request->result['transaction_id'],
 
-        //         'jumlah_pembayaran' => $request->result['gross_amount'],
-        //     ]);
-        // } catch (\Throwable $th) {
-        //     Auction::where('id', $request->auction)->update([
-        //         'transaction_time' => $request->result['transaction_time'],
-        //         'payment_type' => $request->result['payment_type'],
-        //         'payment_status_message' => $request->result['status_message'],
-        //         'transaction_id' => $request->result['transaction_id'],
+                'jumlah_pembayaran' => $request->result['gross_amount'],
+            ]);
+        } catch (\Throwable $th) {
+            Contract::where('id', $request->id)->update([
+                'transaction_time' => $request->result['transaction_time'],
+                'payment_type' => $request->result['payment_type'],
+                'payment_status_message' => $request->result['status_message'],
+                'transaction_id' => $request->result['transaction_id'],
 
-        //         'jumlah_pembayaran' => $request->result['gross_amount'],
-        //     ]);
-        // }
-        // if ($request->status == "success") {
-        //     Auction::where('id', $request->auction)->update([
-        //         'payment_status' => 2,
-        //     ]);
-        // } elseif ($request->status == 'pending') {
-        //     Auction::where('id', $request->auction)->update([
-        //         'paymment_status' => 1,
-        //     ]);
-        // } elseif ($request->status == 'error') {
-        //     Auction::where('id', $request->auction)->update([
-        //         'paymment_status' => 4,
-        //     ]);
-        // }
+                'jumlah_pembayaran' => $request->result['gross_amount'],
+            ]);
+        }
+        if ($request->status == "success") {
+            Contract::where('id', $request->id)->update([
+                'payment_status' => 2,
+                'status' => 'active'
 
-
-        // Product::where('id', Auction::where('id', $request->auction)->first()->product_id)->update([
-        //     'status' => '0',
-        // ]);
-
-
-        // Mail::to(Auction::where('id', $request->auction)->first()->user->email)->send(new WinnerAuctionMail($request->auction));
-
+            ]);
+        } elseif ($request->status == 'pending') {
+            Contract::where('id', $request->id)->update([
+                'paymment_status' => 1,
+            ]);
+        } elseif ($request->status == 'error') {
+            Contract::where('id', $request->id)->update([
+                'paymment_status' => 4,
+            ]);
+        }
+        // Mail::to(Auction::where('id', $request->id)->first()->user->email)->send(new WinnerAuctionMail($request->auction));
         return response()->json(['message' => 'Update Transaction', 'status' => 'success'], 200);
     }
 
@@ -109,13 +121,6 @@ class TransactionControllerApi extends Controller
     {
         return view('api.pay-finish');
     }
-
-
-
-
-
-
-
 
     // Menyimpan transaksi baru
     public function store(Request $request)

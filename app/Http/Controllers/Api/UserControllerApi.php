@@ -33,89 +33,166 @@ class UserControllerApi extends Controller
         }
     }
 
-    public function submitRequestForm(Request $request, $userId)
+    public function show()
     {
-        // Validasi input dari form
-        $request->validate([
-            'nik' => 'required',
-            'ktp' => 'required|image',
-            'address' => 'required',
-            'upah' => 'required|numeric',
-            'selfie_ktp' => 'required|image',
-        ]);
-
-        // Cari user berdasarkan ID
-        $user = User::findOrFail($userId);
-
-        // Simpan data pengangon ke dalam kolom pengguna
-        $user->nik = $request->nik;
-        $user->ktp = $request->ktp->store('ktp'); // Menyimpan file KTP
-        $user->address = $request->address;
-        $user->upah = $request->upah;
-        $user->selfie_ktp = $request->selfie_ktp->store('selfie_ktp');
-        $user->save();
-
-        // Update status pengangon pada kolom is_pengangon jika ada
-        $user->update([
-            'is_pengangon' => 1 // Misalnya status pengangon ada di kolom is_pengangon
-        ]);
-
-        // Kirim respons sukses
+        try{
+        $id = request()->route('id');
+        $user = User::findOrFail($id);
         return response()->json([
-            'status' => 'Pengangon berhasil aktif!',
-            'user' => $user
+            'status' => 'sukses',
+            'data' => $user,
         ]);
-    }
-
-    // Menyimpan pengguna baru
-    public function store(Request $request)
-    {
-        $validatedData = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
-            'phone_number' => 'nullable|string|max:20',
-            'address' => 'nullable|string|max:255',
-            'bio' => 'nullable|string|max:500',
-            'avatar' => 'nullable|file|mimes:jpeg,png,jpg,svg|max:2048',
-            'nik' => 'nullable|string|max:255',
-            'upah' => 'nullable|numeric',
-            'ktp' => 'nullable|file|mimes:jpeg,png,jpg,svg|max:2048',
-            'selfie_ktp' => 'nullable|file|mimes:jpeg,png,jpg,svg|max:2048',
-        ]);
-
-        try {
-            $avatarPath = $request->file('avatar') ? $request->file('avatar')->store('avatars', 'public') : null;
-            $ktpPath = $request->file('ktp') ? $request->file('ktp')->store('ktp', 'public') : null;
-            $selfieKtpPath = $request->file('selfie_ktp') ? $request->file('selfie_ktp')->store('selfie_ktp', 'public') : null;
-
-            $user = User::create([
-                'name' => $validatedData['name'],
-                'email' => $validatedData['email'],
-                'password' => Hash::make($validatedData['password']),
-                'phone_number' => $validatedData['phone_number'],
-                'address' => $validatedData['address'],
-                'bio' => $validatedData['bio'],
-                'avatar' => $avatarPath,
-                'nik' => $validatedData['nik'],
-                'upah' => $validatedData['upah'],
-                'ktp' => $ktpPath,
-                'selfie_ktp' => $selfieKtpPath,
-            ]);
-
-            return response()->json([
-                'status' => 'sukses',
-                'pesan' => 'Pengguna berhasil dibuat',
-                'data' => $user,
-            ], 201);
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'gagal',
-                'pesan' => 'Gagal membuat pengguna',
+                'pesan' => 'Gagal mengambil data pengguna',
                 'error' => $e->getMessage(),
             ], 500);
         }
     }
+
+    public function submitRequestForm(Request $request)
+{
+    // Validasi data dari form request
+    $validatedData = $request->validate([
+        'nik' => 'required|string|max:255',
+        'ktp' => 'required|file|mimes:jpeg,png,jpg,svg|max:2048',
+        'upah' => 'required|numeric',
+        'selfie_ktp' => 'required|file|mimes:jpeg,png,jpg,svg|max:2048',
+    ]);
+
+    try {
+        // Proses upload KTP dan selfie KTP
+        $ktpPath = $request->file('ktp') ? $request->file('ktp')->store('ktp', 'public') : null;
+        $selfieKtpPath = $request->file('selfie_ktp') ? $request->file('selfie_ktp')->store('selfie_ktp', 'public') : null;
+
+        // Mengambil user yang terautentikasi
+        $user = auth()->user();
+
+        // Perbarui data user dengan data yang diterima
+        $user->nik = $validatedData['nik'];
+        $user->ktp = $ktpPath;
+        $user->upah = $validatedData['upah'];
+        $user->selfie_ktp = $selfieKtpPath;
+        $user->status = 'pending';  // Set status ke pending setelah form disubmit
+        $user->save();
+
+        return response()->json([
+            'status' => 'sukses',
+            'pesan' => 'Pengajuan berhasil dikirim, menunggu persetujuan admin.',
+            'user' => $user
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'gagal',
+            'pesan' => 'Gagal mengirimkan pengajuan',
+            'error' => $e->getMessage(),
+        ], 500);
+    }
+}
+
+
+
+    public function approveRequest(Request $request, $userId)
+    {
+        try {
+            // Mencari pengguna berdasarkan ID
+            $user = User::findOrFail($userId);
+
+            // Mengubah status menjadi 'approved'
+            $user->is_pengangon = 1;
+            $user->status = 'approved';
+            $user->save();
+
+            // Mengembalikan respons jika berhasil
+            return response()->json([
+                'status' => 'sukses',
+                'pesan' => 'Pengajuan telah disetujui',
+                'data' => $user,
+            ]);
+        } catch (\Exception $e) {
+            // Menangani error jika ada masalah
+            return response()->json([
+                'status' => 'gagal',
+                'pesan' => 'Gagal menyetujui pengajuan',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function rejectRequest($userId)
+    {
+        try {
+            // Temukan user berdasarkan ID
+            $user = User::find($userId);
+
+            // Cek apakah user ditemukan
+            if (!$user) {
+                return response()->json(['error' => 'User not found'], 404);
+            }
+
+            // Update data menjadi null saat request ditolak
+            $user->nik = null;
+            $user->ktp = null;
+            $user->selfie_ktp = null;
+            $user->upah = null;
+            $user->status = 'rejected'; // atau status lainnya sesuai keinginan Anda
+
+            // Simpan perubahan ke database
+            $user->save();
+
+            return response()->json(['message' => 'Request rejected successfully'], 200);
+        } catch (\Exception $e) {
+            // Tangani error dengan baik dan log pesan error
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+
+
+    // Menyimpan pengguna baru
+    public function store(Request $request)
+{
+    // Validasi hanya data yang relevan untuk pembuatan pengguna baru
+    $validatedData = $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => 'required|string|email|max:255|unique:users',
+        'password' => 'required|string|min:8',
+        'phone_number' => 'nullable|string|max:20',
+        'address' => 'nullable|string|max:255',
+        'avatar' => 'nullable|file|mimes:jpeg,png,jpg,svg|max:2048',
+    ]);
+
+    try {
+        // Proses upload avatar jika ada
+        $avatarPath = $request->file('avatar') ? $request->file('avatar')->store('avatars', 'public') : null;
+
+        // Membuat pengguna baru dengan data yang sudah divalidasi
+        $user = User::create([
+            'name' => $validatedData['name'],
+            'email' => $validatedData['email'],
+            'password' => Hash::make($validatedData['password']),
+            'phone_number' => $validatedData['phone_number'],
+            'address' => $validatedData['address'],
+            'avatar' => $avatarPath,
+        ]);
+
+        // Response sukses jika pengguna berhasil dibuat
+        return response()->json([
+            'status' => 'sukses',
+            'pesan' => 'Pengguna berhasil dibuat',
+            'data' => $user,
+        ], 201);
+    } catch (\Exception $e) {
+        // Response gagal jika ada error dalam proses
+        return response()->json([
+            'status' => 'gagal',
+            'pesan' => 'Gagal membuat pengguna',
+            'error' => $e->getMessage(),
+        ], 500);
+    }
+}
+
 
     public function getDetailPengangon($id)
     {
@@ -186,7 +263,6 @@ $result = [
         'address' => $pengangon->address ?? 'Alamat tidak tersedia',
         'upah' => "Rp " . number_format($pengangon->upah, 0, ',', '.'),
         'avatar' => $pengangon->avatar ?? null,
-        'bio' => $pengangon->bio ?? 'Bio tidak tersedia',
         'rate' => $pengangon->avg_rate ? (int) $pengangon->avg_rate : 0,
         'farm' => $pengangon->farms ?? 'Farm tidak tersedia',
     ],
@@ -272,7 +348,6 @@ $result = [
                 'address' => $user->address ?? 'Alamat tidak tersedia',
                 'upah' => $user->upah ? "Rp " . number_format($user->upah, 0, ',', '.') : 'Upah tidak tersedia',
                 'avatar' => $user->avatar ?? null,
-                'bio' => $user->bio ?? 'Bio tidak tersedia',
                 'rate' => $user->avg_rate ? (int) $user->avg_rate : 0
             ];
         });
@@ -306,7 +381,6 @@ $result = [
                 'password' => 'nullable|string|min:8',
                 'phone_number' => 'nullable|string|max:15',
                 'address' => 'nullable|string|max:255',
-                'bio' => 'nullable|string|max:500',
                 'avatar' => 'nullable|mimes:jpeg,png,jpg,svg|max:2048'
             ]);
 
@@ -319,7 +393,14 @@ $result = [
                 $validatedData['avatar'] = $avatarPath;
             }
 
-            $user->update($validatedData);
+            $user->update([
+                'name' => $validatedData['name'] ?? $user->name,
+                'email' => $validatedData['email'] ?? $user->email,
+                'password' => $validatedData['password'] ?? $user->password,
+                'phone_number' => $validatedData['phone_number'] ?? $user->phone_number,
+                'address' => $validatedData['address'] ?? $user->address,
+                'avatar' => $validatedData['avatar'] ?? $user->avatar ?? null,
+            ]);
 
             return response()->json([
                 'status' => 'sukses',
