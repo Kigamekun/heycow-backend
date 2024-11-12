@@ -65,7 +65,8 @@ class UserControllerApi extends Controller
         // Proses upload KTP dan selfie KTP
         $ktpPath = $request->file('ktp') ? $request->file('ktp')->store('ktp', 'public') : null;
         $selfieKtpPath = $request->file('selfie_ktp') ? $request->file('selfie_ktp')->store('selfie_ktp', 'public') : null;
-
+        // Format upah menjadi rupiah
+        $validatedData['upah'] = 'Rp ' . number_format($validatedData['upah'], 0, ',', '.');
         // Mengambil user yang terautentikasi
         $user = auth()->user();
 

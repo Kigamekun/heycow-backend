@@ -101,7 +101,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::prefix('contract')->group(function () {
         Route::get('/', [ContractControllerApi::class, 'index']);
         Route::get('/{id}', [ContractControllerApi::class, 'show']);
-        Route::post('/contract/{contractId}/return', [ContractControllerApi::class, 'returnCattle']);
+        Route::post('/{contractId}/return', [ContractControllerApi::class, 'returnContract']);
 
     });
 
@@ -116,11 +116,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/iot-devices/search', [CattleControllerApi::class, 'searchIOT']);
         Route::patch('/assign-iot-devices/{id}', [CattleControllerApi::class, 'assignIOTDevices']);
         Route::delete('/remove-iot-devices/{id}', [CattleControllerApi::class, 'removeIOTDevices'])->name('cattle.remove-iot-devices');
-        Route::patch('change-status/{id}', [CattleControllerApi::class, 'changeStatus'])->name('cattle.change-status');
-        Route::post('/create-request', [CattleControllerApi::class, 'createRequest'])->name('cattle.create-request');
-        Route::patch('/respond-request/{id}', [CattleControllerApi::class, 'respondToRequest'])->name('cattle.respond-request');
-        Route::post('/complete-contract/{id}', [CattleControllerApi::class, 'completeContract'])->name('cattle.complete-contract');
-    });
+       });
 
     // Rute untuk IoT Devices
     Route::prefix('iot_devices')->group(function () {
@@ -221,6 +217,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/', [CattleControllerApi::class, 'getBreeds']);
         Route::post('/', [BreedControllerApi::class, 'store']);
         Route::delete('/{id}', [BreedControllerApi::class, 'destroy']);
+        Route::put('/{id}', [BreedControllerApi::class, 'update']);
     });
 
     Route::prefix('users')->group(function () {
@@ -271,7 +268,7 @@ Route::get('/user', function (Request $request) {
 Route::post('/update-profile', function (Request $request) {
     // Validate the incoming request data
     $request->validate([
-        'name' => 'nullable|string|max:255',
+        'nama' => 'nullable|string|max:255',
         'email' => 'nullable|email|max:255',
         'phone_number' => 'nullable|string|max:20',
         'address' => 'nullable|string|max:255',
@@ -285,7 +282,7 @@ Route::post('/update-profile', function (Request $request) {
 
     // Prepare data for updating
     $data = [
-        'name' => $request->input('name'),
+        'name' => $request->input('nama'),
         'email' => $request->input('email'),
         'phone_number' => $request->input('phone_number'),
         'address' => $request->input('address'),

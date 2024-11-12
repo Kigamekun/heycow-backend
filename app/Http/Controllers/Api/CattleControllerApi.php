@@ -133,6 +133,7 @@ class CattleControllerApi extends Controller
         }
     }
 
+
     public function iotDevices($id)
     {
 

@@ -76,64 +76,88 @@ class BlogPostControllerApi extends Controller
     }
 
     public function store(Request $request)
-    {
-        try {
-            $validatedData = $request->validate([
-                'user_id' => 'exists:users,id',
-                'title' => 'required|string|max:255',
-                'content' => 'required|string',
-                'image' => 'nullable|mimes:png,jpg,jpeg|max:2048',
-                'category' => 'nullable|string|in:forum,jual',
-                'price' => 'nullable|integer',
-                'cattle_id' => 'nullable|exists:cattle,id',
-                'published' => 'nullable|string|in:draft,published',
-                'published_at' => 'nullable|date',
-            ], [
-                'user_id.required' => 'User ID harus diisi',
-                'cattle_id.exists' => 'Cattle ID tidak valid',
-                'user_id.exists' => 'User ID tidak valid',
-                'title.required' => 'Judul harus diisi',
-                'content.required' => 'Konten harus diisi',
-                'image.mimes' => 'Format gambar tidak valid',
-                'image.max' => 'Ukuran gambar terlalu besar',
-            ]);
+{
+    try {
+        // Validasi data
+        $validatedData = $request->validate([
+            'user_id' => 'exists:users,id',
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
+            'image' => 'nullable|mimes:png,jpg,jpeg|max:2048',
+            'category' => 'nullable|string|in:forum,jual',
+            'price' => 'nullable|integer|required_if:category,jual',
+            'cattle_id' => 'nullable|exists:cattle,id|required_if:category,jual',
+            'published' => 'nullable|string|in:draft,published',
+            'published_at' => 'nullable|date',
+        ], [
+            'user_id.required' => 'User ID harus diisi',
+            'cattle_id.exists' => 'Cattle ID tidak valid',
+            'user_id.exists' => 'User ID tidak valid',
+            'title.required' => 'Judul harus diisi',
+            'content.required' => 'Konten harus diisi',
+            'image.mimes' => 'Format gambar tidak valid',
+            'image.max' => 'Ukuran gambar terlalu besar',
+        ]);
 
-            if (empty($validatedData['published_at'])) {
-                $validatedData['published_at'] = now();
-            }
-            $user = Auth::id();
-
-            Log::info('BlogPost validation successful', $validatedData);
-
-            $cattle = Cattle::where('user_id', $user)->first();
-
-            $blogPost = BlogPost::create([
-                'user_id' => $user,
-                'title' => $validatedData['title'],
-                'content' => $validatedData['content'],
-                'cattle_id'=>$validatedData['cattle_id'],
-                // 'cattle_id' => $cattle ? $cattle->id : null,
-                'image' => $request->file('image') ? $request->file('image')->store('blog_images', 'public') : null,
-                'price' => $validatedData['price'] ?? null,
-                'category' => $validatedData['category'],
-                'published_at' => $validatedData['published_at']
-            ]);
-
-            return response()->json([
-                'message' => 'BlogPost berhasil ditambahkan',
-                'status' => 'success',
-                'statusCode' => 200,
-                'data' => $blogPost
-            ], 200);
-
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'message' => 'Validasi gagal',
-                'errors' => $e->errors(),
-                'status' => 'error'
-            ], 422);
+        // Menangani 'published_at' jika tidak ada
+        if (empty($validatedData['published_at'])) {
+            $validatedData['published_at'] = now();
         }
+
+        // Menyimpan user id yang sedang login
+        $user = Auth::id();
+
+        Log::info('BlogPost validation successful', $validatedData);
+
+        // Mengambil cattle jika kategori adalah 'jual' dan user memiliki cattle
+        $cattle = null;
+        if ($validatedData['category'] === 'jual') {
+            $cattle = Cattle::where('user_id', $user)->first();
+        }
+
+        // Jika kategori adalah 'forum', set cattle_id dan price menjadi null
+        if ($validatedData['category'] === 'forum') {
+            $validatedData['cattle_id'] = null;
+            $validatedData['price'] = null;
+        }
+
+        // Membuat BlogPost
+        $blogPost = BlogPost::create([
+            'user_id' => $user,
+            'title' => $validatedData['title'],
+            'content' => $validatedData['content'],
+            'cattle_id' => $validatedData['cattle_id'],
+            'image' => $request->file('image') ? $request->file('image')->store('blog_images', 'public') : null,
+            'price' => $validatedData['price'] ?? null,
+            'category' => $validatedData['category'],
+            'published_at' => $validatedData['published_at'],
+        ]);
+
+        // Menyusun response jika berhasil
+        return response()->json([
+            'message' => 'BlogPost berhasil ditambahkan',
+            'status' => 'success',
+            'statusCode' => 200,
+            'data' => $blogPost
+        ], 200);
+
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        // Menangani error validasi
+        return response()->json([
+            'message' => 'Validasi gagal',
+            'errors' => $e->errors(),
+            'status' => 'error'
+        ], 422);
+    } catch (\Exception $e) {
+        // Menangani error lainnya
+        return response()->json([
+            'message' => 'Terjadi kesalahan saat menyimpan data',
+            'status' => 'error',
+            'error' => $e->getMessage(),
+        ], 500);
     }
+}
+
 
 
     public function show($id)
@@ -163,48 +187,83 @@ class BlogPostControllerApi extends Controller
     }
 
     public function update(Request $request, $id)
-    {
-        $blogPost = BlogPost::find($id);
+{
+    $blogPost = BlogPost::find($id);
 
-        if (!$blogPost) {
-            return response()->json([
-                'message' => 'BlogPost tidak ditemukan',
-                'status' => 'error'
-            ], 404);
-        }
-
-        try {
-            $validatedData = $request->validate([
-                'title' => 'nullable|string|max:255',
-                'content' => 'nullable|string',
-                'image' => 'nullable|mimes:png,jpg,jpeg|max:2048',
-                'price' => 'nullable|integer',
-            ], [
-                'title.string' => 'Judul harus berupa teks',
-                'content.string' => 'Konten harus berupa teks',
-            ]);
-
-            $blogPost->update([
-                'title' => $validatedData['title'] ?? $blogPost->title,
-                'content' => $validatedData['content'] ?? $blogPost->content,
-                'image' => $request->file('image') ? $request->file('image')->store('blog_images', 'public') : $blogPost->image,
-                'price' => $validatedData['price'] ?? $blogPost->price,
-            ]);
-
-            return response()->json([
-                'message' => 'BlogPost berhasil diupdate',
-                'status' => 'success',
-                'data' => $blogPost
-            ], 200);
-
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'message' => 'Validasi gagal',
-                'errors' => $e->errors(),
-                'status' => 'error'
-            ], 422);
-        }
+    if (!$blogPost) {
+        return response()->json([
+            'message' => 'BlogPost tidak ditemukan',
+            'status' => 'error'
+        ], 404);
     }
+
+    try {
+        // Validasi data berdasarkan kategori
+        $validatedData = $request->validate([
+            'title' => 'nullable|string|max:255',
+            'content' => 'nullable|string',
+            'image' => 'nullable|mimes:png,jpg,jpeg|max:2048',
+            'category' => 'nullable|string|in:forum,jual',
+            'price' => 'nullable|integer|required_if:category,jual',
+            'cattle_id' => 'nullable|exists:cattle,id|required_if:category,jual',
+            'published' => 'nullable|string|in:draft,published',
+            'published_at' => 'nullable|date',
+        ], [
+            'title.string' => 'Judul harus berupa teks',
+            'content.string' => 'Konten harus berupa teks',
+            'price.integer' => 'Harga harus berupa angka',
+            'cattle_id.exists' => 'Cattle ID tidak valid',
+        ]);
+
+        // Pastikan published_at memiliki nilai yang valid
+        $publishedAt = $validatedData['published_at'] ?? $blogPost->published_at;
+
+        // Jika published_at berupa string yang bisa diparse (misalnya '15 minutes ago'), ubah menjadi waktu yang valid
+        if (is_string($publishedAt)) {
+            $publishedAt = \Carbon\Carbon::parse($publishedAt)->format('Y-m-d H:i:s');
+        }
+
+        // Memastikan 'category' ada dalam validatedData
+        $category = $validatedData['category'] ?? $blogPost->category;
+
+        // Jika kategori adalah 'forum', set cattle_id dan price menjadi null
+        if ($category === 'forum') {
+            $validatedData['cattle_id'] = null;
+            $validatedData['price'] = null;
+        }
+
+        // Update blog post
+        $blogPost->update([
+            'title' => $validatedData['title'] ?? $blogPost->title,
+            'content' => $validatedData['content'] ?? $blogPost->content,
+            'image' => $request->file('image') ? $request->file('image')->store('blog_images', 'public') : $blogPost->image,
+            'category' => $category,
+            'price' => $validatedData['price'] ?? $blogPost->price,
+            'cattle_id' => $validatedData['cattle_id'] ?? $blogPost->cattle_id,
+            'published_at' => $publishedAt, // Menyimpan tanggal yang valid
+        ]);
+
+        return response()->json([
+            'message' => 'BlogPost berhasil diupdate',
+            'status' => 'success',
+            'data' => $blogPost
+        ], 200);
+
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return response()->json([
+            'message' => 'Validasi gagal',
+            'errors' => $e->errors(),
+            'status' => 'error'
+        ], 422);
+    } catch (\Exception $e) {
+        return response()->json([
+            'message' => 'Terjadi kesalahan saat memperbarui data',
+            'status' => 'error',
+            'error' => $e->getMessage(),
+        ], 500);
+    }
+}
+
 
     public function destroy($id)
     {

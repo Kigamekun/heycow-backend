@@ -32,12 +32,9 @@ class HealthRecordControllerApi extends Controller
                 'year' => $year,
                 'records' => $records->map(function ($record) {
                     return [
-                        'weight' => $record->weight,
                         'temperature' => $record->temperature,
-                        'heart_rate' => $record->heart_rate,
                         'status' => $record->status,
                         'checkup_time' => $record->checkup_time->format('d-m-Y'),
-                        'veterinarian' => $record->veterinarian,
                     ];
                 }),
             ];
@@ -57,10 +54,7 @@ class HealthRecordControllerApi extends Controller
                 'cattle_id' => 'required|integer',
                 'checkup_time' => 'required|date',
                 'temperature' => 'required|numeric',
-                'heart_rate' => 'required|integer',
-                'status' => 'required|in:sick,healthy',
-                'weight' => 'nullable|numeric',
-                'veterinarian' => 'nullable|string|max:255',
+                'status' => 'required|in:sehat,sakit',
             ]);
 
             $healthRecord = HealthRecord::create($validatedData);
@@ -105,9 +99,6 @@ class HealthRecordControllerApi extends Controller
                 'records' => $records->map(function($record) {
                     return [
                         'checkup_time' => \Carbon\Carbon::parse($record->checkup_time)->format('d-m-Y'), // Format tanggal
-                        'veterinarian' => $record->veterinarian ?? 'N/A',
-                        'weight' => $record->weight ? $record->weight . ' kg' : 'N/A',
-                        'heart_rate' => $record->heart_rate ? $record->heart_rate . ' hr/m' : 'N/A',
                         'temperature' => $record->temperature ? $record->temperature . '℃' : 'N/A',
                         'status' => $record->status,
                     ];
@@ -144,10 +135,7 @@ class HealthRecordControllerApi extends Controller
         $validatedData = $request->validate([
             'checkup_time' => 'nullable|date',
             'temperature' => 'nullable|numeric',
-            'heart_rate' => 'nullable|integer',
-            'status' => 'nullable|in:sick,healthy',
-            'weight' => 'nullable|numeric',
-            'veterinarian' => 'nullable|string|max:255',
+            'status' => 'nullable|in:sehat,sakit',
         ]);
 
         $healthRecord->update($validatedData);

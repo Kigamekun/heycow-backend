@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\RequestAngon;
 use App\Models\Contract;
+use App\Models\User;
+use App\Models\Cattle;
+use App\Models\Farm;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
@@ -34,10 +37,14 @@ class RequestAngonControllerApi extends Controller
                  $title = $is_pengangon
                      ? "Permintaan mengangon dari " . $item->user->name . ": " . $item->cattle->name
                      : "Request Angon " . $item->cattle->name . " ke " . $item->peternak->name;
+                $cattle_id = DB::table('cattle')->where('id', $item->cattle_id)->first();
 
                  return [
                     'id' => $item->id,
+                    'cattle_id'=> $item->cattle_id,
+                    'user_id' => $item->user_id,
                     'title' => $title,
+                    'cattle' => $item->cattle,
                     'is_pengangon' => $is_pengangon,
                     'status' => $item->status,
                     'tanggal' => $item->created_at->toIso8601String(),
@@ -92,16 +99,13 @@ class RequestAngonControllerApi extends Controller
 
         // Generate contract code dan kontrak otomatis
         $prefix = 'CONTRACT';
-        $length = 6;
+        $length = 4;
         $date = date('Ymd');
         $randomString = substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, $length);
         $contractCode = $prefix . '-' . $date . '-' . $randomString;
 
-
-
-
-
         $peternak = User::where('id',$requestAngon->peternak_id)->first();
+        $farm = Farm::where('user_id',$peternak->id)->first();
         $cattle = Cattle::where('id',$requestAngon->cattle_id)->first();
 
 
@@ -111,8 +115,7 @@ class RequestAngonControllerApi extends Controller
         $contract->contract_code = $contractCode;
         $contract->request_id = $requestAngon->id;
         $contract->cattle_id = $requestAngon->cattle_id;
-        $contract->farm_id = $requestAngon->farm_id;
-        $contract->user_id = $user->id;
+        $contract->farm_id = $farm->id;
         $contract->start_date = now()->toDateString();
         $contract->end_date = now()->addMonths($requestAngon->duration)->toDateString();
         $contract->rate = $peternak->upah;

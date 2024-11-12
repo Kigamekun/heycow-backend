@@ -20,38 +20,58 @@ class BreedControllerApi extends Controller
         ], 200);
     }
 
-    // API untuk menambah breed baru
     public function store(Request $request)
     {
-        try {
-            $validatedData = $request->validate([
-                'name' => 'required|string|max:255',
-            ], [
-                'name.required' => 'Nama ras sapi harus diisi',
-            ]);
+        // Validasi data yang diterima
+        $validatedData = $request->validate([
+            'name' => 'required|string',
+            'country' => 'required|string',
+            'type' => 'required|string',
+            'characteristics' => 'required|string',
+        ]);
 
-            $breed = Breed::create([
-                'name' => $validatedData['name'],
-            ]);
+        // Simpan data ke database
+        $breed = Breed::create($validatedData);
 
-            return response()->json([
-                'message' => 'Ras sapi berhasil ditambahkan',
-                'status' => 'success',
-                'data' => $breed
-            ], 201);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'message' => 'Validasi gagal',
-                'errors' => $e->errors(),
-                'status' => 'error'
-            ], 422);
-        }
+        return response()->json([
+            'message' => 'Breed successfully created',
+            'data' => $breed
+        ], 201);
     }
+
+
 
     // API untuk update breed
-    public function update($id){
-        
+    public function update(Request $request, $id)
+    {
+        // Validasi data yang diterima
+        $validatedData = $request->validate([
+            'name' => 'sometimes|required|string',
+            'country' => 'sometimes|required|string',
+            'type' => 'sometimes|required|string',
+            'characteristics' => 'sometimes|required|string',
+        ]);
+
+        // Cari breed berdasarkan ID
+        $breed = Breed::find($id);
+
+        if (!$breed) {
+            return response()->json([
+                'message' => 'Ras sapi tidak ditemukan',
+                'status' => 'error',
+            ], 404);
+        }
+
+        // Update breed dengan data yang divalidasi
+        $breed->update($validatedData);
+
+        return response()->json([
+            'message' => 'Breed successfully updated',
+            'status' => 'success',
+            'data' => $breed,
+        ], 200);
     }
+
 
 
     // API untuk menghapus breed
