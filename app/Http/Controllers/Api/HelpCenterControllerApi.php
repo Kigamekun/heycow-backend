@@ -36,8 +36,9 @@ public function store(Request $request)
 
         return response()->json([
             'message' => 'Pertanyaan berhasil dikirim',
-            'status' => 'success'
-        ], 201);
+            'status' => 'success',
+            'statusCode' => 200
+        ], 200);
 
     } catch (\Illuminate\Validation\ValidationException $e) {
         return response()->json([

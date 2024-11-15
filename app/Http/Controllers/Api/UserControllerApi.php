@@ -13,7 +13,6 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
-
 class UserControllerApi extends Controller
 {
     public function index()
@@ -53,6 +52,7 @@ class UserControllerApi extends Controller
 
     public function submitRequestForm(Request $request)
 {
+
     // Validasi data dari form request
     $validatedData = $request->validate([
         'nik' => 'required|string|max:255',
@@ -62,20 +62,27 @@ class UserControllerApi extends Controller
     ]);
 
     try {
-        // Proses upload KTP dan selfie KTP
-        $ktpPath = $request->file('ktp') ? $request->file('ktp')->store('ktp', 'public') : null;
-        $selfieKtpPath = $request->file('selfie_ktp') ? $request->file('selfie_ktp')->store('selfie_ktp', 'public') : null;
-        // Format upah menjadi rupiah
-        $validatedData['upah'] = 'Rp ' . number_format($validatedData['upah'], 0, ',', '.');
         // Mengambil user yang terautentikasi
         $user = auth()->user();
+        if (!$user) {
+            return response()->json([
+                'status' => 'gagal',
+                'pesan' => 'User tidak ditemukan atau tidak terautentikasi.',
+            ], 401);
+        }
+
+        // Log the authenticated user
+        \Log::info('User Authenticated', ['user' => $user]);
+
+        // Pastikan file valid sebelum disimpan
+        $ktpPath = $request->file('ktp')->isValid() ? $request->file('ktp')->store('ktp', 'public') : null;
+        $selfieKtpPath = $request->file('selfie_ktp')->isValid() ? $request->file('selfie_ktp')->store('selfie_ktp', 'public') : null;
 
         // Perbarui data user dengan data yang diterima
         $user->nik = $validatedData['nik'];
         $user->ktp = $ktpPath;
         $user->upah = $validatedData['upah'];
         $user->selfie_ktp = $selfieKtpPath;
-        $user->status = 'pending';  // Set status ke pending setelah form disubmit
         $user->save();
 
         return response()->json([
@@ -84,6 +91,8 @@ class UserControllerApi extends Controller
             'user' => $user
         ]);
     } catch (\Exception $e) {
+        // Catat error untuk debug jika perlu
+        \Log::error('Error saat submit request form: ' . $e->getMessage());
         return response()->json([
             'status' => 'gagal',
             'pesan' => 'Gagal mengirimkan pengajuan',
@@ -91,6 +100,7 @@ class UserControllerApi extends Controller
         ], 500);
     }
 }
+
 
 
 
@@ -102,7 +112,6 @@ class UserControllerApi extends Controller
 
             // Mengubah status menjadi 'approved'
             $user->is_pengangon = 1;
-            $user->status = 'approved';
             $user->save();
 
             // Mengembalikan respons jika berhasil
@@ -137,7 +146,6 @@ class UserControllerApi extends Controller
             $user->ktp = null;
             $user->selfie_ktp = null;
             $user->upah = null;
-            $user->status = 'rejected'; // atau status lainnya sesuai keinginan Anda
 
             // Simpan perubahan ke database
             $user->save();
@@ -166,17 +174,33 @@ class UserControllerApi extends Controller
 
     try {
         // Proses upload avatar jika ada
-        $avatarPath = $request->file('avatar') ? $request->file('avatar')->store('avatars', 'public') : null;
+        if (auth()->user()->role == 'cattleman') {
+            $avatarPath = $request->file('avatar') ? $request->file('avatar')->store('avatars', 'public') : null;
 
-        // Membuat pengguna baru dengan data yang sudah divalidasi
-        $user = User::create([
-            'name' => $validatedData['name'],
-            'email' => $validatedData['email'],
-            'password' => Hash::make($validatedData['password']),
-            'phone_number' => $validatedData['phone_number'],
-            'address' => $validatedData['address'],
-            'avatar' => $avatarPath,
-        ]);
+            // Membuat pengguna baru dengan data yang sudah divalidasi
+            $user = User::create([
+                'name' => $validatedData['name'],
+                'email' => $validatedData['email'],
+                'password' => Hash::make($validatedData['password']),
+                'phone_number' => $validatedData['phone_number'],
+                'address' => $validatedData['address'],
+                'avatar' => $avatarPath,
+            ]);
+        } else {
+            $avatarPath = $request->file('avatar') ? $request->file('avatar')->store('avatars', 'public') : null;
+
+            // Membuat pengguna baru dengan data yang sudah divalidasi
+            $user = User::create([
+                'name' => $validatedData['name'],
+                'email' => $validatedData['email'],
+                'password' => Hash::make($validatedData['password']),
+                'phone_number' => $validatedData['phone_number'],
+                'address' => $validatedData['address'],
+                'avatar' => $avatarPath,
+                'role' => $request->input('role'),
+            ]);
+        }
+
 
         // Response sukses jika pengguna berhasil dibuat
         return response()->json([
@@ -257,18 +281,18 @@ class UserControllerApi extends Controller
             });
 
 
-$result = [
-    'pengangon' => [
-        'id' => $pengangon->id,
-        'name' => $pengangon->name,
-        'address' => $pengangon->address ?? 'Alamat tidak tersedia',
-        'upah' => "Rp " . number_format($pengangon->upah, 0, ',', '.'),
-        'avatar' => $pengangon->avatar ?? null,
-        'rate' => $pengangon->avg_rate ? (int) $pengangon->avg_rate : 0,
-        'farm' => $pengangon->farms ?? 'Farm tidak tersedia',
-    ],
-    'riwayat_pelanggan' => $riwayatFormatted
-];
+        $result = [
+            'pengangon' => [
+                'id' => $pengangon->id,
+                'name' => $pengangon->name,
+                'address' => $pengangon->address ?? 'Alamat tidak tersedia',
+                'upah' => $pengangon->upah,
+                'avatar' => $pengangon->full_avatar_url ?? null,
+                'rate' => $pengangon->avg_rate ? (int) $pengangon->avg_rate : 0,
+                'farm' => $pengangon->farms ?? 'Farm tidak tersedia',
+            ],
+            'riwayat_pelanggan' => $riwayatFormatted
+        ];
 
 
             return response()->json([
@@ -347,7 +371,7 @@ $result = [
                 'name' => $user->name,
                 'farm' => $user->farms ? $user->farms : 'Farm tidak ditemukan',
                 'address' => $user->address ?? 'Alamat tidak tersedia',
-                'upah' => $user->upah ? "Rp " . number_format($user->upah, 0, ',', '.') : 'Upah tidak tersedia',
+                'upah' => $user->upah,
                 'avatar' => $user->avatar ?? null,
                 'rate' => $user->avg_rate ? (int) $user->avg_rate : 0
             ];
@@ -371,51 +395,51 @@ $result = [
     }
 }
 
-    public function update(Request $request, $id)
-    {
-        $user = User::find($id);
+public function update(Request $request, $id)
+{
+    try {
+        // Validasi data input
+        $validatedData = $request->validate([
+            'name' => 'nullable|string|max:255',
+            'email' => 'nullable|string|email|max:255|unique:users,email,' . $id,
+            'password' => 'nullable|string|min:8',
+            'phone_number' => 'nullable|string|max:15',
+            'address' => 'nullable|string|max:255',
+        ]);
 
-        try {
-            $validatedData = $request->validate([
-                'name' => 'nullable|string|max:255',
-                'email' => 'nullable|string|email|max:255|unique:users,email,' . $id,
-                'password' => 'nullable|string|min:8',
-                'phone_number' => 'nullable|string|max:15',
-                'address' => 'nullable|string|max:255',
-                'avatar' => 'nullable|mimes:jpeg,png,jpg,svg|max:2048'
-            ]);
-
-            if (isset($validatedData['password'])) {
-                $validatedData['password'] = Hash::make($validatedData['password']);
-            }
-
-            if ($request->hasFile('avatar')) {
-                $avatarPath = $request->file('avatar')->store('avatars', 'public');
-                $validatedData['avatar'] = $avatarPath;
-            }
-
-            $user->update([
-                'name' => $validatedData['name'] ?? $user->name,
-                'email' => $validatedData['email'] ?? $user->email,
-                'password' => $validatedData['password'] ?? $user->password,
-                'phone_number' => $validatedData['phone_number'] ?? $user->phone_number,
-                'address' => $validatedData['address'] ?? $user->address,
-                'avatar' => $validatedData['avatar'] ?? $user->avatar ?? null,
-            ]);
-
-            return response()->json([
-                'status' => 'sukses',
-                'pesan' => 'Pengguna berhasil diperbarui',
-                'data' => $user,
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'gagal',
-                'pesan' => 'Gagal memperbarui pengguna',
-                'error' => $e->getMessage(),
-            ], 500);
+        // Hash password jika ada
+        if (isset($validatedData['password'])) {
+            $validatedData['password'] = Hash::make($validatedData['password']);
         }
+
+        // Simpan avatar jika ada
+        if ($request->hasFile('avatar')) {
+            $validatedData['avatar'] = $request->file('avatar')->store('avatars', 'public');
+        }
+
+        // Cari user berdasarkan ID
+        $user = User::find($id);
+        if (!$user) {
+            return response()->json(['error' => 'User not found'], 404);
+        }
+
+        // Update user dengan data yang telah divalidasi
+        $user->update($validatedData);
+
+        return response()->json([
+            'status' => 'sukses',
+            'pesan' => 'Pengguna berhasil diperbarui',
+            'data' => $user,
+        ], 200);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'gagal',
+            'pesan' => 'Gagal memperbarui pengguna',
+            'error' => $e->getMessage(),
+        ], 500);
     }
+}
+
 
     public function destroy($id)
     {

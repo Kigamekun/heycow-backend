@@ -41,25 +41,59 @@ class FarmControllerApi extends Controller
     public function store(Request $request)
     {
         try {
-            $validatedData = $request->validate([
-                'name' => 'required|string|max:255',
-                'address' => 'required|string|max:255',
-            ], [
-                'name.required' => 'Nama harus diisi',
-                'address.required' => 'Alamat harus diisi',
-            ]);
 
-            // Create new farm after validation success
-            $farm = Farm::create([
-                'name' => $validatedData['name'],
-                'address' => $validatedData['address'],
-            ]);
+            if (auth()->user()->role == 'cattleman') {
+                $validatedData = $request->validate([
+                    'name' => 'required|string|max:255',
+                    'address' => 'required|string|max:255',
+                ], [
+                    'name.required' => 'Nama harus diisi',
+                    'address.required' => 'Alamat harus diisi',
+                ]);
 
-            return response()->json([
-                'message' => 'Farm berhasil ditambahkan',
-                'status' => 'success',
-                'data' => $farm
-            ], 201);
+                // Create new farm after validation success
+                $farm = Farm::create([
+                    'name' => $validatedData['name'],
+                    'address' => $validatedData['address'],
+                ]);
+
+                return response()->json([
+                    'message' => 'Farm berhasil ditambahkan',
+                    'status' => 'success',
+                    'data' => $farm
+                ], 201);
+
+            } else {
+                $validatedData = $request->validate([
+                    'name' => 'required|string|max:255',
+                    'address' => 'required|string|max:255',
+                ], [
+                    'name.required' => 'Nama harus diisi',
+                    'address.required' => 'Alamat harus diisi',
+                ]);
+
+                if (Farm::where('user_id', $request->user_id)->count() > 0) {
+                    return response()->json([
+                        'message' => 'Peternak hanya boleh memiliki satu peternakan',
+                        'status' => 'error'
+                    ], 400);
+                    # code...
+                }
+
+                // Create new farm after validation success
+                $farm = Farm::create([
+                    'name' => $validatedData['name'],
+                    'address' => $validatedData['address'],
+                    'user_id' => $request->user_id
+                ]);
+
+                return response()->json([
+                    'message' => 'Farm berhasil ditambahkan',
+                    'status' => 'success',
+                    'data' => $farm
+                ], 201);
+
+            }
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             // Catch validation error and return response immediately
@@ -99,13 +133,36 @@ class FarmControllerApi extends Controller
 
         try {
             // Validasi data input
-            $validatedData = $request->validate([
-                'name' => 'required|string|max:255',
-                'address' => 'required|string|max:255',
-            ]);
+            if (auth()->user()->role == 'cattleman') {
+                $validatedData = $request->validate([
+                    'name' => 'required|string|max:255',
+                    'address' => 'required|string|max:255',
+                ]);
 
-            // Update farm jika validasi berhasil
-            $farm->update($validatedData);
+                // Update farm jika validasi berhasil
+                $farm->update($validatedData);
+            } else {
+                $validatedData = $request->validate([
+                    'name' => 'required|string|max:255',
+                    'address' => 'required|string|max:255',
+                ]);
+
+                if (Farm::where('user_id', $request->user_id)->count() > 0) {
+                    return response()->json([
+                        'message' => 'Peternak hanya boleh memiliki satu peternakan',
+                        'status' => 'error'
+                    ], 400);
+                    # code...
+                }
+
+                // Update farm jika validasi berhasil
+                $farm->update([
+                    'name' => $validatedData['name'],
+                    'address' => $validatedData['address'],
+                    'user_id' => $request->user_id
+                ]);
+            }
+
 
             return response()->json([
                 'message' => 'Farm berhasil diupdate',

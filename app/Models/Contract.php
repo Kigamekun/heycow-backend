@@ -43,5 +43,10 @@ class Contract extends Model
         return $this->belongsTo(Farm::class, 'farm_id');
     }
 
+    public function requestAngon()
+    {
+        return $this->belongsTo(RequestAngon::class, 'request_id');
+    }
+
 
 }

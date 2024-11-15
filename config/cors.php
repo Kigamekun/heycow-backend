@@ -19,7 +19,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://localhost:3000'],
+    'allowed_origins' => ['http://localhost:3000','http://127.0.0.1:8000','https://heycow-frontend.netlify.app','http://192.168.100.30:3000'],
 
     'allowed_origins_patterns' => [],
 

@@ -15,7 +15,7 @@ class RequestNgangon extends Model
         'start_date',
         'end_date',
         'duration',
-        'price',
+        'price' ,
         'note',
         'created_at',
         'updated_at',

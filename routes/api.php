@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Api\FarmControllerApi;
 use App\Http\Controllers\Api\CattleControllerApi;
 use App\Http\Controllers\Api\IOTDevicesControllerApi;
@@ -37,31 +38,59 @@ Route::middleware(['auth:sanctum'])->group(function () {
             'to_user'=>auth()->user()->id,
             'is_read'=>0
         ])->count();
-        $cattle = Cattle::with([
-            'breed',
-            'iotDevice',
-        ])
-            ->where('user_id', $userId)
-            ->limit(5)
-            ->get()
-            ->map(function ($cattle) {
-                $hr = DB::table('health_records')->where('cattle_id', $cattle->id)->orderBy('created_at', 'desc')->first();
-                return [
-                    'id' => $cattle->id,
-                    'name' => $cattle->name,
-                    'status' => $cattle->status,
-                    'user_id' => $cattle->user_id,
-                    'gender' => $cattle->gender,
-                    'type' => $cattle->type,
-                    'birth_date' => $cattle->birth_date,
-                    'breed' => $cattle->breed->name ?? 'Unknown',
-                    'breed_id' => $cattle->breed_id,
-                    'birth_weight' => $cattle->birth_weight ?? 'Unknown',
-                    'birth_height' => $cattle->birth_height ?? 'Unknown',
-                    'iot_devices' => $cattle->iotDevice,
-                    'latest_health_status' => $hr
-                ];
-            });
+
+
+    $user = Auth::id();
+
+
+// Base query to retrieve cattle data
+$data = Cattle::with(['iotDevice', 'breed', 'farm', 'healthRecords'])
+->orderBy('id', 'DESC');
+
+// Search filter
+if (isset($_GET['search'])) {
+$data = $data->where('name', 'like', '%' . $_GET['search'] . '%');
+}
+
+// Role-based filtering for cattle data
+if (auth()->user()->role == 'cattleman' && auth()->user()->is_pengangon == 0) {
+// Cattle owned by the logged-in user
+$data = $data->where('user_id', $user);
+} else if (auth()->user()->role == 'cattleman' && auth()->user()->is_pengangon == 1) {
+
+// Cattle either owned by the caretaker or cared for under an active contract
+$data = $data->where(function ($query) use ($user) {
+    $query->where('user_id', $user) // Owned by the logged-in user
+          ->orWhereHas('contracts', function ($query) use ($user) {
+              $query->where('status', 'active')
+                    ->whereHas('requestAngon', function ($query) use ($user) {
+                        $query->where('peternak_id', $user);
+                    });
+          });
+});
+
+}
+
+// Load first health record and adjust farm based on contract status
+$data = $data->get()->map(function ($cattle) {
+// Add the first health record for each cattle, if exists
+$cattle->first_health_record = $cattle->healthRecords()->first();
+
+// Check if cattle has an active contract
+$activeContract = $cattle->contracts()->where('status', 'active')->first();
+if ($activeContract) {
+    $farm = Farm::where('id',$activeContract->farm_id)->first();
+    $cattle->farmNow = $farm; // Set farm to caretaker's farm
+} else {
+    $farm = Farm::where('id',$cattle->farm_id)->first();
+    $cattle->farmNow = $farm; // Set farm to caretaker's farm
+
+
+}
+return $cattle;
+
+
+});
 
         return response()->json([
             'notif_count' => $notif_count,
@@ -72,7 +101,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
             'contract' => $contract,
             'farm' => $farm,
             'cattle_count' => $cattle_count,
-            'cattle' => $cattle
+            'cattle' => $data
         ]);
     });
 
@@ -126,6 +155,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::put('/{id}', [IOTDevicesControllerApi::class, 'update'])->middleware('checkRole:admin');
         Route::delete('/{id}', [IOTDevicesControllerApi::class, 'destroy'])->middleware('checkRole:admin');
         Route::post('/assign-iot-devices', [IOTDevicesControllerApi::class, 'AssignIOTDevices']);
+        Route::delete('/remove_devices/{id}', [IOTDevicesControllerApi::class, 'removeIOTDevices']);
         Route::put('/change-status/{id}', [IOTDevicesControllerApi::class, 'changeStatus']);
         Route::get('/get-iot-devices-by-user', [IOTDevicesControllerApi::class, 'getIOTDevicesByUser']);
     });
@@ -164,7 +194,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/{id}/likes', [LikeControllerApi::class, 'store']);
         Route::get('/{id}/likes/{like_id}', [LikeControllerApi::class, 'show']);
         Route::put('/{id}/likes', [LikeControllerApi::class, 'update']);
-
+        Route::delete('/{id}/likes', [LikeControllerApi::class, 'destroy']);
         // // Forum Category
         // Route::get('/forum', [BlogPostControllerApi::class, 'showForumPosts']);
 
@@ -236,8 +266,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/request-ngangon', [UserControllerApi::class, 'requestNgangon']);
         Route::patch('/{userId}/approve', [UserControllerApi::class, 'approveRequest']);
         Route::put('/{userId}/reject', [UserControllerApi::class, 'rejectRequest']);
-
-
     });
 
     // Rute untuk Help Center
@@ -275,6 +303,7 @@ Route::post('/update-profile', function (Request $request) {
         'farm_name' => 'nullable|string|max:255',
         'farm_address' => 'nullable|string|max:255',
         'upah' => 'nullable|numeric',
+        'gender' => 'nullable|string|in:male,female',
         'avatar' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:2048', // 2MB max
     ]);
 
@@ -286,6 +315,7 @@ Route::post('/update-profile', function (Request $request) {
         'email' => $request->input('email'),
         'phone_number' => $request->input('phone_number'),
         'address' => $request->input('address'),
+        'gender' => $request->input('gender'),
         'upah' => $request->input('upah'),
     ];
 
@@ -307,6 +337,17 @@ Route::post('/update-profile', function (Request $request) {
         Farm::where('user_id',$user->id)->update([
             'name'=>$request->farm_name,
             'address'=>$request->farm_address,
+        ]);
+    }
+
+    else {
+        $farm = Farm::create([
+            'name'=>$request->farm_name,
+            'address'=>$request->farm_address,
+            'user_id'=>auth()->user()->id,
+        ]);
+        Cattle::where('user_id',auth()->user()->id)->update([
+            "farm_id"=>$farm->id
         ]);
     }
 

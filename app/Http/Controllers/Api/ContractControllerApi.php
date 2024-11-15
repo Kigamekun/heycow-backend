@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Models\Contract;
+use App\Models\{Contract,Cattle};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
@@ -69,6 +69,7 @@ class ContractControllerApi extends Controller
         $contract->farmAddress = $contract->farm->address ?? '-';
         $contract->pengangonPhone = $contract->request->peternak->phone ?? '-';
         $contract->pengangonName = $contract->request->peternak->name ?? '-';
+        $contract->pelangganPhone = $contract->request->user->phone ?? '-';
         $contract->pengangonFee = 'Rp. '.$contract->total_cost;
 
 
@@ -92,40 +93,89 @@ class ContractControllerApi extends Controller
     /**
      * Mengembalikan kontrak yang sudah selesai.
      */
-    public function returnContract($id)
-    {
-        // Ambil kontrak berdasarkan ID
-        $contract = Contract::find($id);
+    public function returnContract(Request $request, $id)
+{
+    // Ambil kontrak berdasarkan ID
+    $contract = Contract::find($id);
 
-        if (!$contract) {
-            return response()->json([
-                'status' => 'error',
-                'statusCode' => 404,
-                'message' => 'Contract not found',
-                'data' => null
-            ], 404);
-        }
-
-        // Pastikan kontrak belum dikembalikan
-        if ($contract->status === 'returned') {
-            return response()->json([
-                'status' => 'error',
-                'statusCode' => 400,
-                'message' => 'Contract has already been returned',
-                'data' => null
-            ], 400);
-        }
-
-        // Update status kontrak menjadi returned
-        $contract->status = 'returned';
-        $contract->end_date = now(); // Set tanggal pengembalian
-        $contract->save();
-
+    if (!$contract) {
         return response()->json([
-            'status' => 'success',
-            'statusCode' => 200,
-            'message' => 'Contract returned successfully',
-            'data' => $contract
-        ], 200);
+            'status' => 'error',
+            'statusCode' => 404,
+            'message' => 'Contract not found',
+            'data' => null
+        ], 404);
     }
+
+    // Pastikan kontrak belum dikembalikan
+    if ($contract->status === 'returned') {
+        return response()->json([
+            'status' => 'error',
+            'statusCode' => 400,
+            'message' => 'Contract has already been returned',
+            'data' => null
+        ], 400);
+    }
+
+    // Validasi input untuk weight, height, dan rate
+    $request->validate([
+        'weight' => 'required|numeric|min:0',
+        'height' => 'required|numeric|min:0',
+        'rate' => 'required|numeric|min:0'
+    ]);
+
+    // Ambil data cattle terkait
+    $cattle = $contract->cattle;
+
+    if (!$cattle) {
+        return response()->json([
+            'status' => 'error',
+            'statusCode' => 404,
+            'message' => 'Cattle not found',
+            'data' => null
+        ], 404);
+    }
+
+    // Simpan birth_weight dan birth_height lama ke dalam history_records
+    \DB::table('history')->insert([
+        'cattle_id' => $cattle->id,
+        'user_id' => Auth::id(),
+        'record_type' => 'weight',
+        'old_value' => $cattle->birth_weight,
+        'new_value' => $request->weight,
+        'message' => 'Updated weight during contract return',
+    ]);
+
+    \DB::table('history')->insert([
+        'cattle_id' => $cattle->id,
+        'user_id' => Auth::id(),
+        'record_type' => 'height',
+        'old_value' => $cattle->birth_height,
+        'new_value' => $request->height,
+        'message' => 'Updated height during contract return',
+    ]);
+
+    // Update birth_weight dan birth_height pada Cattle dengan data baru dari request
+    $cattle->birth_weight = $request->weight;
+    $cattle->birth_height = $request->height;
+    $cattle->save();
+
+    // Update status kontrak menjadi returned, serta simpan rate baru
+    $contract->final_weight = $request->weight;
+    $contract->final_height = $request->height;
+    $contract->rate = $request->rate;
+    $contract->status = 'returned';
+    $contract->end_date = now(); // Set tanggal pengembalian
+    $contract->save();
+
+    return response()->json([
+        'status' => 'success',
+        'statusCode' => 200,
+        'message' => 'Contract returned successfully',
+        'data' => $contract
+    ], 200);
+}
+
+
+
 }

@@ -38,13 +38,18 @@ class RequestAngonControllerApi extends Controller
                      ? "Permintaan mengangon dari " . $item->user->name . ": " . $item->cattle->name
                      : "Request Angon " . $item->cattle->name . " ke " . $item->peternak->name;
                 $cattle_id = DB::table('cattle')->where('id', $item->cattle_id)->first();
+                $cattle = Cattle::with(['iotDevice', 'breed', 'farm', 'healthRecords'])->findOrFail($cattle_id->id);
+                // $cattle = DB::table('cattle')->where('id', $item->cattle_id)->first();
+                // $breed = DB::table('breeds')->where('id', $cattle->breed_id)->first();
 
                  return [
                     'id' => $item->id,
                     'cattle_id'=> $item->cattle_id,
                     'user_id' => $item->user_id,
+                    // 'breed' => $breed,
                     'title' => $title,
-                    'cattle' => $item->cattle,
+                    'cattle' => $cattle,
+                    'peternak' => $peternak,
                     'is_pengangon' => $is_pengangon,
                     'status' => $item->status,
                     'tanggal' => $item->created_at->toIso8601String(),
@@ -196,7 +201,7 @@ public function rejectRequest($id)
                 'nama_sapi' => $cattle->name,
                 'durasi' => $request->durasi,
                 'tanggal' => $formattedDate,
-                'biaya' => 'Rp. '.$pengangon->upah * $request->durasi,
+                'biaya' => (integer)$pengangon->upah * $request->durasi,
             ];
 
         return response()->json([

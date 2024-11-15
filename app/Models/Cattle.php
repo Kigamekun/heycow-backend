@@ -49,5 +49,13 @@ class Cattle extends Model
         return $this->hasMany(HistoryRecord::class);
     }
 
+    // In Cattle.php model
+
+public function contracts()
+{
+    return $this->hasMany(Contract::class, 'cattle_id');
+}
+
+
 
 }

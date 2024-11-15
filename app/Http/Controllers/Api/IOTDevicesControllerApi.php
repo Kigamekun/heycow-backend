@@ -16,7 +16,23 @@ class IOTDevicesControllerApi extends Controller
 {
     public function index()
     {
-        $devices = IOTDevices::latest()->get();
+        // Eager load 'user' relationship to get user data for each device
+        $devices = IOTDevices::with('user')->latest()->get();
+
+        // Map the devices and add 'user_name' if 'user' relation exists
+        $devices = $devices->map(function ($device) {
+            return [
+                'id' => $device->id,
+                'serial_number' => $device->serial_number,
+                'status' => $device->status,
+                'installation_date' => $device->installation_date,
+                'qr_image' => $device->qr_image,
+                'ssid' => $device->ssid,
+                'password' => $device->password,
+                'user_id' => $device->user_id,
+                'user_name' => $device->user ? $device->user->name : null,
+            ];
+        });
 
         return response()->json([
             'message' => 'Data perangkat IoT',
@@ -25,10 +41,9 @@ class IOTDevicesControllerApi extends Controller
         ]);
     }
 
+
     public function store(Request $request)
     {
-
-
         $request->validate([
             'serial_number' => 'required|string|unique:iot_devices,serial_number',
             'installation_date' => 'required|date',
@@ -43,7 +58,6 @@ class IOTDevicesControllerApi extends Controller
             'status' => $request->status,
             'installation_date' => $request->installation_date,
             'qr_image' => $qrCodeFileName,
-            'user_id' => Auth::id()
         ]);
 
 
@@ -121,13 +135,35 @@ class IOTDevicesControllerApi extends Controller
         ], 200);
     }
 
+    public function assignIOTDevices(Request $request)
+    {
+        $request->validate([
+            'device_id' => 'required|exists:iot_devices,id',
+            'user_id' => 'required|exists:users,id',
+        ]);
+
+        $device = IOTDevices::find($request->device_id);
+
+        if (!$device) {
+            return response()->json(['message' => 'Perangkat IoT tidak ditemukan', 'status' => 'error'], 404);
+        }
+
+        $device->user_id = $request->user_id;
+        $device->save();
+
+        return response()->json([
+            'message' => 'Perangkat IoT berhasil di-assign ke pengguna',
+            'status' => 'success',
+            'data' => $device
+        ], 200);
+    }
 
     public function getIOTDevicesByUser()
     {
         $devices = IOTDevices::where('user_id', auth()->user()->id)->get();
 
         return response()->json([
-            'message' => 'Data perangkat IoT',
+            'message' => 'Data perangkat IoT milik pengguna',
             'status' => 'success',
             'data' => $devices
         ]);
@@ -149,6 +185,23 @@ class IOTDevicesControllerApi extends Controller
 
         return response()->json([
             'message' => 'Status perangkat IoT berhasil diubah',
+            'status' => 'success',
+            'data' => $device
+        ], 200);
+    }
+
+    public function removeIOTDevices($id) {
+        $device = IOTDevices::find($id);
+
+        if (!$device) {
+            return response()->json(['message' => 'Perangkat IoT tidak ditemukan', 'status' => 'error'], 404);
+        }
+
+        $device->user_id = null;
+        $device->save();
+
+        return response()->json([
+            'message' => 'Perangkat IoT berhasil di-unassign dari pengguna',
             'status' => 'success',
             'data' => $device
         ], 200);
