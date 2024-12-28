@@ -54,7 +54,7 @@ class BlogPostControllerApi extends Controller
             $query->where('category', $category);
         }
 
-        $blogPosts = $query->orderBy($sortBy, $sortOrder)->paginate($perPage);
+        $blogPosts = $query->orderBy('created_at')->paginate($perPage);
 
         $user = auth()->user(); // atau cara lain untuk mendapatkan user yang sedang login
         $blogPosts->getCollection()->transform(function ($post) use ($user) {

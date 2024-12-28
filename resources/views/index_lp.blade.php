@@ -66,7 +66,7 @@
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
 
-      <a href="{{route('login')}}" class="btn btn-light">Login</a>
+      <a href="https://heycow.netlify.app/login" class="btn btn-light">Login</a>
 
     </div>
   </header>
@@ -318,7 +318,7 @@
               <div class="faq-item faq-active">
                 <h3>Sistem aplikasinya seperti apa sihh?</h3>
                 <div class="faq-content">
-                  <p>Lorem ipsum dolor, sit amet consectetur adipisicing elit. Unde omnis molestiae voluptatem ad, culpa veritatis amet suscipit eos eum, nesciunt minus ipsum! Maxime blanditiis possimus sapiente iste eveniet. Natus, earum!</p>
+                  <p>HeyCow adalah aplikasi berbasis IoT yang terintegrasi dengan perangkat untuk memonitor kesehatan sapi secara real-time. Sistem ini mencatat data seperti suhu tubuh, perilaku, dan kebiasaan sapi. Selain itu, terdapat fitur Ngangon untuk menitipkan sapi ke pengangon yang bertanggung jawab. Semua data diproses secara digital sehingga peternak dapat mengakses informasi penting kapan saja melalui aplikasi.</p>
                 </div>
                 <i class="faq-toggle bi bi-chevron-right"></i>
               </div><!-- End Faq item-->
@@ -326,7 +326,7 @@
               <div class="faq-item">
                 <h3>Kenapa aplikasi ini perlu saya gunakan?</h3>
                 <div class="faq-content">
-                  <p>Lorem ipsum dolor, sit amet consectetur adipisicing elit. Veritatis dolore repellat dolorum rerum, architecto ab, vero nulla id adipisci perferendis sit atque reprehenderit eaque mollitia cupiditate quo repellendus labore cum?</p>
+                  <p>Aplikasi ini mempermudah pengelolaan kesehatan sapi dengan memberikan data real-time dan akurat. Anda bisa memantau gejala atau penyakit sapi tanpa harus selalu berada di kandang. Selain itu, fitur Ngangon memberikan fleksibilitas untuk menitipkan sapi dengan aman saat Anda sedang sibuk. Dengan HeyCow, produktivitas dan efisiensi peternakan Anda dapat meningkat.</p>
                 </div>
                 <i class="faq-toggle bi bi-chevron-right"></i>
               </div><!-- End Faq item-->
@@ -334,7 +334,7 @@
               <div class="faq-item">
                 <h3>Apakah aplikasi ini memiliki keunggulan?</h3>
                 <div class="faq-content">
-                  <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Sapiente rem dolore provident vel quibusdam soluta saepe odio dolores explicabo, maxime placeat nostrum quos excepturi ducimus modi velit natus nihil ad.</p>
+                  <p>- Monitoring Real-Time<br>- Fitur Ngangon<br>- Kemudahan Akses<br>- Diskusi Peternakan<br>- Efisiensi</p>
                 </div>
                 <i class="faq-toggle bi bi-chevron-right"></i>
               </div><!-- End Faq item-->

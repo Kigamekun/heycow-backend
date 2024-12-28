@@ -125,6 +125,33 @@ class LikeControllerApi extends Controller
 
     }
 
+    public function unlikePost(Request $request, $id)
+    {
+        $like = Like::where('post_id', $id)
+            ->where('user_id', auth()->user()->id)
+            ->first();
+
+        if (!$like) {
+            return response()->json([
+                'status' => 'gagal',
+                'pesan' => 'Like tidak ditemukan',
+            ], 404);
+        }
+
+        try {
+            $like->delete();
+            return response()->json([
+                'status' => 'sukses',
+                'pesan' => 'Like berhasil dihapus',
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'gagal',
+                'pesan' => 'Gagal menghapus like',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 
     /**
      * Remove the specified resource from storage.

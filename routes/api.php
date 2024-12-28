@@ -23,7 +23,11 @@ use App\Models\{Cattle, IOTDevices, Farm, RequestAngon};
 use Illuminate\Http\Request;
 
 
+// Route::get('/export-excel', [ExportController::class, 'exportExcel']);
+// Route::get('/export-pdf', [ExportController::class, 'exportPdf']);
 
+Route::post('/health_records', [HealthRecordControllerApi::class, 'store']);
+Route::get('/cattle/iot-devices/iot/{id}', [CattleControllerApi::class, 'iotDevices']);
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/dashboard', function () {
         $userId = auth()->user()->id;
@@ -139,8 +143,7 @@ return $cattle;
         Route::get('/', [CattleControllerApi::class, 'index']);
         Route::post('/', [CattleControllerApi::class, 'store']);
         Route::get('/{id}', [CattleControllerApi::class, 'show']);
-        Route::get('/iot-devices/{id}', [CattleControllerApi::class, 'iotDevices']);
-        Route::put('/{id}', [CattleControllerApi::class, 'update']);
+        Route::post('/{id}', [CattleControllerApi::class, 'update']);
         Route::delete('/{id}', [CattleControllerApi::class, 'destroy']);
         Route::post('/iot-devices/search', [CattleControllerApi::class, 'searchIOT']);
         Route::patch('/assign-iot-devices/{id}', [CattleControllerApi::class, 'assignIOTDevices']);
@@ -194,7 +197,7 @@ return $cattle;
         Route::post('/{id}/likes', [LikeControllerApi::class, 'store']);
         Route::get('/{id}/likes/{like_id}', [LikeControllerApi::class, 'show']);
         Route::put('/{id}/likes', [LikeControllerApi::class, 'update']);
-        Route::delete('/{id}/likes', [LikeControllerApi::class, 'destroy']);
+        Route::delete('/{id}/likes', [LikeControllerApi::class, 'unlikePost']);
         // // Forum Category
         // Route::get('/forum', [BlogPostControllerApi::class, 'showForumPosts']);
 
@@ -219,7 +222,6 @@ return $cattle;
     // Rute untuk Health Records
     Route::prefix('health_records')->group(function () {
         Route::get('/', [HealthRecordControllerApi::class, 'index']);
-        Route::post('/', [HealthRecordControllerApi::class, 'store']);
         Route::get('/{id}', [HealthRecordControllerApi::class, 'show']);
         Route::put('/{id}', [HealthRecordControllerApi::class, 'update']);
         Route::delete('/{id}', [HealthRecordControllerApi::class, 'destroy']);

@@ -13,6 +13,12 @@ class IOTDevices extends Model
 
     protected $fillable = ['serial_number', 'status', 'installation_date', 'qr_image','user_id'];
 
+    // protected $appends = ['qr_image_url'];
+    // public function getFulllQrImage()
+    // {
+    //     return $this->qr_image ? url('api/getFile/' . $this->qr_image) : null;
+    // }
+
     public function user()
     {
         return $this->belongsTo(User::class);

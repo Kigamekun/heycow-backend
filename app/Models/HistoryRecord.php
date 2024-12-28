@@ -10,7 +10,7 @@ class HistoryRecord extends Model
     use HasFactory;
 
     // Nama tabel di database
-    protected $table = 'history_records';
+    protected $table = 'history';
 
     // Nonaktifkan otomatis timestamps
     public $timestamps = false;
@@ -23,7 +23,6 @@ class HistoryRecord extends Model
         'new_value',
         'recorded_at',
         'iot_device_id',
-        'created_by',
     ];
 
     // Kolom yang akan diperlakukan sebagai tanggal
@@ -60,4 +59,6 @@ class HistoryRecord extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+
+
 }

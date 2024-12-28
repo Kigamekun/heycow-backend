@@ -85,6 +85,15 @@ class UserControllerApi extends Controller
         $user->selfie_ktp = $selfieKtpPath;
         $user->save();
 
+        $us = User::where('role','admin')->first();
+        \DB::table('notifications')->insert([
+            'from_user' => $us->id,
+            'to_user' => $us->id,
+            'is_read' => 0,
+            'title' => 'Pengajuan Peternak',
+            'message' => "Pengajuan anda telah diterima, mohon tunggu 1x24 jam",
+        ]);
+
         return response()->json([
             'status' => 'sukses',
             'pesan' => 'Pengajuan berhasil dikirim, menunggu persetujuan admin.',
@@ -113,6 +122,14 @@ class UserControllerApi extends Controller
             // Mengubah status menjadi 'approved'
             $user->is_pengangon = 1;
             $user->save();
+
+            \DB::table('notifications')->insert([
+                'from_user' => $user->id,
+                'to_user' => $user->id,
+                'is_read' => 0,
+                'title' => 'Pengajuan Peternak',
+                'message' => "Pengajuan anda telah diterima",
+            ]);
 
             // Mengembalikan respons jika berhasil
             return response()->json([
@@ -149,6 +166,14 @@ class UserControllerApi extends Controller
 
             // Simpan perubahan ke database
             $user->save();
+
+            \DB::table('notifications')->insert([
+                'from_user' => $user->id,
+                'to_user' => $user->id,
+                'is_read' => 0,
+                'title' => 'Pengajuan Peternak',
+                'message' => "Pengajuan anda ditolak",
+            ]);
 
             return response()->json(['message' => 'Request rejected successfully'], 200);
         } catch (\Exception $e) {
@@ -258,7 +283,8 @@ class UserControllerApi extends Controller
                                   ->join('farms', 'contracts.farm_id', '=', 'farms.id') // Join dengan farms untuk dapatkan nama farm
                                   ->where('farms.user_id', $id) // Filter berdasarkan user_id
                                   ->join('cattle', 'contracts.cattle_id', '=', 'cattle.id') // Gabungkan dengan data sapi
-                                  ->join('users', 'farms.user_id', '=', 'users.id') // Join dengan tabel users untuk mengambil nama pelanggan
+                                  ->join('request_ngangons', 'contracts.request_id', '=', 'request_ngangons.id') // Gabungkan dengan data sapi
+                                  ->join('users', 'request_ngangons.user_id', '=', 'users.id') // Join dengan tabel users untuk mengambil nama pelanggan
                                   ->select(
                                       'contracts.start_date',
                                       'contracts.end_date',
@@ -310,7 +336,7 @@ class UserControllerApi extends Controller
         }
     }
 
-
+  
 
     public function getUserByPengangon(Request $request)
 {
@@ -372,7 +398,7 @@ class UserControllerApi extends Controller
                 'farm' => $user->farms ? $user->farms : 'Farm tidak ditemukan',
                 'address' => $user->address ?? 'Alamat tidak tersedia',
                 'upah' => $user->upah,
-                'avatar' => $user->avatar ?? null,
+                'avatar' => $user->avatar ? 'https://heycow.my.id/storage/'.$user->avatar : null,
                 'rate' => $user->avg_rate ? (int) $user->avg_rate : 0
             ];
         });

@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 class NotificationControllerApi extends Controller
 {
+
     // Method to get all notifications for the logged-in user
     public function getUserNotifications()
     {
@@ -46,5 +47,14 @@ class NotificationControllerApi extends Controller
         }
 
         return response()->json(['message' => 'Notification not found.'], 404);
+    }
+
+    public function sendNotification($user, $message)
+    {
+        // Implementasikan logika untuk mengirim notifikasi, misalnya dengan menggunakan email, push notification, dll.
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Notification sent successfully!'
+        ], 200);
     }
 }

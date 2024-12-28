@@ -16,7 +16,7 @@ class Cattle extends Model
     protected $fillable = [
         'name', 'breed_id', 'status', 'gender', 'type', 'birth_date',
         'birth_weight', 'birth_height', 'iot_device_id', 'last_vaccination',
-        'farm_id', 'user_id'
+        'farm_id', 'user_id','image'
     ];
 
     public function breed()

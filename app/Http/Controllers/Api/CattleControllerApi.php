@@ -100,7 +100,6 @@ class CattleControllerApi extends Controller
         }
     }
 
-
     public function store(Request $request)
     {
         try {
@@ -113,6 +112,8 @@ class CattleControllerApi extends Controller
                     'birth_date' => 'required|date',
                     'birth_weight' => 'required|numeric',
                     'birth_height' => 'nullable|numeric',
+                    'last_vaccination' => 'nullable|date',
+                    'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Validasi gambar opsional
                 ]);
 
                 $user = Auth::id();
@@ -128,6 +129,13 @@ class CattleControllerApi extends Controller
                 }
 
                 $name = $request->name ?? 'Sapi ' . (Cattle::where('user_id', $user)->count() + 1);
+
+                // Proses gambar jika diunggah
+                $imagePath = null;
+                if ($request->hasFile('image')) {
+                    $imagePath = $request->file('image')->store('cattle_images', 'public');
+                }
+
                 $cattle = Cattle::create([
                     'name' => $name,
                     'breed_id' => $validatedData['breed_id'],
@@ -137,17 +145,11 @@ class CattleControllerApi extends Controller
                     'birth_date' => $validatedData['birth_date'],
                     'birth_weight' => $validatedData['birth_weight'],
                     'birth_height' => $validatedData['birth_height'],
+                    'last_vaccination' => $validatedData['last_vaccination'] ?? null,
                     'farm_id' => $farm_id,
                     'user_id' => $user,
                     'iot_device_id' => $iot_device_id,
-                ]);
-
-                HistoryRecord::create([
-                    'cattle_id' => $cattle->id,
-                    'record_type' => 'create',
-                    'new_value' => $cattle->toJson(),
-                    'recorded_at' => now(),
-                    'created_by' => $user,
+                    'image' => $imagePath, // Tambahkan kolom gambar
                 ]);
 
                 return response()->json([
@@ -164,6 +166,8 @@ class CattleControllerApi extends Controller
                     'birth_date' => 'required|date',
                     'birth_weight' => 'required|numeric',
                     'birth_height' => 'nullable|numeric',
+                    'last_vaccination' => 'nullable|date',
+                    'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Validasi gambar opsional
                 ]);
 
                 $farm_id = $request->farm_id;
@@ -177,6 +181,13 @@ class CattleControllerApi extends Controller
                 }
 
                 $name = $request->name ?? 'Sapi ' . (Cattle::where('user_id', $user)->count() + 1);
+
+                // Proses gambar jika diunggah
+                $imagePath = null;
+                if ($request->hasFile('image')) {
+                    $imagePath = $request->file('image')->store('cattle_images', 'public');
+                }
+
                 $cattle = Cattle::create([
                     'name' => $name,
                     'breed_id' => $validatedData['breed_id'],
@@ -189,13 +200,13 @@ class CattleControllerApi extends Controller
                     'farm_id' => $farm_id,
                     'user_id' => $user,
                     'iot_device_id' => $iot_device_id,
+                    'last_vaccination' => $validatedData['last_vaccination'] ?? null,
+                    'image' => $imagePath, // Tambahkan kolom gambar
                 ]);
 
                 HistoryRecord::create([
                     'cattle_id' => $cattle->id,
-                    'record_type' => 'create',
                     'new_value' => $cattle->toJson(),
-                    'recorded_at' => now(),
                     'created_by' => $user,
                 ]);
 
@@ -206,7 +217,6 @@ class CattleControllerApi extends Controller
                 ], 201);
             }
 
-
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'message' => 'Validasi gagal',
@@ -215,6 +225,7 @@ class CattleControllerApi extends Controller
             ], 422);
         }
     }
+
 
 
     public function iotDevices($id)
@@ -292,6 +303,7 @@ class CattleControllerApi extends Controller
                 'status' => 'error'
             ], 404);
         }
+        iotDevices::where('serial_number', $request->iot_device_id)->update(['ssid' => $request->ssid, 'password' => $request->password]);
 
         // Cari sapi berdasarkan ID
         $cattle = Cattle::findOrFail($id);
@@ -335,6 +347,7 @@ class CattleControllerApi extends Controller
                     'id' => $cattle->breed->id,
                     'name' => $cattle->breed->name,
                 ],
+                'image' => $cattle->image,
                 'status' => $cattle->status,
                 'gender' => $cattle->gender,
                 'type' => $cattle->type,
@@ -358,59 +371,100 @@ class CattleControllerApi extends Controller
     }
 
     public function update(Request $request, $id)
-    {
-        $cattle = Cattle::find($id);
+{
+    $cattle = Cattle::find($id);
 
-        if (!$cattle) {
-            return response()->json([
-                'message' => 'Cattle tidak ditemukan',
-                'status' => 'error'
-            ], 404);
-        }
-
-        try {
-            // Validasi data input
-            $validatedData = $request->validate([
-                'breed_id' => 'nullable|exists:breeds,id',
-                'status' => 'nullable|in:sehat,sakit,mati,dijual',
-                'gender' => 'nullable|in:jantan,betina',
-                'type' => 'nullable|in:pedaging,perah,peranakan,lainnya',
-                'birth_date' => 'nullable|date',
-                'birth_weight' => 'nullable|numeric',
-                'birth_height' => 'nullable|numeric',
-            ]);
-
-            if (isset($request->name) && $request->name != '') {
-                $name = $request->name;
-            } else {
-                $name = $cattle->name;
-            }
-
-            // Update data sapi
-            $cattle->update([
-                'name' => $name,
-                'breed_id' => $validatedData['breed_id'],
-                'status' => $validatedData['status'],
-                'gender' => $validatedData['gender'],
-                'type' => $validatedData['type'],
-                'birth_date' => $validatedData['birth_date'],
-                'birth_weight' => $validatedData['birth_weight'],
-                'birth_height' => $validatedData['birth_height'],
-            ]);
-
-            return response()->json([
-                'message' => 'Sapi berhasil diupdate',
-                'status' => 'success',
-                'data' => $cattle
-            ], 200);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'message' => 'Validasi gagal',
-                'errors' => $e->errors(),
-                'status' => 'error'
-            ], 422);
-        }
+    if (!$cattle) {
+        return response()->json([
+            'message' => 'Cattle tidak ditemukan',
+            'status' => 'error'
+        ], 404);
     }
+
+    try {
+        // Validasi data input
+        $validatedData = $request->validate([
+            'breed_id' => 'nullable|exists:breeds,id',
+            'status' => 'nullable|in:sehat,sakit,mati,dijual',
+            'gender' => 'nullable|in:jantan,betina',
+            'type' => 'nullable|in:pedaging,perah,peranakan,lainnya',
+            'birth_date' => 'nullable|date',
+            'birth_weight' => 'nullable|numeric',
+            'birth_height' => 'nullable|numeric',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Validasi gambar
+        ]);
+
+        // Update nama jika diberikan
+        $name = $request->filled('name') ? $request->name : $cattle->name;
+
+        // Jika gambar dikirimkan, upload dan simpan path-nya
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $imagePath = $image->store('cattle_images', 'public'); // Simpan di folder public/cattle_images
+        } else {
+            $imagePath = $cattle->image; // Pertahankan path gambar yang lama
+        }
+
+        // Menyimpan perubahan sejarah (history) untuk berat badan
+        if (isset($request->birth_weight) && !is_null($request->birth_weight) && $cattle->birth_weight != $request->birth_weight) {
+            \DB::table('history')->insert([
+                'cattle_id' => $cattle->id,
+                'user_id' => Auth::id(),
+                'record_type' => 'weight',
+                'old_value' => $cattle->birth_weight,
+                'new_value' => $request->birth_weight,
+                'message' => 'Updated weight during cattle update',
+            ]);
+        }
+
+        // Menyimpan perubahan sejarah (history) untuk tinggi badan
+        if (isset($request->birth_height) && !is_null($request->birth_height) && $cattle->birth_height != $request->birth_height) {
+            \DB::table('history')->insert([
+                'cattle_id' => $cattle->id,
+                'user_id' => Auth::id(),
+                'record_type' => 'height',
+                'old_value' => $cattle->birth_height,
+                'new_value' => $request->birth_height,
+                'message' => 'Updated height during cattle update',
+            ]);
+        }
+
+        // Update data sapi
+        $cattle->update([
+            'name' => $name,
+            'breed_id' => $validatedData['breed_id'] ?? $cattle->breed_id,
+            'status' => $validatedData['status'] ?? $cattle->status,
+            'gender' => $validatedData['gender'] ?? $cattle->gender,
+            'type' => $validatedData['type'] ?? $cattle->type,
+            'birth_date' => $validatedData['birth_date'] ?? $cattle->birth_date,
+            'birth_weight' => $validatedData['birth_weight'] ?? $cattle->birth_weight,
+            'birth_height' => $validatedData['birth_height'] ?? $cattle->birth_height,
+            'image' => $imagePath, // Simpan path gambar
+        ]);
+
+        return response()->json([
+            'message' => 'Sapi berhasil diupdate',
+            'status' => 'success',
+            'data' => $cattle
+        ], 200);
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return response()->json([
+            'message' => 'Validasi gagal',
+            'errors' => $e->errors(),
+            'status' => 'error'
+        ], 422);
+    } catch (\Exception $e) {
+        return response()->json([
+            'message' => 'Terjadi kesalahan saat mengupdate data',
+            'status' => 'error',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
+
+
+
+
 
     private function getChanges($oldData, $newData)
     {
@@ -445,9 +499,7 @@ class CattleControllerApi extends Controller
 
         HistoryRecord::create([
             'cattle_id' => $id,
-            'record_type' => 'delete',
             'old_value' => $oldValue,
-            'recorded_at' => now(),
             'created_by' => Auth::id(),
         ]);
 

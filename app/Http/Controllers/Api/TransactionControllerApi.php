@@ -113,6 +113,17 @@ class TransactionControllerApi extends Controller
                 'paymment_status' => 4,
             ]);
         }
+
+        $contract=Contract::find($request->id);
+        $peternak=User::where('id',$contract->request->peternak_id)->first();
+        \DB::table('notifications')->insert([
+            'from_user' => $peternak->id,
+            'to_user' => $peternak->id,
+            'is_read' => 0,
+            'title' => 'Kontrak angon',
+            'message' => "Kontrak ".$contract->contract_code." anda telah dibayar",
+        ]);
+
         // Mail::to(Auction::where('id', $request->id)->first()->user->email)->send(new WinnerAuctionMail($request->auction));
         return response()->json(['message' => 'Update Transaction', 'status' => 'success'], 200);
     }

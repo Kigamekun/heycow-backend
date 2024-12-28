@@ -21,60 +21,72 @@ class RequestAngonControllerApi extends Controller
 
      public function index()
      {
-         $user = Auth::id();
-         $data = RequestAngon::with(['user', 'cattle'])
-                     ->where('user_id', $user)
-                     ->orWhere('peternak_id', $user);
+       if (auth()->user()->role == 'admin') {
+            $data = RequestAngon::with(['user', 'cattle'])->get();
 
-         $limit = $_GET['limit'] ?? 10;
+            return response()->json([
+                'status' => 'success',
+                'statusCode' => 200,
+                'message' => 'Data berhasil diambil',
+                'data' => $data,
+                'timestamp' => now()->toIso8601String()
+            ], 200);
+       } else {
+        $user = Auth::id();
+        $data = RequestAngon::with(['user', 'cattle'])
+                    ->where('user_id', $user)
+                    ->orWhere('peternak_id', $user);
 
-         if ($data->count() > 0) {
-             $data = $data->paginate($limit)->map(function ($item) use ($user) {
-                 $is_pengangon = $item->peternak_id === $user;
+        $limit = $_GET['limit'] ?? 10;
 
-                 $peternak = DB::table('users')->where('id', $item->peternak_id)->first();
-                 $user = DB::table('users')->where('id', $item->user_id)->first();
-                 $title = $is_pengangon
-                     ? "Permintaan mengangon dari " . $item->user->name . ": " . $item->cattle->name
-                     : "Request Angon " . $item->cattle->name . " ke " . $item->peternak->name;
-                $cattle_id = DB::table('cattle')->where('id', $item->cattle_id)->first();
-                $cattle = Cattle::with(['iotDevice', 'breed', 'farm', 'healthRecords'])->findOrFail($cattle_id->id);
-                // $cattle = DB::table('cattle')->where('id', $item->cattle_id)->first();
-                // $breed = DB::table('breeds')->where('id', $cattle->breed_id)->first();
+        if ($data->count() > 0) {
+            $data = $data->paginate($limit)->map(function ($item) use ($user) {
+                $is_pengangon = $item->peternak_id === $user;
 
-                 return [
-                    'id' => $item->id,
-                    'cattle_id'=> $item->cattle_id,
-                    'user_id' => $item->user_id,
-                    // 'breed' => $breed,
-                    'title' => $title,
-                    'cattle' => $cattle,
-                    'peternak' => $peternak,
-                    'is_pengangon' => $is_pengangon,
-                    'status' => $item->status,
-                    'tanggal' => $item->created_at->toIso8601String(),
-                 ];
-             });
+                $peternak = DB::table('users')->where('id', $item->peternak_id)->first();
+                $user = DB::table('users')->where('id', $item->user_id)->first();
+                $title = $is_pengangon
+                    ? "Permintaan mengangon dari " . $item->user->name . ": " . $item->cattle->name
+                    : "Request Angon " . $item->cattle->name . " ke " . $item->peternak->name;
+               $cattle_id = DB::table('cattle')->where('id', $item->cattle_id)->first();
+               $cattle = Cattle::with(['iotDevice', 'breed', 'farm', 'healthRecords'])->findOrFail($cattle_id->id);
+               // $cattle = DB::table('cattle')->where('id', $item->cattle_id)->first();
+               // $breed = DB::table('breeds')->where('id', $cattle->breed_id)->first();
 
-             $custom = collect([
-                 'status' => 'success',
-                 'statusCode' => 200,
-                 'message' => 'Data berhasil diambil',
-                 'data' => $data,
-                 'timestamp' => now()->toIso8601String()
-             ]);
+                return [
+                   'id' => $item->id,
+                   'cattle_id'=> $item->cattle_id,
+                   'user_id' => $item->user_id,
+                   // 'breed' => $breed,
+                   'title' => $title,
+                   'cattle' => $cattle,
+                   'peternak' => $peternak,
+                   'is_pengangon' => $is_pengangon,
+                   'status' => $item->status,
+                   'tanggal' => $item->created_at->toIso8601String(),
+                ];
+            });
 
-             return response()->json($custom, 200);
-         } else {
-             $custom = collect([
-                 'status' => 'error',
-                 'statusCode' => 404,
-                 'message' => 'Data tidak ditemukan',
-                 'data' => null
-             ]);
+            $custom = collect([
+                'status' => 'success',
+                'statusCode' => 200,
+                'message' => 'Data berhasil diambil',
+                'data' => $data,
+                'timestamp' => now()->toIso8601String()
+            ]);
 
-             return response()->json($custom, 200);
-         }
+            return response()->json($custom, 200);
+        } else {
+            $custom = collect([
+                'status' => 'error',
+                'statusCode' => 404,
+                'message' => 'Data tidak ditemukan',
+                'data' => null
+            ]);
+
+            return response()->json($custom, 200);
+        }
+       }
      }
 
      public function approveRequest($id)
@@ -123,7 +135,6 @@ class RequestAngonControllerApi extends Controller
         $contract->farm_id = $farm->id;
         $contract->start_date = now()->toDateString();
         $contract->end_date = now()->addMonths($requestAngon->duration)->toDateString();
-        $contract->rate = $peternak->upah;
         $contract->initial_weight = $cattle->birth_weight;
         $contract->initial_height = $cattle->birth_height;
         $contract->final_weight = null;
@@ -138,6 +149,15 @@ class RequestAngonControllerApi extends Controller
         $contract->jumlah_pembayaran = null;
         $contract->payment_status = null;
         $contract->save();
+
+        \DB::table('notifications')->insert([
+            'from_user' => $user->id,
+            'to_user' => $user->id,
+            'is_read' => 0,
+            'title' => 'Permintaan mengangon',
+            'message' => "Permintaan anda telah diterima",
+        ]);
+
 
         // Mengembalikan response sukses dengan data kontrak yang valid
         return response()->json([
@@ -193,7 +213,7 @@ public function rejectRequest($id)
             $cattle = DB::table('cattle')->where('id', $request->cattle_id)->first();
 
 
-            $formattedDate = now()->addDays(3)->format('d F Y - H:i');
+            $formattedDate = now()->format('d F Y - H:i');
 
 
             $data = [
@@ -203,6 +223,14 @@ public function rejectRequest($id)
                 'tanggal' => $formattedDate,
                 'biaya' => (integer)$pengangon->upah * $request->durasi,
             ];
+
+            \DB::table('notifications')->insert([
+                'from_user' => $pengangon->id,
+                'to_user' => $pengangon->id,
+                'is_read' => 0,
+                'title' => 'Permintaan mengangon',
+                'message' => "Permintaan anda telah diterima, mohon tunggu 1x24 jam",
+            ]);
 
         return response()->json([
             'message' => 'Data Request',
